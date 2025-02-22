@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./lib/auth"
 import Index from "./pages/Index"
-import Settings from "./pages/Settings"
 import SignIn from "./pages/auth/SignIn"
 import NotFound from "./pages/NotFound"
 
@@ -21,7 +20,6 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/settings" element={<Settings />} />
             <Route path="/auth" element={<SignIn />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
