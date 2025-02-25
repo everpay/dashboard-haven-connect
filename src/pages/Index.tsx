@@ -1,34 +1,31 @@
+
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
-  BarChart,
+  Bell,
+  ChevronDown,
+  Plus,
   Search,
   Settings,
-  Bell,
-  RefreshCcw,
-  ArrowUpRight,
-  ArrowDownRight,
-  Download,
-  MoreVertical,
-  LogOut,
-  User,
-  HelpCircle,
+  Wallet2,
+  ChevronUp,
+  BanknoteIcon,
+  SendIcon
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Link } from "react-router-dom"
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 const data = [
-  { name: 'Sep 25', amount: 400 },
-  { name: 'Sep 26', amount: 600 },
-  { name: 'Sep 27', amount: 450 },
-  { name: 'Sep 28', amount: 350 },
-  { name: 'Sep 29', amount: 500 },
-  { name: 'Sep 30', amount: 450 },
-  { name: 'Oct 1', amount: 400 },
+  { name: 'Jun 21', amount: 400 },
+  { name: 'Jun 22', amount: 300 },
+  { name: 'Jun 23', amount: 500 },
+  { name: 'Jun 24', amount: 280 },
+  { name: 'Jun 25', amount: 590 },
+  { name: 'Jun 26', amount: 390 },
+  { name: 'Jun 27', amount: 490 },
 ]
 
 const Index = () => {
@@ -39,80 +36,49 @@ const Index = () => {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8F9FA]">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="bg-white border-b">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold">WavePay</h1>
-              <nav className="flex gap-6">
-                <Link to="/" className="text-sm font-medium text-gray-900">
-                  Dashboard
-                </Link>
-                <Link to="/payments" className="text-sm font-medium text-gray-500">
-                  Payments
-                </Link>
-                <Link to="/history" className="text-sm font-medium text-gray-500">
-                  History
-                </Link>
-                <Link to="/settings" className="text-sm font-medium text-gray-500">
-                  Settings
-                </Link>
-              </nav>
+              <div className="flex items-center gap-3">
+                <img src="/lovable-uploads/dbfe1c50-ec15-4baa-bc55-11a8d89afb54.png" alt="Logo" className="h-8 w-8" />
+                <h1 className="text-xl font-semibold text-gray-900">DaPay</h1>
+              </div>
             </div>
             <div className="flex items-center gap-6">
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <div className="relative w-72">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   type="search"
-                  placeholder="Search"
-                  className="pl-10 bg-gray-100 border-0"
+                  placeholder="Search for transactions"
+                  className="pl-10 pr-4 py-2 w-full bg-gray-50 border-0 focus:ring-0"
                 />
               </div>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-gray-500">
                 <Settings className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-gray-500">
                 <Bell className="h-5 w-5" />
               </Button>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar>
-                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarImage src="https://images.unsplash.com/photo-1633332755192-727a05c4013d" />
                       <AvatarFallback>{firstName?.[0]}{lastName?.[0]}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
-                  <DropdownMenu.Content 
-                    className="w-56 bg-white rounded-lg shadow-lg p-2 mt-2"
-                    align="end"
-                  >
+                  <DropdownMenu.Content className="w-56 bg-white rounded-lg shadow-lg p-2 mt-2" align="end">
                     <div className="px-3 py-2 border-b border-gray-100">
                       <p className="font-medium text-sm text-gray-900">{firstName} {lastName}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{userEmail}</p>
                     </div>
                     <div className="py-2">
-                      <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
-                        <Link to="/settings" className="flex items-center gap-2 w-full">
-                          <Settings className="h-4 w-4" />
-                          Settings
-                        </Link>
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
-                        <Link to="/support" className="flex items-center gap-2 w-full">
-                          <HelpCircle className="h-4 w-4" />
-                          Support
-                        </Link>
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Separator className="my-1 h-px bg-gray-200" />
-                      <DropdownMenu.Item 
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded cursor-pointer"
-                        onClick={signOut}
-                      >
-                        <LogOut className="h-4 w-4" />
+                      <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded cursor-pointer" onClick={signOut}>
                         Sign out
                       </DropdownMenu.Item>
                     </div>
@@ -126,130 +92,121 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold">Payments overview</h2>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-white rounded-lg border px-3 py-1.5">
-              <img src="/mastercard.svg" alt="Mastercard" className="h-5 w-5" />
-              <span className="text-sm font-medium">•••• 0234</span>
-            </div>
-            <Button className="gap-2">
-              <span>New payment</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-6 grid-cols-12">
-          {/* Balance Card */}
-          <Card className="col-span-5 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium">Total balance</h3>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">+2%</span>
-              </div>
-              <Button variant="ghost" size="icon">
-                <RefreshCcw className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-3xl font-bold mb-6">$26,592.00</p>
-            <div className="grid grid-cols-3 gap-4">
-              <Button variant="outline" className="h-auto py-4 px-3">
-                <div className="flex flex-col items-center gap-1">
-                  <ArrowUpRight className="h-4 w-4" />
-                  <span className="text-xs">Send</span>
-                </div>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 px-3">
-                <div className="flex flex-col items-center gap-1">
-                  <ArrowDownRight className="h-4 w-4" />
-                  <span className="text-xs">Request</span>
-                </div>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 px-3">
-                <div className="flex flex-col items-center gap-1">
-                  <Download className="h-4 w-4" />
-                  <span className="text-xs">Export</span>
-                </div>
-              </Button>
-            </div>
-          </Card>
-
-          {/* Scheduled Transfers */}
-          <Card className="col-span-7 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-medium">Scheduled transfers</h3>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">All</Button>
-                <Button variant="outline" size="sm">Completed</Button>
-                <Button variant="outline" size="sm" className="bg-gray-900 text-white">Pending</Button>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>A</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">Amy P.</p>
-                    <p className="text-sm text-gray-500">Germany</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <p className="font-medium">€375.00</p>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>M</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">Michael S.</p>
-                    <p className="text-sm text-gray-500">United States</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <p className="font-medium">$460.00</p>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Chart */}
-          <Card className="col-span-12 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-medium">Total sent</h3>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm">
-                  <BarChart className="h-4 w-4 mr-2" />
-                  Columns
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Column */}
+          <div className="col-span-8 space-y-6">
+            {/* Balance Card */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-medium">Your balance</h2>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Wallet2 className="h-4 w-4" />
+                  Add money
                 </Button>
-                <Button variant="outline" size="sm">Line</Button>
-                <select className="text-sm border rounded-md px-2 py-1">
+              </div>
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Available balance</p>
+                  <p className="text-3xl font-semibold">$12,560.00</p>
+                  <div className="flex items-center gap-1 text-sm text-green-600 mt-1">
+                    <ChevronUp className="h-4 w-4" />
+                    <span>+2.5%</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Pending balance</p>
+                  <p className="text-3xl font-semibold">$1,214.00</p>
+                  <div className="flex items-center gap-1 text-sm text-red-600 mt-1">
+                    <ChevronDown className="h-4 w-4" />
+                    <span>-0.8%</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Chart Card */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-medium">Analytics</h2>
+                <select className="text-sm border rounded-lg px-3 py-2">
+                  <option>Last 7 days</option>
                   <option>Last month</option>
+                  <option>Last year</option>
                 </select>
               </div>
-            </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="amount" stroke="#4F46E5" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                    <YAxis axisLine={false} tickLine={false} />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="amount" 
+                      stroke="#013c3f" 
+                      strokeWidth={2} 
+                      dot={false}
+                      activeDot={{ r: 6, fill: "#013c3f" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right Column */}
+          <div className="col-span-4 space-y-6">
+            {/* Quick Actions */}
+            <Card className="p-6">
+              <h2 className="text-lg font-medium mb-4">Quick actions</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" className="h-auto py-4 px-3 border-2">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
+                      <SendIcon className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-medium">Send Money</span>
+                  </div>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 px-3 border-2">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center">
+                      <BanknoteIcon className="h-5 w-5 text-green-600" />
+                    </div>
+                    <span className="text-sm font-medium">Request</span>
+                  </div>
+                </Button>
+              </div>
+            </Card>
+
+            {/* Recent Transactions */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-medium">Recent transactions</h2>
+                <Button variant="ghost" size="sm" className="text-[#013c3f]">
+                  See all
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-3 border-b last:border-0">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={`https://images.unsplash.com/photo-${1570295999919 + i}-56ceb5ecca61`} />
+                        <AvatarFallback>UN</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">Alex Morris</p>
+                        <p className="text-sm text-gray-500">Today at 7:45 AM</p>
+                      </div>
+                    </div>
+                    <p className="font-medium">-$250.00</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
         </div>
       </main>
     </div>
