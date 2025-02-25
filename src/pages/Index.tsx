@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -13,9 +12,14 @@ import {
   ArrowDownRight,
   Download,
   MoreVertical,
+  LogOut,
+  User,
+  HelpCircle,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Link } from "react-router-dom"
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 
 const data = [
   { name: 'Sep 25', amount: 400 },
@@ -28,7 +32,11 @@ const data = [
 ]
 
 const Index = () => {
-  const { signOut } = useAuth()
+  const { signOut, session } = useAuth()
+  const userEmail = session?.user?.email || ""
+  const [firstName, lastName] = userEmail.split('@')[0].split('.').map(name => 
+    name.charAt(0).toUpperCase() + name.slice(1)
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,10 +47,18 @@ const Index = () => {
             <div className="flex items-center gap-8">
               <h1 className="text-xl font-bold">WavePay</h1>
               <nav className="flex gap-6">
-                <a href="#" className="text-sm font-medium text-gray-900">Dashboard</a>
-                <a href="#" className="text-sm font-medium text-gray-500">Payments</a>
-                <a href="#" className="text-sm font-medium text-gray-500">History</a>
-                <a href="#" className="text-sm font-medium text-gray-500">Settings</a>
+                <Link to="/" className="text-sm font-medium text-gray-900">
+                  Dashboard
+                </Link>
+                <Link to="/payments" className="text-sm font-medium text-gray-500">
+                  Payments
+                </Link>
+                <Link to="/history" className="text-sm font-medium text-gray-500">
+                  History
+                </Link>
+                <Link to="/settings" className="text-sm font-medium text-gray-500">
+                  Settings
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-6">
@@ -60,10 +76,49 @@ const Index = () => {
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar>
+                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarFallback>{firstName?.[0]}{lastName?.[0]}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content 
+                    className="w-56 bg-white rounded-lg shadow-lg p-2 mt-2"
+                    align="end"
+                  >
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <p className="font-medium text-sm text-gray-900">{firstName} {lastName}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{userEmail}</p>
+                    </div>
+                    <div className="py-2">
+                      <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                        <Link to="/settings" className="flex items-center gap-2 w-full">
+                          <Settings className="h-4 w-4" />
+                          Settings
+                        </Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded cursor-pointer">
+                        <Link to="/support" className="flex items-center gap-2 w-full">
+                          <HelpCircle className="h-4 w-4" />
+                          Support
+                        </Link>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Separator className="my-1 h-px bg-gray-200" />
+                      <DropdownMenu.Item 
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-gray-100 rounded cursor-pointer"
+                        onClick={signOut}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </DropdownMenu.Item>
+                    </div>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
             </div>
           </div>
         </div>
