@@ -95,6 +95,71 @@ export type Database = {
         }
         Relationships: []
       }
+      card_networks: {
+        Row: {
+          acquirer_merchant_id: string | null
+          card_type: string
+          country_code: string | null
+          created_at: string | null
+          id: number
+          mcc: string | null
+          merchant_name: string | null
+          merchant_profile_id: number
+          processor_id: string
+        }
+        Insert: {
+          acquirer_merchant_id?: string | null
+          card_type: string
+          country_code?: string | null
+          created_at?: string | null
+          id?: number
+          mcc?: string | null
+          merchant_name?: string | null
+          merchant_profile_id: number
+          processor_id: string
+        }
+        Update: {
+          acquirer_merchant_id?: string | null
+          card_type?: string
+          country_code?: string | null
+          created_at?: string | null
+          id?: number
+          mcc?: string | null
+          merchant_name?: string | null
+          merchant_profile_id?: number
+          processor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_networks_merchant_profile_id_fkey"
+            columns: ["merchant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_networks_processor_id_fkey"
+            columns: ["processor_id"]
+            isOneToOne: false
+            referencedRelation: "payment_processors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_card_network_merchant"
+            columns: ["merchant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_card_network_processor"
+            columns: ["processor_id"]
+            isOneToOne: false
+            referencedRelation: "payment_processors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chartmogul_config: {
         Row: {
           account_token: string
@@ -198,6 +263,30 @@ export type Database = {
         Update: {
           id?: never
           name?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -530,6 +619,36 @@ export type Database = {
           },
         ]
       }
+      merchant_profiles: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          sub_merchant_key: string | null
+          token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          sub_merchant_key?: string | null
+          token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          sub_merchant_key?: string | null
+          token?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       merchants: {
         Row: {
           created_at: string | null
@@ -537,6 +656,7 @@ export type Database = {
           id: string
           name: string
           reseller_id: string | null
+          stripe_account_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -545,6 +665,7 @@ export type Database = {
           id?: string
           name: string
           reseller_id?: string | null
+          stripe_account_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -553,6 +674,7 @@ export type Database = {
           id?: string
           name?: string
           reseller_id?: string | null
+          stripe_account_id?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -668,6 +790,50 @@ export type Database = {
           },
         ]
       }
+      payment_sessions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          customer_id: string | null
+          external_id: string
+          id: string
+          metadata: Json | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency: string
+          customer_id?: string | null
+          external_id: string
+          id?: string
+          metadata?: Json | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          customer_id?: string | null
+          external_id?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_sessions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_tokens: {
         Row: {
           created_at: string | null
@@ -772,6 +938,44 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          price: number
+          stock: number
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          price: number
+          stock: number
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number
+          stock?: number
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -992,6 +1196,7 @@ export type Database = {
       }
       users: {
         Row: {
+          avatar_url: string | null
           clerk_id: string
           email: string
           email_verified: string | null
@@ -1004,6 +1209,7 @@ export type Database = {
           role: string | null
         }
         Insert: {
+          avatar_url?: string | null
           clerk_id: string
           email: string
           email_verified?: string | null
@@ -1016,6 +1222,7 @@ export type Database = {
           role?: string | null
         }
         Update: {
+          avatar_url?: string | null
           clerk_id?: string
           email?: string
           email_verified?: string | null
@@ -1026,6 +1233,33 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean | null
           role?: string | null
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
         }
         Relationships: []
       }
