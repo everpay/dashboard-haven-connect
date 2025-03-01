@@ -8,6 +8,10 @@ import { AuthProvider } from "./lib/auth"
 import Index from "./pages/Index"
 import SignIn from "./pages/auth/SignIn"
 import NotFound from "./pages/NotFound"
+import Account from "./pages/Account"
+import Billing from "./pages/Billing"
+import Team from "./pages/Team"
+import Transactions from "./pages/Transactions"
 
 const queryClient = new QueryClient()
 
@@ -21,6 +25,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<SignIn />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/billing" element={<Billing />} />
+            <Route path="/team" element={<Team />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
