@@ -19,6 +19,13 @@ const Account = () => {
   const [name, setName] = useState(`${firstName} ${lastName}`);
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
+  
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +44,55 @@ const Account = () => {
       toast.error(error.message || 'Error updating profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    
+    // Validate passwords
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+    
+    setPasswordLoading(true);
+    
+    try {
+      // First, verify the current password by signing in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: currentPassword,
+      });
+      
+      if (signInError) {
+        throw new Error('Current password is incorrect');
+      }
+      
+      // Update the password
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+      
+      // Reset form fields
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      toast.success('Password updated successfully');
+    } catch (error: any) {
+      setPasswordError(error.message || 'Error updating password');
+      toast.error(error.message || 'Error updating password');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -91,13 +147,62 @@ const Account = () => {
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Password</h2>
           
-          <div className="space-y-4">
-            <p className="text-gray-500">Update your password to secure your account</p>
-            
-            <div className="flex justify-end">
-              <Button variant="outline">Change Password</Button>
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="currentPassword" className="text-sm font-medium">Current Password</label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full"
+                  placeholder="Enter your current password"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="newPassword" className="text-sm font-medium">New Password</label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full"
+                  placeholder="Enter your new password"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="text-sm font-medium">Confirm New Password</label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full"
+                  placeholder="Confirm your new password"
+                  required
+                />
+              </div>
+              
+              {passwordError && (
+                <p className="text-sm text-red-500">{passwordError}</p>
+              )}
+              
+              <div className="flex justify-end">
+                <Button 
+                  type="submit" 
+                  variant="outline"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? 'Updating...' : 'Change Password'}
+                </Button>
+              </div>
             </div>
-          </div>
+          </form>
         </Card>
       </div>
     </DashboardLayout>
