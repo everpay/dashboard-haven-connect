@@ -12,8 +12,17 @@ import Account from "./pages/Account"
 import Billing from "./pages/Billing"
 import Team from "./pages/Team"
 import Transactions from "./pages/Transactions"
+import Customers from "./pages/Customers"
+import Cards from "./pages/Cards"
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,6 +38,8 @@ const App = () => (
             <Route path="/billing" element={<Billing />} />
             <Route path="/team" element={<Team />} />
             <Route path="/transactions" element={<Transactions />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/cards" element={<Cards />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
