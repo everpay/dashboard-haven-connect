@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as z from 'zod';
@@ -73,7 +73,10 @@ const Customers = () => {
     mutationFn: async (values: CustomerFormValues) => {
       const { data, error } = await supabase
         .from('marqeta_customers')
-        .insert([values])
+        .insert([{
+          ...values,
+          user_id: (await supabase.auth.getUser()).data.user?.id
+        }])
         .select();
       
       if (error) throw error;
@@ -249,7 +252,7 @@ const Customers = () => {
                     <td colSpan={5} className="px-6 py-4 text-center">No customers found</td>
                   </tr>
                 ) : (
-                  customers?.map((customer) => (
+                  customers?.map((customer: any) => (
                     <tr key={customer.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, Download, Filter, Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, Eye, ArrowDownUp } from 'lucide-react';
+import { format } from 'date-fns';
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as z from 'zod';
@@ -15,15 +15,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const transactionSchema = z.object({
-  amount: z.string().min(1, "Amount is required").refine(val => !isNaN(Number(val)), {
-    message: "Amount must be a number",
-  }),
-  currency: z.string().min(1, "Currency is required"),
-  status: z.string().default("pending"),
-  merchant_name: z.string().optional(),
-  card_token: z.string().optional(),
+  amount: z.string().min(1, "Amount is required"),
+  currency: z.string().default("USD"),
+  merchant_name: z.string().min(1, "Merchant name is required"),
   transaction_type: z.string().min(1, "Transaction type is required"),
   description: z.string().optional(),
+  status: z.string().default("pending")
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -31,7 +28,7 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isNewTransactionOpen, setIsNewTransactionOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [viewingTransaction, setViewingTransaction] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const limit = 10;
@@ -41,8 +38,8 @@ const Transactions = () => {
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       currency: "USD",
-      status: "pending",
-      transaction_type: "payment"
+      transaction_type: "payment",
+      status: "pending"
     }
   });
 
@@ -77,14 +74,18 @@ const Transactions = () => {
   // Create transaction mutation
   const createTransaction = useMutation({
     mutationFn: async (values: TransactionFormValues) => {
-      // Convert amount to number
-      const numericAmount = Number(values.amount);
+      const numericAmount = parseFloat(values.amount);
+      
+      if (isNaN(numericAmount)) {
+        throw new Error("Invalid amount");
+      }
       
       const { data, error } = await supabase
         .from('marqeta_transactions')
         .insert([{
           ...values,
-          amount: numericAmount
+          amount: numericAmount,
+          user_id: (await supabase.auth.getUser()).data.user?.id
         }])
         .select();
       
@@ -107,123 +108,36 @@ const Transactions = () => {
     }
   });
 
-  // Update transaction mutation
-  const updateTransaction = useMutation({
-    mutationFn: async ({ id, values }: { id: string, values: TransactionFormValues }) => {
-      // Convert amount to number
-      const numericAmount = Number(values.amount);
-      
-      const { data, error } = await supabase
-        .from('marqeta_transactions')
-        .update({
-          ...values,
-          amount: numericAmount
-        })
-        .eq('id', id)
-        .select();
-      
-      if (error) throw error;
-      return data[0];
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      toast({ title: "Success", description: "Transaction updated successfully" });
-      setEditingTransaction(null);
-      reset();
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Error", 
-        description: error.message || "Failed to update transaction", 
-        variant: "destructive" 
-      });
-    }
-  });
-
-  // Delete transaction mutation
-  const deleteTransaction = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('marqeta_transactions')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      return id;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions-count'] });
-      toast({ title: "Success", description: "Transaction deleted successfully" });
-    },
-    onError: (error) => {
-      toast({ 
-        title: "Error", 
-        description: error.message || "Failed to delete transaction", 
-        variant: "destructive" 
-      });
-    }
-  });
+  const totalPages = Math.ceil((countData || 0) / limit);
 
   const onSubmit = (values: TransactionFormValues) => {
-    if (editingTransaction) {
-      updateTransaction.mutate({ id: editingTransaction.id, values });
-    } else {
-      createTransaction.mutate(values);
-    }
-  };
-
-  const openEditModal = (transaction: any) => {
-    setEditingTransaction(transaction);
-    reset({
-      amount: transaction.amount.toString(),
-      currency: transaction.currency,
-      status: transaction.status,
-      merchant_name: transaction.merchant_name || '',
-      card_token: transaction.card_token || '',
-      transaction_type: transaction.transaction_type,
-      description: transaction.description || '',
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this transaction?")) {
-      deleteTransaction.mutate(id);
-    }
+    createTransaction.mutate(values);
   };
 
   const closeModal = () => {
     setIsNewTransactionOpen(false);
-    setEditingTransaction(null);
+    setViewingTransaction(null);
     reset();
   };
 
-  useEffect(() => {
-    if (isNewTransactionOpen || editingTransaction) {
-      reset(editingTransaction ? {
-        amount: editingTransaction.amount.toString(),
-        currency: editingTransaction.currency,
-        status: editingTransaction.status,
-        merchant_name: editingTransaction.merchant_name || '',
-        card_token: editingTransaction.card_token || '',
-        transaction_type: editingTransaction.transaction_type,
-        description: editingTransaction.description || '',
-      } : {
-        currency: "USD",
-        status: "pending",
-        transaction_type: "payment"
-      });
-    }
-  }, [isNewTransactionOpen, editingTransaction, reset]);
-
-  const totalPages = Math.ceil((countData || 0) / limit);
-
-  // Helper function to format currency
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
     }).format(amount);
+  };
+
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
@@ -232,11 +146,11 @@ const Transactions = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Transactions</h1>
-            <p className="text-gray-500">View and manage your transactions</p>
+            <p className="text-gray-500">Manage and track your transaction history</p>
           </div>
           <Button onClick={() => setIsNewTransactionOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
+            New Transaction
           </Button>
         </div>
         
@@ -266,6 +180,7 @@ const Transactions = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
@@ -277,38 +192,33 @@ const Transactions = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center">Loading transactions...</td>
+                    <td colSpan={7} className="px-6 py-4 text-center">Loading transactions...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-red-500">Failed to load transactions</td>
+                    <td colSpan={7} className="px-6 py-4 text-center text-red-500">Failed to load transactions</td>
                   </tr>
                 ) : transactions && transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center">No transactions found</td>
+                    <td colSpan={7} className="px-6 py-4 text-center">No transactions found</td>
                   </tr>
                 ) : (
-                  transactions?.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {transaction.merchant_name ? transaction.merchant_name[0] : 'TX'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {transaction.merchant_name || 'Transaction'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {transaction.description || transaction.transaction_type}
-                            </div>
-                          </div>
+                  transactions?.map((transaction: any) => (
+                    <tr key={transaction.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {transaction.merchant_name || "Unknown Merchant"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{transaction.transaction_type}</div>
+                        <div className="text-sm text-gray-900">
+                          {transaction.description || transaction.transaction_type}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 capitalize">
+                          {transaction.transaction_type}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm font-medium ${
@@ -319,35 +229,27 @@ const Transactions = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          transaction.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                          transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-red-100 text-red-800'
+                          getStatusClass(transaction.status)
                         }`}>
                           {transaction.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(transaction.created_at).toLocaleDateString()}
-                        </div>
                         <div className="text-sm text-gray-500">
-                          {new Date(transaction.created_at).toLocaleTimeString()}
+                          {format(new Date(transaction.created_at), 'MMM d, yyyy')}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {format(new Date(transaction.created_at), 'h:mm a')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => openEditModal(transaction)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleDelete(transaction.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setViewingTransaction(transaction)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -386,29 +288,46 @@ const Transactions = () => {
         </Card>
       </div>
 
-      {/* Transaction Form Dialog */}
-      <Dialog.Root open={isNewTransactionOpen || !!editingTransaction} onOpenChange={closeModal}>
+      {/* New Transaction Dialog */}
+      <Dialog.Root open={isNewTransactionOpen} onOpenChange={closeModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <Dialog.Title className="text-xl font-semibold mb-4">
-              {editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}
+              Create New Transaction
             </Dialog.Title>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="amount" className="text-sm font-medium">Amount</label>
+              <div className="space-y-2">
+                <label htmlFor="merchant_name" className="text-sm font-medium">Merchant Name</label>
+                <Input
+                  id="merchant_name"
+                  {...register("merchant_name")}
+                  className="w-full"
+                />
+                {errors.merchant_name && (
+                  <p className="text-sm text-red-500">{errors.merchant_name.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="amount" className="text-sm font-medium">Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                   <Input
                     id="amount"
+                    type="number"
+                    step="0.01"
                     {...register("amount")}
-                    className="w-full"
+                    className="w-full pl-8"
                   />
-                  {errors.amount && (
-                    <p className="text-sm text-red-500">{errors.amount.message}</p>
-                  )}
                 </div>
-                
+                {errors.amount && (
+                  <p className="text-sm text-red-500">{errors.amount.message}</p>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label htmlFor="currency" className="text-sm font-medium">Currency</label>
                   <select
@@ -422,36 +341,27 @@ const Transactions = () => {
                     <option value="CAD">CAD</option>
                   </select>
                 </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="transaction_type" className="text-sm font-medium">Type</label>
+                  <select
+                    id="transaction_type"
+                    {...register("transaction_type")}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  >
+                    <option value="payment">Payment</option>
+                    <option value="refund">Refund</option>
+                    <option value="transfer">Transfer</option>
+                    <option value="withdrawal">Withdrawal</option>
+                  </select>
+                </div>
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="transaction_type" className="text-sm font-medium">Transaction Type</label>
-                <select
-                  id="transaction_type"
-                  {...register("transaction_type")}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                >
-                  <option value="payment">Payment</option>
-                  <option value="refund">Refund</option>
-                  <option value="withdrawal">Withdrawal</option>
-                  <option value="deposit">Deposit</option>
-                </select>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="merchant_name" className="text-sm font-medium">Merchant Name (optional)</label>
+                <label htmlFor="description" className="text-sm font-medium">Description (optional)</label>
                 <Input
-                  id="merchant_name"
-                  {...register("merchant_name")}
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="card_token" className="text-sm font-medium">Card Token (optional)</label>
-                <Input
-                  id="card_token"
-                  {...register("card_token")}
+                  id="description"
+                  {...register("description")}
                   className="w-full"
                 />
               </div>
@@ -469,24 +379,85 @@ const Transactions = () => {
                 </select>
               </div>
               
-              <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium">Description (optional)</label>
-                <Input
-                  id="description"
-                  {...register("description")}
-                  className="w-full"
-                />
-              </div>
-              
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={closeModal}>
                   Cancel
                 </Button>
                 <Button type="submit">
-                  {editingTransaction ? 'Update Transaction' : 'Create Transaction'}
+                  Create Transaction
                 </Button>
               </div>
             </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* View Transaction Dialog */}
+      <Dialog.Root open={!!viewingTransaction} onOpenChange={closeModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <Dialog.Title className="text-xl font-semibold mb-4">
+              Transaction Details
+            </Dialog.Title>
+            
+            {viewingTransaction && (
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-sm text-gray-500">Transaction ID</div>
+                  <div className="font-mono text-xs break-all">{viewingTransaction.id}</div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-gray-500">Merchant</div>
+                    <div className="font-medium">{viewingTransaction.merchant_name}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500">Date</div>
+                    <div className="font-medium">{format(new Date(viewingTransaction.created_at), 'MMM d, yyyy')}</div>
+                    <div className="text-xs text-gray-400">{format(new Date(viewingTransaction.created_at), 'h:mm a')}</div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-gray-500">Amount</div>
+                    <div className={`font-medium ${
+                      viewingTransaction.amount < 0 ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {formatCurrency(viewingTransaction.amount, viewingTransaction.currency)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500">Status</div>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      getStatusClass(viewingTransaction.status)
+                    }`}>
+                      {viewingTransaction.status}
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-gray-500">Transaction Type</div>
+                  <div className="font-medium capitalize">{viewingTransaction.transaction_type}</div>
+                </div>
+                
+                {viewingTransaction.description && (
+                  <div>
+                    <div className="text-sm text-gray-500">Description</div>
+                    <div className="text-gray-900">{viewingTransaction.description}</div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end pt-4">
+                  <Button onClick={closeModal}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
