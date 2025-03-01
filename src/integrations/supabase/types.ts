@@ -1140,6 +1140,69 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          address_line_1: string | null
+          address_line_2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          first_name: string | null
+          full_name: string | null
+          id: string
+          kyc_status: string | null
+          kyc_verified: boolean | null
+          last_name: string | null
+          phone: string | null
+          postal_code: string | null
+          ssn_last_four: string | null
+          state: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id: string
+          kyc_status?: string | null
+          kyc_verified?: boolean | null
+          last_name?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          ssn_last_four?: string | null
+          state?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          kyc_status?: string | null
+          kyc_verified?: boolean | null
+          last_name?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          ssn_last_four?: string | null
+          state?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       resellers: {
         Row: {
           id: string
