@@ -4,9 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Check, X, ChevronLeft, ChevronRight, Download, Plus, MoreHorizontal, Package, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { Search, Filter, Download, Plus, MoreHorizontal, ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,79 +12,24 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 // Product schema
 const productSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
+  name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   price: z.string().min(1, "Price is required"),
-  stock: z.string().min(1, "Stock quantity is required"),
+  stock: z.string().min(1, "Stock is required"),
   vendor_id: z.string().optional()
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
-// Status mapping for UI display
-const stockStatusColors = {
-  instock: 'bg-[#E3FFCC] text-[#19363B] border-[#1AA47B]',
-  lowstock: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  outofstock: 'bg-red-100 text-red-800 border-red-200',
-};
-
-const StockStatusBadge = ({ stock }: { stock: number }) => {
-  let status = 'instock';
-  if (stock === 0) {
-    status = 'outofstock';
-  } else if (stock < 10) {
-    status = 'lowstock';
-  }
-  
-  const colorClass = stockStatusColors[status as keyof typeof stockStatusColors];
-  
-  return (
-    <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
-      {status === 'instock' ? (
-        <Check className="w-3 h-3 mr-1" />
-      ) : status === 'outofstock' ? (
-        <X className="w-3 h-3 mr-1" />
-      ) : null}
-      <span className="capitalize">{status === 'instock' ? 'In Stock' : status === 'lowstock' ? 'Low Stock' : 'Out of Stock'}</span>
-    </div>
-  );
-};
-
-const FilterButton = ({ label, count, isActive = false, onClick }: { 
-  label: string; 
-  count: number; 
-  isActive?: boolean;
-  onClick: () => void;
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex-1 p-4 text-center border rounded-md transition-colors",
-        isActive 
-          ? "bg-[#f0f4ff] border-[#1AA47B] text-[#19363B]" 
-          : "bg-white border-gray-200 hover:bg-gray-50"
-      )}
-    >
-      <div className="text-sm font-medium">{label}</div>
-      <div className={cn(
-        "text-xl font-semibold mt-1",
-        isActive ? "text-[#1AA47B]" : "text-gray-900"
-      )}>
-        {count}
-      </div>
-    </button>
-  );
-};
-
 const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -96,72 +39,202 @@ const Products = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      stock: "100"
+      stock: "0"
     }
   });
 
-  // Mock data for demo purposes, replace with actual data
-  const products = [
-    {
-      id: '1',
-      name: 'Premium Widget',
-      description: 'High-quality widget with extended durability',
-      price: 49.99,
-      stock: 125,
-      created_at: new Date()
+  // Fetch products
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['products', currentPage, searchTerm],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('*, vendors(name)');
+      
+      // Apply search
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+      
+      // Apply pagination
+      query = query
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
     },
-    {
-      id: '2',
-      name: 'Basic Gadget',
-      description: 'Affordable gadget for everyday use',
-      price: 19.95,
-      stock: 8,
-      created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
-    },
-    {
-      id: '3',
-      name: 'Luxury Doodad',
-      description: 'Exclusive doodad with premium features',
-      price: 199.99,
-      stock: 0,
-      created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)
-    }
-  ];
+  });
 
-  // Mock status counts
-  const stockCounts = {
-    all: 3,
-    instock: 1,
-    lowstock: 1,
-    outofstock: 1
-  };
+  // Count total products
+  const { data: countData } = useQuery({
+    queryKey: ['products-count', searchTerm],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+      
+      // Apply search
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+      
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  // Fetch vendors for dropdown
+  const { data: vendors } = useQuery({
+    queryKey: ['vendors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Create product mutation
+  const createProduct = useMutation({
+    mutationFn: async (values: ProductFormValues) => {
+      const { data, error } = await supabase
+        .from('products')
+        .insert([{
+          name: values.name,
+          description: values.description || null,
+          price: Number(values.price),
+          stock: Number(values.stock),
+          vendor_id: values.vendor_id || null
+        }])
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-count'] });
+      toast({ title: "Success", description: "Product created successfully" });
+      setIsNewProductOpen(false);
+      reset();
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to create product", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Update product mutation
+  const updateProduct = useMutation({
+    mutationFn: async ({ id, values }: { id: string, values: ProductFormValues }) => {
+      const { data, error } = await supabase
+        .from('products')
+        .update({
+          name: values.name,
+          description: values.description || null,
+          price: Number(values.price),
+          stock: Number(values.stock),
+          vendor_id: values.vendor_id || null
+        })
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({ title: "Success", description: "Product updated successfully" });
+      setEditingProduct(null);
+      reset();
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update product", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Delete product mutation
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-count'] });
+      toast({ title: "Success", description: "Product deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to delete product", 
+        variant: "destructive" 
+      });
+    }
+  });
 
   const onSubmit = (values: ProductFormValues) => {
-    // Mock product creation
-    console.log('Creating product:', values);
-    toast({ title: "Success", description: "Product created successfully" });
-    setIsNewProductOpen(false);
-    reset();
+    if (editingProduct) {
+      updateProduct.mutate({ id: editingProduct.id, values });
+    } else {
+      createProduct.mutate(values);
+    }
+  };
+
+  const openEditModal = (product: any) => {
+    setEditingProduct(product);
+    reset({
+      name: product.name,
+      description: product.description || '',
+      price: String(product.price),
+      stock: String(product.stock),
+      vendor_id: product.vendor_id || ''
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      deleteProduct.mutate(id);
+    }
   };
 
   const closeModal = () => {
     setIsNewProductOpen(false);
+    setEditingProduct(null);
     reset();
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'USD'
     }).format(amount);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    // In a real app, this would trigger a new query
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
+
+  const totalPages = Math.ceil((countData || 0) / limit);
 
   return (
     <DashboardLayout>
@@ -169,181 +242,110 @@ const Products = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-[#19363B]">Products</h1>
+            <p className="text-gray-500">Manage your product inventory</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={() => setIsNewProductOpen(true)} 
-              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Button>
-            <Button variant="outline" className="font-medium text-[#19363B] border-[#1AA47B]">
-              Import
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setIsNewProductOpen(true)}
+            className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
         </div>
         
-        {/* Notification banner */}
-        <div className="bg-[#f8fafc] border rounded-md p-4 flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1 bg-[#1AA47B] bg-opacity-10 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1AA47B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-              </svg>
+        <Card className="p-6">
+          {/* Search and filters */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search products"
+                className="pl-10"
+                value={searchTerm}
+                onChange={handleSearch}
+              />
             </div>
-            <span className="text-sm text-[#19363B]">
-              Set up inventory alerts to be notified when stock is running low.
-            </span>
+            
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Button variant="outline" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Filter
+              </Button>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="link" className="text-[#1AA47B] px-2 py-1 h-auto">
-              Set Up Now
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        
-        {/* Status filter cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <FilterButton 
-            label="All Products" 
-            count={stockCounts.all} 
-            isActive={activeFilter === 'all'} 
-            onClick={() => setActiveFilter('all')} 
-          />
-          <FilterButton 
-            label="In Stock" 
-            count={stockCounts.instock} 
-            isActive={activeFilter === 'instock'} 
-            onClick={() => setActiveFilter('instock')} 
-          />
-          <FilterButton 
-            label="Low Stock" 
-            count={stockCounts.lowstock} 
-            isActive={activeFilter === 'lowstock'} 
-            onClick={() => setActiveFilter('lowstock')} 
-          />
-          <FilterButton 
-            label="Out of Stock" 
-            count={stockCounts.outofstock} 
-            isActive={activeFilter === 'outofstock'} 
-            onClick={() => setActiveFilter('outofstock')} 
-          />
-        </div>
-        
-        {/* Search bar and filter buttons */}
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div className="relative w-full md:w-auto md:flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search products"
-              className="pl-10 pr-4 py-2 w-full bg-gray-50 border-0 focus-visible:ring-[#1AA47B]"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Date</span>
-            </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Price</span>
-            </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Stock</span>
-            </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">More filters</span>
-            </Button>
-          </div>
-        </div>
-        
-        <div className="flex justify-end gap-2 mb-2">
-          <Button variant="outline" size="sm" className="text-sm">
-            <Download className="h-4 w-4 mr-1" />
-            Export
-          </Button>
-          <Button variant="outline" size="sm" className="text-sm">
-            Batch Edit
-          </Button>
-        </div>
-        
-        {/* Products table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full divide-y divide-gray-200">
+          
+          {/* Products table */}
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="w-10 py-3 pl-4">
-                    <input type="checkbox" className="rounded border-gray-300" />
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th className="w-10"></th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {products.length === 0 ? (
+                {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-4 text-center text-sm text-gray-500">
-                      No products found
-                    </td>
+                    <td colSpan={5} className="px-6 py-4 text-center">Loading products...</td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-red-500">Failed to load products</td>
+                  </tr>
+                ) : products && products.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center">No products found</td>
                   </tr>
                 ) : (
-                  products.map((product) => (
+                  products?.map((product: any) => (
                     <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="pl-4 py-3">
-                        <input type="checkbox" className="rounded border-gray-300" />
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-6 w-6 bg-[#1AA47B] rounded flex items-center justify-center text-white">
-                            <Package className="h-4 w-4" />
-                          </div>
-                          <div className="ml-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback>{product.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                            <div className="text-xs text-gray-500">{product.description}</div>
+                            <div className="text-sm text-gray-500">{product.description || 'No description'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-sm">
-                        <div className="font-medium">
-                          {formatCurrency(product.price)}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{formatCurrency(product.price)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge 
+                          variant={product.stock > 10 ? "success" : (product.stock > 0 ? "warning" : "error")}
+                        >
+                          {product.stock} in stock
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {product.vendors ? product.vendors.name : 'No vendor'}
                         </div>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {product.stock}
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <StockStatusBadge stock={product.stock} />
-                      </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {format(product.created_at, 'd MMM, yyyy')}
-                      </td>
-                      <td className="pr-3 py-3 whitespace-nowrap text-right">
-                        <button className="text-gray-400 hover:text-gray-500">
-                          <MoreHorizontal className="h-5 w-5" />
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => openEditModal(product)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDelete(product.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -352,40 +354,44 @@ const Products = () => {
             </table>
           </div>
           
-          {/* Pagination footer */}
-          <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="text-sm text-gray-500">
-              {products.length} results
+          {/* Pagination */}
+          {totalPages > 0 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-500">
+                Showing <span className="font-medium">{products?.length ? offset + 1 : 0}</span> to{' '}
+                <span className="font-medium">{Math.min(offset + limit, countData || 0)}</span> of{' '}
+                <span className="font-medium">{countData}</span> results
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={products.length < limit}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+          )}
+        </Card>
       </div>
 
-      {/* New Product Dialog */}
-      <Dialog.Root open={isNewProductOpen} onOpenChange={closeModal}>
+      {/* Product Form Dialog */}
+      <Dialog.Root open={isNewProductOpen || !!editingProduct} onOpenChange={closeModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <Dialog.Title className="text-xl font-semibold mb-4 text-[#19363B]">
-              Add New Product
+              {editingProduct ? 'Edit Product' : 'Add New Product'}
             </Dialog.Title>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -402,7 +408,7 @@ const Products = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium text-[#19363B]">Description</label>
+                <label htmlFor="description" className="text-sm font-medium text-[#19363B]">Description (optional)</label>
                 <Input
                   id="description"
                   {...register("description")}
@@ -410,34 +416,50 @@ const Products = () => {
                 />
               </div>
               
-              <div className="space-y-2">
-                <label htmlFor="price" className="text-sm font-medium text-[#19363B]">Price</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    {...register("price")}
-                    className="w-full pl-8 border-[#1AA47B] focus-visible:ring-[#1AA47B]"
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="price" className="text-sm font-medium text-[#19363B]">Price</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      {...register("price")}
+                      className="w-full pl-8 border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                    />
+                  </div>
+                  {errors.price && (
+                    <p className="text-sm text-red-500">{errors.price.message}</p>
+                  )}
                 </div>
-                {errors.price && (
-                  <p className="text-sm text-red-500">{errors.price.message}</p>
-                )}
+                
+                <div className="space-y-2">
+                  <label htmlFor="stock" className="text-sm font-medium text-[#19363B]">Stock</label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    {...register("stock")}
+                    className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                  />
+                  {errors.stock && (
+                    <p className="text-sm text-red-500">{errors.stock.message}</p>
+                  )}
+                </div>
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="stock" className="text-sm font-medium text-[#19363B]">Stock Quantity</label>
-                <Input
-                  id="stock"
-                  type="number"
-                  {...register("stock")}
-                  className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
-                />
-                {errors.stock && (
-                  <p className="text-sm text-red-500">{errors.stock.message}</p>
-                )}
+                <label htmlFor="vendor_id" className="text-sm font-medium text-[#19363B]">Vendor (optional)</label>
+                <select
+                  id="vendor_id"
+                  {...register("vendor_id")}
+                  className="w-full rounded-md border border-[#1AA47B] bg-background px-3 py-2 focus-visible:ring-[#1AA47B]"
+                >
+                  <option value="">Select a vendor</option>
+                  {vendors?.map((vendor: any) => (
+                    <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                  ))}
+                </select>
               </div>
               
               <div className="flex justify-end gap-2 pt-4">
@@ -445,7 +467,7 @@ const Products = () => {
                   Cancel
                 </Button>
                 <Button type="submit" className="bg-[#1AA47B] hover:bg-[#19363B]">
-                  Add Product
+                  {editingProduct ? 'Update Product' : 'Create Product'}
                 </Button>
               </div>
             </form>

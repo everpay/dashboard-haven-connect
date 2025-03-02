@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,53 +99,128 @@ const Invoicing = () => {
     }
   });
 
-  // Mock data for demo purposes, replace with actual data
-  const invoices = [
-    {
-      id: 1,
-      customer_name: 'John Doe',
-      customer_email: 'john@example.com',
-      total_amount: 499.99,
-      issue_date: new Date(),
-      due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      status: 'Paid'
+  // Fetch invoices
+  const { data: invoices, isLoading } = useQuery({
+    queryKey: ['invoices', currentPage, activeFilter, searchTerm],
+    queryFn: async () => {
+      let query = supabase
+        .from('invoices')
+        .select('*');
+      
+      // Apply status filter
+      if (activeFilter !== 'all') {
+        query = query.eq('status', activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1));
+      }
+      
+      // Apply search filter
+      if (searchTerm) {
+        query = query.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
+      }
+      
+      // Apply pagination
+      query = query
+        .order('issue_date', { ascending: false })
+        .range(offset, offset + limit - 1);
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
     },
-    {
-      id: 2,
-      customer_name: 'Jane Smith',
-      customer_email: 'jane@example.com',
-      total_amount: 299.50,
-      issue_date: new Date(),
-      due_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
-      status: 'Pending'
-    },
-    {
-      id: 3,
-      customer_name: 'Bob Johnson',
-      customer_email: 'bob@example.com',
-      total_amount: 199.75,
-      issue_date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-      due_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-      status: 'Overdue'
-    }
-  ];
+  });
 
-  // Mock status counts
-  const statusCounts = {
-    all: 3,
-    paid: 1,
-    pending: 1,
-    overdue: 1,
-    draft: 0,
-    cancelled: 0
-  };
+  // Get status counts
+  const { data: statusCounts } = useQuery({
+    queryKey: ['invoices-status-count', searchTerm],
+    queryFn: async () => {
+      const statuses = ['Pending', 'Paid', 'Overdue', 'Draft', 'Cancelled'];
+      const counts: Record<string, number> = { all: 0 };
+      
+      for (const status of statuses) {
+        let query = supabase
+          .from('invoices')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', status);
+        
+        // Apply search filter if present
+        if (searchTerm) {
+          query = query.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
+        }
+        
+        const { count, error } = await query;
+        if (error) throw error;
+        
+        const key = status.toLowerCase();
+        counts[key] = count || 0;
+        counts.all += count || 0;
+      }
+      
+      return counts;
+    },
+  });
+
+  // Create invoice mutation
+  const createInvoice = useMutation({
+    mutationFn: async (values: InvoiceFormValues) => {
+      // First, get the next invoice ID
+      const { data: maxIdData, error: maxIdError } = await supabase
+        .from('invoices')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1);
+      
+      if (maxIdError) throw maxIdError;
+      
+      const nextId = maxIdData && maxIdData.length > 0 ? Number(maxIdData[0].id) + 1 : 1001;
+      
+      // Then create the invoice
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert([{
+          id: nextId,
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: values.customer_name,
+          customer_email: values.customer_email,
+          total_amount: Number(values.total_amount),
+          issue_date: values.issue_date,
+          due_date: values.due_date,
+          status: values.status
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      // Create a default invoice item
+      await supabase
+        .from('invoice_items')
+        .insert([{
+          id: nextId * 10000 + 1, // Generate a unique ID for the item
+          invoice_id: nextId,
+          description: "Service",
+          quantity: 1,
+          unit_price: Number(values.total_amount),
+          amount: Number(values.total_amount)
+        }]);
+      
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-status-count'] });
+      toast({ title: "Success", description: "Invoice created successfully" });
+      setIsNewInvoiceOpen(false);
+      reset();
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to create invoice", 
+        variant: "destructive" 
+      });
+    }
+  });
 
   const onSubmit = (values: InvoiceFormValues) => {
-    // Mock invoice creation
-    console.log('Creating invoice:', values);
-    toast({ title: "Success", description: "Invoice created successfully" });
-    setIsNewInvoiceOpen(false);
-    reset();
+    createInvoice.mutate(values);
   };
 
   const closeModal = () => {
@@ -163,7 +238,6 @@ const Invoicing = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    // In a real app, this would trigger a new query
     setCurrentPage(1);
   };
 
@@ -218,37 +292,37 @@ const Invoicing = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <FilterButton 
             label="All" 
-            count={statusCounts.all} 
+            count={statusCounts?.all || 0} 
             isActive={activeFilter === 'all'} 
             onClick={() => setActiveFilter('all')} 
           />
           <FilterButton 
             label="Paid" 
-            count={statusCounts.paid} 
+            count={statusCounts?.paid || 0} 
             isActive={activeFilter === 'paid'} 
             onClick={() => setActiveFilter('paid')} 
           />
           <FilterButton 
             label="Pending" 
-            count={statusCounts.pending} 
+            count={statusCounts?.pending || 0} 
             isActive={activeFilter === 'pending'} 
             onClick={() => setActiveFilter('pending')} 
           />
           <FilterButton 
             label="Overdue" 
-            count={statusCounts.overdue} 
+            count={statusCounts?.overdue || 0} 
             isActive={activeFilter === 'overdue'} 
             onClick={() => setActiveFilter('overdue')} 
           />
           <FilterButton 
             label="Draft" 
-            count={statusCounts.draft} 
+            count={statusCounts?.draft || 0} 
             isActive={activeFilter === 'draft'} 
             onClick={() => setActiveFilter('draft')} 
           />
           <FilterButton 
             label="Cancelled" 
-            count={statusCounts.cancelled} 
+            count={statusCounts?.cancelled || 0} 
             isActive={activeFilter === 'cancelled'} 
             onClick={() => setActiveFilter('cancelled')} 
           />
@@ -326,14 +400,20 @@ const Invoicing = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {invoices.length === 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-4 text-center text-sm text-gray-500">
+                      Loading invoices...
+                    </td>
+                  </tr>
+                ) : invoices?.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-4 text-center text-sm text-gray-500">
                       No invoices found
                     </td>
                   </tr>
                 ) : (
-                  invoices.map((invoice) => (
+                  invoices?.map((invoice: any) => (
                     <tr key={invoice.id} className="hover:bg-gray-50">
                       <td className="pl-4 py-3">
                         <input type="checkbox" className="rounded border-gray-300" />
@@ -358,10 +438,10 @@ const Invoicing = () => {
                         </div>
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {format(invoice.issue_date, 'd MMM, yyyy')}
+                        {format(new Date(invoice.issue_date), 'd MMM, yyyy')}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {format(invoice.due_date, 'd MMM, yyyy')}
+                        {format(new Date(invoice.due_date), 'd MMM, yyyy')}
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         <StatusBadge status={invoice.status} />
@@ -381,7 +461,7 @@ const Invoicing = () => {
           {/* Pagination footer */}
           <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="text-sm text-gray-500">
-              {invoices.length} results
+              {invoices?.length || 0} results
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -395,7 +475,7 @@ const Invoicing = () => {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={invoices.length < limit}
+                disabled={invoices?.length < limit}
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
                 <ChevronRight className="h-4 w-4" />

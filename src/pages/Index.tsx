@@ -20,6 +20,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { supabase } from "@/lib/supabase"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { useQuery } from '@tanstack/react-query'
 
 // Types for our data
 type Transaction = {
@@ -35,66 +36,127 @@ type Transaction = {
 type SalesData = {
   name: string;
   amount: number;
+  secondary: number;
 }
 
 type SummaryData = {
   todaySales: number;
   totalSales: number;
-  totalOrders: number;
+  totalCustomers: number;
   todayIncrease: number;
   salesIncrease: number;
-  ordersIncrease: number;
+  customersIncrease: number;
 }
 
 const Index = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [salesData, setSalesData] = useState<SalesData[]>([]);
-  const [summary, setSummary] = useState<SummaryData>({
-    todaySales: 12426,
-    totalSales: 238485,
-    totalOrders: 84382,
-    todayIncrease: 36,
-    salesIncrease: -14,
-    ordersIncrease: 36
+  const [selectedTimeframe, setSelectedTimeframe] = useState('12 Months');
+
+  // Fetch transactions data
+  const { data: transactions, isLoading: transactionsLoading } = useQuery({
+    queryKey: ['dashboard-transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('marqeta_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data || [];
+    },
   });
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch transactions data
-    const fetchTransactions = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('marqeta_transactions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
-        
-        if (error) throw error;
-        setTransactions(data || []);
-        
-        // Generate sales data for the chart (in real app, you would fetch this data)
-        generateMockSalesData();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Fetch sales data for the chart
+  const { data: salesData } = useQuery({
+    queryKey: ['dashboard-sales', selectedTimeframe],
+    queryFn: async () => {
+      // In a real app, this would fetch aggregated data from the backend
+      // For now, we'll generate it from our transactions
+      const { data, error } = await supabase
+        .from('marqeta_transactions')
+        .select('amount, created_at')
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      
+      // Group by month
+      const monthlyData: Record<string, { amount: number, secondary: number }> = {};
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      // Initialize all months with 0
+      months.forEach(month => {
+        monthlyData[month] = { amount: 0, secondary: 0 };
+      });
+      
+      // Sum up transaction amounts by month
+      data?.forEach(tx => {
+        const date = new Date(tx.created_at);
+        const month = months[date.getMonth()];
+        monthlyData[month].amount += Number(tx.amount) || 0;
+        // For the secondary line, we'll use 70% of the amount as "revenue" for demo
+        monthlyData[month].secondary += (Number(tx.amount) * 0.7) || 0;
+      });
+      
+      // Convert to array format for the chart
+      return months.map(month => ({
+        name: month,
+        amount: monthlyData[month].amount,
+        secondary: monthlyData[month].secondary
+      }));
+    },
+  });
 
-    fetchTransactions();
-  }, []);
+  // Fetch customer count
+  const { data: customerCount } = useQuery({
+    queryKey: ['dashboard-customers-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('marqeta_customers')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      return count || 0;
+    },
+  });
 
-  // Function to generate mock sales data for the chart
-  const generateMockSalesData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const data = months.map(month => ({
-      name: month,
-      amount: Math.floor(Math.random() * 50000) + 10000,
-      secondary: Math.floor(Math.random() * 40000) + 5000
-    }));
-    setSalesData(data);
-  };
+  // Calculate summary data
+  const { data: summaryData } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: async () => {
+      // Get today's sales
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data: todayTransactions, error: todayError } = await supabase
+        .from('marqeta_transactions')
+        .select('amount')
+        .gte('created_at', today.toISOString());
+      
+      if (todayError) throw todayError;
+      
+      const todaySales = todayTransactions?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
+      
+      // Get total sales
+      const { data: allTransactions, error: allError } = await supabase
+        .from('marqeta_transactions')
+        .select('amount');
+      
+      if (allError) throw allError;
+      
+      const totalSales = allTransactions?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
+      
+      // For demo purposes, we'll create some fictional increases
+      return {
+        todaySales,
+        totalSales,
+        totalCustomers: customerCount || 0,
+        todayIncrease: 36,
+        salesIncrease: -14,
+        customersIncrease: 28
+      };
+    },
+    enabled: !!customerCount,
+  });
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -142,7 +204,7 @@ const Index = () => {
       <div className="space-y-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-[#19363B]">Dashboard</h1>
           <p className="text-gray-500 mt-1">Manage and optimize your business</p>
         </div>
 
@@ -152,10 +214,10 @@ const Index = () => {
           <Card className="p-6">
             <p className="text-sm text-gray-500 mb-1">Today's Sale</p>
             <div className="flex items-center justify-between">
-              <p className="text-2xl font-bold">{formatCurrency(summary.todaySales)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(summaryData?.todaySales || 0)}</p>
               <div className="flex items-center gap-1 text-sm text-green-600">
                 <ChevronUp className="h-4 w-4" />
-                <span>{summary.todayIncrease}%</span>
+                <span>{summaryData?.todayIncrease || 0}%</span>
               </div>
             </div>
           </Card>
@@ -164,22 +226,22 @@ const Index = () => {
           <Card className="p-6">
             <p className="text-sm text-gray-500 mb-1">Total Sales</p>
             <div className="flex items-center justify-between">
-              <p className="text-2xl font-bold">{formatCurrency(summary.totalSales)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(summaryData?.totalSales || 0)}</p>
               <div className="flex items-center gap-1 text-sm text-red-600">
                 <ChevronDown className="h-4 w-4" />
-                <span>{Math.abs(summary.salesIncrease)}%</span>
+                <span>{Math.abs(summaryData?.salesIncrease || 0)}%</span>
               </div>
             </div>
           </Card>
 
-          {/* Total Orders */}
+          {/* Customers - renamed from "Total Orders" */}
           <Card className="p-6">
-            <p className="text-sm text-gray-500 mb-1">Total Orders</p>
+            <p className="text-sm text-gray-500 mb-1">Customers</p>
             <div className="flex items-center justify-between">
-              <p className="text-2xl font-bold">{formatCompactNumber(summary.totalOrders)}</p>
+              <p className="text-2xl font-bold">{formatCompactNumber(summaryData?.totalCustomers || 0)}</p>
               <div className="flex items-center gap-1 text-sm text-green-600">
                 <ChevronUp className="h-4 w-4" />
-                <span>{summary.ordersIncrease}%</span>
+                <span>{summaryData?.customersIncrease || 0}%</span>
               </div>
             </div>
           </Card>
@@ -213,7 +275,11 @@ const Index = () => {
               <h2 className="text-lg font-medium">Sales report</h2>
               <p className="text-sm text-gray-500">Sales trends over time</p>
             </div>
-            <select className="text-sm border rounded-lg px-3 py-2">
+            <select 
+              className="text-sm border rounded-lg px-3 py-2"
+              value={selectedTimeframe}
+              onChange={(e) => setSelectedTimeframe(e.target.value)}
+            >
               <option>12 Months</option>
               <option>6 Months</option>
               <option>30 Days</option>
@@ -230,10 +296,10 @@ const Index = () => {
                 <Line 
                   type="monotone" 
                   dataKey="amount" 
-                  stroke="#013c3f" 
+                  stroke="#1AA47B" 
                   strokeWidth={2} 
                   dot={false}
-                  activeDot={{ r: 6, fill: "#013c3f" }}
+                  activeDot={{ r: 6, fill: "#1AA47B" }}
                   name="Sales"
                 />
                 <Line 
@@ -267,7 +333,7 @@ const Index = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left border-b">
-                  <th className="pb-2 pl-4 pr-2 font-medium text-sm text-gray-500">Merchant</th>
+                  <th className="pb-2 pl-4 pr-2 font-medium text-sm text-gray-500">Customer</th>
                   <th className="pb-2 px-2 font-medium text-sm text-gray-500">Date</th>
                   <th className="pb-2 px-2 font-medium text-sm text-gray-500">Status</th>
                   <th className="pb-2 px-2 font-medium text-sm text-gray-500">Payment</th>
@@ -275,16 +341,16 @@ const Index = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {isLoading ? (
+                {transactionsLoading ? (
                   <tr>
                     <td colSpan={5} className="py-4 text-center text-gray-500">Loading transactions...</td>
                   </tr>
-                ) : transactions.length === 0 ? (
+                ) : transactions?.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-4 text-center text-gray-500">No transactions found</td>
                   </tr>
                 ) : (
-                  transactions.map((transaction) => (
+                  transactions?.map((transaction: Transaction) => (
                     <tr key={transaction.id} className="hover:bg-gray-50">
                       <td className="py-4 pl-4 pr-2">
                         <div className="flex items-center gap-3">
@@ -293,7 +359,7 @@ const Index = () => {
                               {transaction.merchant_name?.[0] || 'M'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="font-medium">{transaction.merchant_name || 'Unknown Merchant'}</span>
+                          <span className="font-medium">{transaction.merchant_name || 'Unknown Customer'}</span>
                         </div>
                       </td>
                       <td className="py-4 px-2 text-gray-600">
@@ -323,7 +389,7 @@ const Index = () => {
             </table>
           </div>
           <div className="mt-4 flex justify-between items-center">
-            <p className="text-sm text-gray-500">Showing {transactions.length} of {transactions.length} transactions</p>
+            <p className="text-sm text-gray-500">Showing {transactions?.length || 0} of {transactions?.length || 0} transactions</p>
             <Button variant="outline" className="text-sm" size="sm">
               <Download className="h-4 w-4 mr-2" />
               Export
