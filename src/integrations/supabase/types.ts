@@ -766,12 +766,14 @@ export type Database = {
         Row: {
           amount: number
           card_token: string | null
+          card_type: string | null
           created_at: string | null
           currency: string
           description: string | null
           id: string
           merchant_name: string | null
           metadata: Json | null
+          payment_method: string | null
           status: string
           transaction_type: string
           updated_at: string | null
@@ -780,12 +782,14 @@ export type Database = {
         Insert: {
           amount: number
           card_token?: string | null
+          card_type?: string | null
           created_at?: string | null
           currency?: string
           description?: string | null
           id?: string
           merchant_name?: string | null
           metadata?: Json | null
+          payment_method?: string | null
           status?: string
           transaction_type: string
           updated_at?: string | null
@@ -794,12 +798,14 @@ export type Database = {
         Update: {
           amount?: number
           card_token?: string | null
+          card_type?: string | null
           created_at?: string | null
           currency?: string
           description?: string | null
           id?: string
           merchant_name?: string | null
           metadata?: Json | null
+          payment_method?: string | null
           status?: string
           transaction_type?: string
           updated_at?: string | null
