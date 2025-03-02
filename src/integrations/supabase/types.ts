@@ -44,6 +44,56 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          bank_account_id: number
+          bank_account_number: string
+          bank_city: string | null
+          bank_country_iso3: string | null
+          bank_name: string | null
+          bank_region: string | null
+          bank_routing_number: string
+          bank_street_1: string | null
+          bank_street_2: string | null
+          created_at: string | null
+          recipient_id: number | null
+        }
+        Insert: {
+          bank_account_id?: number
+          bank_account_number: string
+          bank_city?: string | null
+          bank_country_iso3?: string | null
+          bank_name?: string | null
+          bank_region?: string | null
+          bank_routing_number: string
+          bank_street_1?: string | null
+          bank_street_2?: string | null
+          created_at?: string | null
+          recipient_id?: number | null
+        }
+        Update: {
+          bank_account_id?: number
+          bank_account_number?: string
+          bank_city?: string | null
+          bank_country_iso3?: string | null
+          bank_name?: string | null
+          bank_region?: string | null
+          bank_routing_number?: string
+          bank_street_1?: string | null
+          bank_street_2?: string | null
+          created_at?: string | null
+          recipient_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["recipient_id"]
+          },
+        ]
+      }
       business_profiles: {
         Row: {
           business_category: string | null
@@ -94,6 +144,44 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      card_accounts: {
+        Row: {
+          card_account_id: number
+          card_number: string
+          created_at: string | null
+          cvv: string | null
+          expiration_month: string
+          expiration_year: string
+          recipient_id: number | null
+        }
+        Insert: {
+          card_account_id?: number
+          card_number: string
+          created_at?: string | null
+          cvv?: string | null
+          expiration_month: string
+          expiration_year: string
+          recipient_id?: number | null
+        }
+        Update: {
+          card_account_id?: number
+          card_number?: string
+          created_at?: string | null
+          cvv?: string | null
+          expiration_month?: string
+          expiration_year?: string
+          recipient_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_accounts_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["recipient_id"]
+          },
+        ]
       }
       card_networks: {
         Row: {
@@ -286,6 +374,33 @@ export type Database = {
           message?: string | null
           name?: string
           reason?: string | null
+        }
+        Relationships: []
+      }
+      corporate_accounts: {
+        Row: {
+          corporate_account_id: string
+          created_at: string | null
+          float_balance: number | null
+          gateway_api_key: string
+          payout_balance: number | null
+          reserve_balance: number | null
+        }
+        Insert: {
+          corporate_account_id: string
+          created_at?: string | null
+          float_balance?: number | null
+          gateway_api_key: string
+          payout_balance?: number | null
+          reserve_balance?: number | null
+        }
+        Update: {
+          corporate_account_id?: string
+          created_at?: string | null
+          float_balance?: number | null
+          gateway_api_key?: string
+          payout_balance?: number | null
+          reserve_balance?: number | null
         }
         Relationships: []
       }
@@ -861,6 +976,122 @@ export type Database = {
           },
         ]
       }
+      new_transactions: {
+        Row: {
+          bank_account_id: number | null
+          card_account_id: number | null
+          corporate_account_id: string | null
+          corporate_administrative_message: string | null
+          float_balance_after_transaction: number | null
+          float_balance_before_transaction: number | null
+          gateway_message: string | null
+          notification_type: number
+          payout_balance_after_transaction: number | null
+          payout_balance_before_transaction: number | null
+          priority_level: number
+          public_transaction_description: string | null
+          recipient_id: number | null
+          reserve_balance_after_transaction: number | null
+          reserve_balance_before_transaction: number | null
+          send_amount: number
+          send_currency_iso3: string
+          send_fee_fixed_amount: number | null
+          send_fee_percentage: number | null
+          send_fee_percentage_amount: number | null
+          send_fee_total_amount: number | null
+          send_method: string
+          transaction_datetime_created: string | null
+          transaction_id: string
+          transaction_status: string
+          transfer_method: string
+        }
+        Insert: {
+          bank_account_id?: number | null
+          card_account_id?: number | null
+          corporate_account_id?: string | null
+          corporate_administrative_message?: string | null
+          float_balance_after_transaction?: number | null
+          float_balance_before_transaction?: number | null
+          gateway_message?: string | null
+          notification_type?: number
+          payout_balance_after_transaction?: number | null
+          payout_balance_before_transaction?: number | null
+          priority_level?: number
+          public_transaction_description?: string | null
+          recipient_id?: number | null
+          reserve_balance_after_transaction?: number | null
+          reserve_balance_before_transaction?: number | null
+          send_amount: number
+          send_currency_iso3?: string
+          send_fee_fixed_amount?: number | null
+          send_fee_percentage?: number | null
+          send_fee_percentage_amount?: number | null
+          send_fee_total_amount?: number | null
+          send_method: string
+          transaction_datetime_created?: string | null
+          transaction_id: string
+          transaction_status: string
+          transfer_method?: string
+        }
+        Update: {
+          bank_account_id?: number | null
+          card_account_id?: number | null
+          corporate_account_id?: string | null
+          corporate_administrative_message?: string | null
+          float_balance_after_transaction?: number | null
+          float_balance_before_transaction?: number | null
+          gateway_message?: string | null
+          notification_type?: number
+          payout_balance_after_transaction?: number | null
+          payout_balance_before_transaction?: number | null
+          priority_level?: number
+          public_transaction_description?: string | null
+          recipient_id?: number | null
+          reserve_balance_after_transaction?: number | null
+          reserve_balance_before_transaction?: number | null
+          send_amount?: number
+          send_currency_iso3?: string
+          send_fee_fixed_amount?: number | null
+          send_fee_percentage?: number | null
+          send_fee_percentage_amount?: number | null
+          send_fee_total_amount?: number | null
+          send_method?: string
+          transaction_datetime_created?: string | null
+          transaction_id?: string
+          transaction_status?: string
+          transfer_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["bank_account_id"]
+          },
+          {
+            foreignKeyName: "new_transactions_card_account_id_fkey"
+            columns: ["card_account_id"]
+            isOneToOne: false
+            referencedRelation: "card_accounts"
+            referencedColumns: ["card_account_id"]
+          },
+          {
+            foreignKeyName: "new_transactions_corporate_account_id_fkey"
+            columns: ["corporate_account_id"]
+            isOneToOne: false
+            referencedRelation: "corporate_accounts"
+            referencedColumns: ["corporate_account_id"]
+          },
+          {
+            foreignKeyName: "new_transactions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["recipient_id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           id: number
@@ -1200,6 +1431,63 @@ export type Database = {
           ssn_last_four?: string | null
           state?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recipients: {
+        Row: {
+          account_id: string | null
+          city: string | null
+          country_iso3: string | null
+          created_at: string | null
+          email_address: string | null
+          first_names: string
+          full_name: string
+          last_names: string
+          postal_code: string | null
+          recipient_id: number
+          region: string | null
+          street_1: string | null
+          street_2: string | null
+          telephone_country_iso2: string | null
+          telephone_number: string | null
+          zelle_address: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          city?: string | null
+          country_iso3?: string | null
+          created_at?: string | null
+          email_address?: string | null
+          first_names: string
+          full_name: string
+          last_names: string
+          postal_code?: string | null
+          recipient_id?: number
+          region?: string | null
+          street_1?: string | null
+          street_2?: string | null
+          telephone_country_iso2?: string | null
+          telephone_number?: string | null
+          zelle_address?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          city?: string | null
+          country_iso3?: string | null
+          created_at?: string | null
+          email_address?: string | null
+          first_names?: string
+          full_name?: string
+          last_names?: string
+          postal_code?: string | null
+          recipient_id?: number
+          region?: string | null
+          street_1?: string | null
+          street_2?: string | null
+          telephone_country_iso2?: string | null
+          telephone_number?: string | null
+          zelle_address?: string | null
         }
         Relationships: []
       }
