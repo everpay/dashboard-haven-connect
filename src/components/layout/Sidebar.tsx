@@ -63,7 +63,7 @@ export const Sidebar = () => {
     { to: '/cards', icon: <CreditCard size={20} />, label: 'Cards' },
     { to: '/billing', icon: <DollarSign size={20} />, label: 'Billing' },
     { to: '/team', icon: <Users size={20} />, label: 'Team' },
-    { to: '/account', icon: <User size={20} />, label: 'Account' },
+    { to: '/account', icon: <User size={20} />, label: 'Settings' },
   ];
 
   return (
@@ -98,7 +98,7 @@ export const Sidebar = () => {
           <div className="flex items-center justify-between p-4 border-b">
             <div className={cn('flex items-center', !expanded && 'justify-center w-full')}>
               <img src="/lovable-uploads/dbfe1c50-ec15-4baa-bc55-11a8d89afb54.png" alt="Logo" className="h-8 w-8" />
-              {expanded && <h1 className="ml-3 text-xl font-semibold text-[#19363B]">DaPay</h1>}
+              {expanded && <h1 className="ml-3 text-xl font-semibold text-[#19363B]">everpay</h1>}
             </div>
             
             <Button
