@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -6,140 +7,329 @@ import {
   ChevronDown,
   ChevronUp,
   BanknoteIcon,
-  SendIcon
+  SendIcon,
+  ArrowUpRight,
+  ArrowDownRight,
+  Search,
+  Download,
+  CreditCard
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { supabase } from "@/lib/supabase"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 
-const data = [
-  { name: 'Jun 21', amount: 400 },
-  { name: 'Jun 22', amount: 300 },
-  { name: 'Jun 23', amount: 500 },
-  { name: 'Jun 24', amount: 280 },
-  { name: 'Jun 25', amount: 590 },
-  { name: 'Jun 26', amount: 390 },
-  { name: 'Jun 27', amount: 490 },
-]
+// Types for our data
+type Transaction = {
+  id: string;
+  merchant_name: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  payment_method?: string;
+  card_type?: string;
+}
+
+type SalesData = {
+  name: string;
+  amount: number;
+}
+
+type SummaryData = {
+  todaySales: number;
+  totalSales: number;
+  totalOrders: number;
+  todayIncrease: number;
+  salesIncrease: number;
+  ordersIncrease: number;
+}
 
 const Index = () => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [salesData, setSalesData] = useState<SalesData[]>([]);
+  const [summary, setSummary] = useState<SummaryData>({
+    todaySales: 12426,
+    totalSales: 238485,
+    totalOrders: 84382,
+    todayIncrease: 36,
+    salesIncrease: -14,
+    ordersIncrease: 36
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch transactions data
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('marqeta_transactions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        setTransactions(data || []);
+        
+        // Generate sales data for the chart (in real app, you would fetch this data)
+        generateMockSalesData();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  // Function to generate mock sales data for the chart
+  const generateMockSalesData = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const data = months.map(month => ({
+      name: month,
+      amount: Math.floor(Math.random() * 50000) + 10000,
+      secondary: Math.floor(Math.random() * 40000) + 5000
+    }));
+    setSalesData(data);
+  };
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  // Format compact number (e.g., 1.2k)
+  const formatCompactNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      compactDisplay: 'short'
+    }).format(num);
+  };
+
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
+  };
+
   return (
     <DashboardLayout>
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left Column */}
-        <div className="col-span-12 md:col-span-8 space-y-6">
-          {/* Balance Card */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-medium">Your balance</h2>
-              <Button variant="outline" size="sm" className="gap-2">
-                <BanknoteIcon className="h-4 w-4" />
-                Add money
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Available balance</p>
-                <p className="text-3xl font-semibold">$12,560.00</p>
-                <div className="flex items-center gap-1 text-sm text-green-600 mt-1">
-                  <ChevronUp className="h-4 w-4" />
-                  <span>+2.5%</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Pending balance</p>
-                <p className="text-3xl font-semibold">$1,214.00</p>
-                <div className="flex items-center gap-1 text-sm text-red-600 mt-1">
-                  <ChevronDown className="h-4 w-4" />
-                  <span>-0.8%</span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Chart Card */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-medium">Analytics</h2>
-              <select className="text-sm border rounded-lg px-3 py-2">
-                <option>Last 7 days</option>
-                <option>Last month</option>
-                <option>Last year</option>
-              </select>
-            </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#013c3f" 
-                    strokeWidth={2} 
-                    dot={false}
-                    activeDot={{ r: 6, fill: "#013c3f" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+      <div className="space-y-8">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 mt-1">Manage and optimize your business</p>
         </div>
 
-        {/* Right Column */}
-        <div className="col-span-12 md:col-span-4 space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Today's Sale */}
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Today's Sale</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold">{formatCurrency(summary.todaySales)}</p>
+              <div className="flex items-center gap-1 text-sm text-green-600">
+                <ChevronUp className="h-4 w-4" />
+                <span>{summary.todayIncrease}%</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Total Sales */}
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Total Sales</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold">{formatCurrency(summary.totalSales)}</p>
+              <div className="flex items-center gap-1 text-sm text-red-600">
+                <ChevronDown className="h-4 w-4" />
+                <span>{Math.abs(summary.salesIncrease)}%</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Total Orders */}
+          <Card className="p-6">
+            <p className="text-sm text-gray-500 mb-1">Total Orders</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold">{formatCompactNumber(summary.totalOrders)}</p>
+              <div className="flex items-center gap-1 text-sm text-green-600">
+                <ChevronUp className="h-4 w-4" />
+                <span>{summary.ordersIncrease}%</span>
+              </div>
+            </div>
+          </Card>
+
           {/* Quick Actions */}
           <Card className="p-6">
-            <h2 className="text-lg font-medium mb-4">Quick actions</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-auto py-4 px-3 border-2">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center">
-                    <SendIcon className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <span className="text-sm font-medium">Send Money</span>
-                </div>
+            <p className="text-sm text-gray-500 mb-1">Quick Actions</p>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center justify-start gap-2 h-10 px-3"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>Cards</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 px-3 border-2">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-green-50 flex items-center justify-center">
-                    <BanknoteIcon className="h-5 w-5 text-green-600" />
-                  </div>
-                  <span className="text-sm font-medium">Request</span>
-                </div>
+              <Button 
+                variant="outline" 
+                className="flex items-center justify-start gap-2 h-10 px-3"
+              >
+                <SendIcon className="h-4 w-4" />
+                <span>Transfer</span>
               </Button>
-            </div>
-          </Card>
-
-          {/* Recent Transactions */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-medium">Recent transactions</h2>
-              <Button variant="ghost" size="sm" className="text-[#013c3f]">
-                See all
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between py-3 border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={`https://images.unsplash.com/photo-${1570295999919 + i}-56ceb5ecca61`} />
-                      <AvatarFallback>UN</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">Alex Morris</p>
-                      <p className="text-sm text-gray-500">Today at 7:45 AM</p>
-                    </div>
-                  </div>
-                  <p className="font-medium">-$250.00</p>
-                </div>
-              ))}
             </div>
           </Card>
         </div>
+
+        {/* Charts Section */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-medium">Sales report</h2>
+              <p className="text-sm text-gray-500">Sales trends over time</p>
+            </div>
+            <select className="text-sm border rounded-lg px-3 py-2">
+              <option>12 Months</option>
+              <option>6 Months</option>
+              <option>30 Days</option>
+            </select>
+          </div>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={salesData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <Tooltip />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#013c3f" 
+                  strokeWidth={2} 
+                  dot={false}
+                  activeDot={{ r: 6, fill: "#013c3f" }}
+                  name="Sales"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="secondary" 
+                  stroke="#e3a008" 
+                  strokeWidth={2} 
+                  dot={false}
+                  activeDot={{ r: 6, fill: "#e3a008" }}
+                  name="Revenue"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Recent Transactions */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium">Transactions</h2>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                className="pl-10 pr-4 py-2 w-64 bg-gray-50 border-0 focus:ring-0"
+              />
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="text-left border-b">
+                  <th className="pb-2 pl-4 pr-2 font-medium text-sm text-gray-500">Merchant</th>
+                  <th className="pb-2 px-2 font-medium text-sm text-gray-500">Date</th>
+                  <th className="pb-2 px-2 font-medium text-sm text-gray-500">Status</th>
+                  <th className="pb-2 px-2 font-medium text-sm text-gray-500">Payment</th>
+                  <th className="pb-2 px-2 text-right font-medium text-sm text-gray-500">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="py-4 text-center text-gray-500">Loading transactions...</td>
+                  </tr>
+                ) : transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-4 text-center text-gray-500">No transactions found</td>
+                  </tr>
+                ) : (
+                  transactions.map((transaction) => (
+                    <tr key={transaction.id} className="hover:bg-gray-50">
+                      <td className="py-4 pl-4 pr-2">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-blue-100 text-blue-800">
+                              {transaction.merchant_name?.[0] || 'M'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{transaction.merchant_name || 'Unknown Merchant'}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-2 text-gray-600">
+                        {transaction.created_at ? formatDate(transaction.created_at) : 'N/A'}
+                      </td>
+                      <td className="py-4 px-2">
+                        <Badge variant="outline" className={getStatusColor(transaction.status || 'pending')}>
+                          {transaction.status || 'Pending'}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-2">
+                        <div>
+                          <p className="font-medium">{transaction.payment_method || 'Card payment'}</p>
+                          <p className="text-sm text-gray-500">{transaction.card_type || 'Standard payment'}</p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <span className={transaction.amount > 0 ? "text-green-600" : "text-red-600"}>
+                          {transaction.amount > 0 ? '+' : ''}
+                          {formatCurrency(transaction.amount)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 flex justify-between items-center">
+            <p className="text-sm text-gray-500">Showing {transactions.length} of {transactions.length} transactions</p>
+            <Button variant="outline" className="text-sm" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </Card>
       </div>
     </DashboardLayout>
   );

@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator"
 export default function SignIn() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(true)
+  const [isSignUp, setIsSignUp] = useState(false) // Changed to false to default to login
   const [currentStep, setCurrentStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   
@@ -486,7 +486,7 @@ export default function SignIn() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#e8fb5a] hover:bg-[#e0f347] text-gray-800 py-3 rounded-lg font-semibold transition-colors"
+                  className="w-full bg-[#013c3f] hover:bg-[#012a2d] text-white py-3 rounded-lg font-semibold transition-colors"
                 >
                   {loading ? "Signing In..." : "Sign In"}
                 </Button>
@@ -513,7 +513,7 @@ export default function SignIn() {
             <Link to="/privacy" className="hover:text-gray-600">
               Privacy Policy
             </Link>
-            <span>Copyright 2022</span>
+            <span>Copyright 2023</span>
           </div>
         </div>
       </div>
