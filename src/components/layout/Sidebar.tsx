@@ -11,7 +11,9 @@ import {
   Menu,
   X,
   BarChart2,
-  User
+  User,
+  FileText,
+  Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,8 +34,8 @@ const SidebarLink = ({ to, icon, label, isActive, expanded, onClick }: SidebarLi
       'flex items-center p-2 rounded-md my-1 transition-colors',
       expanded ? 'px-4' : 'px-3 justify-center',
       isActive
-        ? 'bg-gray-100 text-gray-900'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        ? 'bg-[#E3FFCC] text-[#19363B]'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B]'
     )}
   >
     {icon}
@@ -55,6 +57,8 @@ export const Sidebar = () => {
   const links = [
     { to: '/', icon: <Home size={20} />, label: 'Dashboard' },
     { to: '/transactions', icon: <BarChart2 size={20} />, label: 'Transactions' },
+    { to: '/invoicing', icon: <FileText size={20} />, label: 'Invoicing' },
+    { to: '/products', icon: <Package size={20} />, label: 'Products' },
     { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/cards', icon: <CreditCard size={20} />, label: 'Cards' },
     { to: '/billing', icon: <DollarSign size={20} />, label: 'Billing' },
@@ -94,7 +98,7 @@ export const Sidebar = () => {
           <div className="flex items-center justify-between p-4 border-b">
             <div className={cn('flex items-center', !expanded && 'justify-center w-full')}>
               <img src="/lovable-uploads/dbfe1c50-ec15-4baa-bc55-11a8d89afb54.png" alt="Logo" className="h-8 w-8" />
-              {expanded && <h1 className="ml-3 text-xl font-semibold">DaPay</h1>}
+              {expanded && <h1 className="ml-3 text-xl font-semibold text-[#19363B]">DaPay</h1>}
             </div>
             
             <Button

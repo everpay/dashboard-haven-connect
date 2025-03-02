@@ -14,6 +14,8 @@ import Team from "./pages/Team"
 import Transactions from "./pages/Transactions"
 import Customers from "./pages/Customers"
 import Cards from "./pages/Cards"
+import Invoicing from "./pages/Invoicing"
+import Products from "./pages/Products"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/cards" element={<Cards />} />
+            <Route path="/invoicing" element={<Invoicing />} />
+            <Route path="/products" element={<Products />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

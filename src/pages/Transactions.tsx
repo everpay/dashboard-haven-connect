@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Check, X, ChevronLeft, ChevronRight, Download, Plus, MoreHorizontal, CreditCard } from 'lucide-react';
+import { Check, X, ChevronLeft, ChevronRight, Download, Plus, MoreHorizontal, CreditCard, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -30,8 +30,8 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 // Status mapping for UI display
 const statusColors = {
-  completed: 'bg-green-100 text-green-800 border-green-200',
-  succeeded: 'bg-green-100 text-green-800 border-green-200',
+  completed: 'bg-[#E3FFCC] text-[#19363B] border-[#1AA47B]',
+  succeeded: 'bg-[#E3FFCC] text-[#19363B] border-[#1AA47B]',
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   incomplete: 'bg-gray-100 text-gray-800 border-gray-200',
   failed: 'bg-red-100 text-red-800 border-red-200',
@@ -67,45 +67,15 @@ const FilterButton = ({ label, count, isActive = false, onClick }: {
       className={cn(
         "flex-1 p-4 text-center border rounded-md transition-colors",
         isActive 
-          ? "bg-[#f0f4ff] border-[#6366f1] text-[#6366f1]" 
+          ? "bg-[#f0f4ff] border-[#1AA47B] text-[#19363B]" 
           : "bg-white border-gray-200 hover:bg-gray-50"
       )}
     >
       <div className="text-sm font-medium">{label}</div>
       <div className={cn(
         "text-xl font-semibold mt-1",
-        isActive ? "text-[#6366f1]" : "text-gray-900"
+        isActive ? "text-[#1AA47B]" : "text-gray-900"
       )}>
-        {count}
-      </div>
-    </button>
-  );
-};
-
-const FilterTab = ({ 
-  name, 
-  count, 
-  activeFilter, 
-  onClick 
-}: { 
-  name: string; 
-  count: number; 
-  activeFilter: string;
-  onClick: (filter: string) => void;
-}) => {
-  return (
-    <button
-      className={`flex-1 p-4 text-center border rounded-md transition-colors ${
-        activeFilter === name.toLowerCase() 
-          ? "bg-[#f0f4ff] border-[#6366f1] text-[#6366f1]" 
-          : "bg-white border-gray-200 hover:bg-gray-50"
-      }`}
-      onClick={() => onClick(name.toLowerCase())}
-    >
-      <div className="text-sm font-medium">{name}</div>
-      <div className={`text-xl font-semibold mt-1 ${
-        activeFilter === name.toLowerCase() ? "text-[#6366f1]" : "text-gray-900"
-      }`}>
         {count}
       </div>
     </button>
@@ -115,8 +85,10 @@ const FilterTab = ({
 const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isNewTransactionOpen, setIsNewTransactionOpen] = useState(false);
+  const [isVgsFormOpen, setIsVgsFormOpen] = useState(false);
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const limit = 10;
@@ -131,9 +103,118 @@ const Transactions = () => {
     }
   });
 
-  // Fetch transactions
+  // Load VGS Collect script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  // Initialize VGS Collect form when modal opens
+  useEffect(() => {
+    if (isVgsFormOpen) {
+      // Wait for the script to load and the form elements to be in the DOM
+      const initializeVgsForm = setTimeout(() => {
+        if (window.VGSCollect) {
+          const vgsForm = window.VGSCollect.create('tntplctzddm', 'sandbox', {
+            environment: 'sandbox'
+          });
+
+          // Initialize form fields
+          vgsForm.field('#card-number-container', {
+            type: 'card-number',
+            name: 'card_number',
+            placeholder: 'Card Number',
+            validations: ['required', 'validCardNumber'],
+            css: {
+              base: {
+                color: "#19363B",
+                fontSize: "16px",
+                padding: "12px 16px"
+              },
+              invalid: {
+                color: "red"
+              },
+              valid: {
+                color: "#1AA47B"
+              }
+            }
+          });
+
+          vgsForm.field('#card-expiry-container', {
+            type: 'card-expiration-date',
+            name: 'card_expiry',
+            placeholder: 'MM/YY',
+            validations: ['required', 'validCardExpirationDate'],
+            css: {
+              base: {
+                color: "#19363B",
+                fontSize: "16px",
+                padding: "12px 16px"
+              },
+              invalid: {
+                color: "red"
+              },
+              valid: {
+                color: "#1AA47B"
+              }
+            }
+          });
+
+          vgsForm.field('#card-cvc-container', {
+            type: 'card-security-code',
+            name: 'card_cvc',
+            placeholder: 'CVC',
+            validations: ['required', 'validCardSecurityCode'],
+            css: {
+              base: {
+                color: "#19363B",
+                fontSize: "16px",
+                padding: "12px 16px"
+              },
+              invalid: {
+                color: "red"
+              },
+              valid: {
+                color: "#1AA47B"
+              }
+            }
+          });
+
+          // Handle form submission
+          document.getElementById('vgs-payment-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            vgsForm.submit('/post', {}, function(status, response) {
+              if (status === 200) {
+                toast({ 
+                  title: "Payment Submitted", 
+                  description: "Your card details have been securely collected."
+                });
+                setIsVgsFormOpen(false);
+              } else {
+                toast({ 
+                  title: "Error", 
+                  description: "There was an issue processing your payment.",
+                  variant: "destructive"
+                });
+              }
+            });
+          });
+        }
+      }, 500);
+
+      return () => clearTimeout(initializeVgsForm);
+    }
+  }, [isVgsFormOpen, toast]);
+
+  // Fetch transactions with search capability
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ['transactions', currentPage, activeFilter],
+    queryKey: ['transactions', currentPage, activeFilter, searchTerm],
     queryFn: async () => {
       let query = supabase
         .from('marqeta_transactions')
@@ -141,6 +222,10 @@ const Transactions = () => {
       
       if (activeFilter !== 'all') {
         query = query.eq('status', activeFilter);
+      }
+
+      if (searchTerm) {
+        query = query.or(`merchant_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
       
       const { data, error } = await query
@@ -226,6 +311,7 @@ const Transactions = () => {
 
   const closeModal = () => {
     setIsNewTransactionOpen(false);
+    setIsVgsFormOpen(false);
     setViewingTransaction(null);
     reset();
   };
@@ -237,19 +323,29 @@ const Transactions = () => {
     }).format(amount);
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    // Reset to page 1 when searching
+    setCurrentPage(1);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Transactions</h1>
+            <h1 className="text-2xl font-bold text-[#19363B]">Transactions</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setIsNewTransactionOpen(true)} className="bg-[#6366f1] hover:bg-[#4f46e5]">
+            <Button 
+              onClick={() => setIsVgsFormOpen(true)} 
+              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create payment
             </Button>
-            <Button variant="outline" className="font-medium">
+            <Button variant="outline" className="font-medium text-[#19363B] border-[#1AA47B]">
               Analyse
             </Button>
           </div>
@@ -258,20 +354,20 @@ const Transactions = () => {
         {/* Notification banner */}
         <div className="bg-[#f8fafc] border rounded-md p-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-1 bg-[#6366f1] bg-opacity-10 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="p-1 bg-[#1AA47B] bg-opacity-10 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1AA47B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 9H4.5a2.5 2.5 0 0 0 0 5H6" />
                 <path d="M18 9h1.5a2.5 2.5 0 0 1 0 5H18" />
                 <path d="M8 9h8" />
                 <path d="M8 15h8" />
               </svg>
             </div>
-            <span className="text-sm">
+            <span className="text-sm text-[#19363B]">
               Get quick financial insights based on your latest payment data with the Xero app.
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="link" className="text-[#6366f1] px-2 py-1 h-auto">
+            <Button variant="link" className="text-[#1AA47B] px-2 py-1 h-auto">
               Install Xero
             </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -282,64 +378,76 @@ const Transactions = () => {
         
         {/* Status filter cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <FilterTab 
-            name="All" 
+          <FilterButton 
+            label="All" 
             count={statusCounts?.all || 0} 
-            activeFilter={activeFilter} 
-            onClick={setActiveFilter} 
+            isActive={activeFilter === 'all'} 
+            onClick={() => setActiveFilter('all')} 
           />
-          <FilterTab 
-            name="Succeeded" 
+          <FilterButton 
+            label="Succeeded" 
             count={statusCounts?.succeeded || 0} 
-            activeFilter={activeFilter} 
-            onClick={setActiveFilter} 
+            isActive={activeFilter === 'succeeded'} 
+            onClick={() => setActiveFilter('succeeded')} 
           />
-          <FilterTab 
-            name="Refunded" 
+          <FilterButton 
+            label="Refunded" 
             count={statusCounts?.refunded || 0} 
-            activeFilter={activeFilter} 
-            onClick={setActiveFilter} 
+            isActive={activeFilter === 'refunded'} 
+            onClick={() => setActiveFilter('refunded')} 
           />
-          <FilterTab 
-            name="Disputed" 
+          <FilterButton 
+            label="Disputed" 
             count={statusCounts?.disputed || 0} 
-            activeFilter={activeFilter} 
-            onClick={setActiveFilter} 
+            isActive={activeFilter === 'disputed'} 
+            onClick={() => setActiveFilter('disputed')} 
           />
-          <FilterTab 
-            name="Failed" 
+          <FilterButton 
+            label="Failed" 
             count={statusCounts?.failed || 0} 
-            activeFilter={activeFilter} 
-            onClick={setActiveFilter} 
+            isActive={activeFilter === 'failed'} 
+            onClick={() => setActiveFilter('failed')} 
           />
-          <FilterTab 
-            name="Uncaptured" 
+          <FilterButton 
+            label="Uncaptured" 
             count={statusCounts?.uncaptured || 0} 
-            activeFilter={activeFilter} 
-            onClick={setActiveFilter} 
+            isActive={activeFilter === 'uncaptured'} 
+            onClick={() => setActiveFilter('uncaptured')} 
           />
         </div>
         
-        {/* Filter buttons */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Button variant="outline" size="sm" className="text-sm">
-            <span className="mr-1">Date and time</span>
-          </Button>
-          <Button variant="outline" size="sm" className="text-sm">
-            <span className="mr-1">Amount</span>
-          </Button>
-          <Button variant="outline" size="sm" className="text-sm">
-            <span className="mr-1">Currency</span>
-          </Button>
-          <Button variant="outline" size="sm" className="text-sm">
-            <span className="mr-1">Status</span>
-          </Button>
-          <Button variant="outline" size="sm" className="text-sm">
-            <span className="mr-1">Payment method</span>
-          </Button>
-          <Button variant="outline" size="sm" className="text-sm">
-            <span className="mr-1">More filters</span>
-          </Button>
+        {/* Search bar and filter buttons */}
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="relative w-full md:w-auto md:flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              type="search"
+              placeholder="Search transactions"
+              className="pl-10 pr-4 py-2 w-full bg-gray-50 border-0 focus-visible:ring-[#1AA47B]"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="text-sm">
+              <span className="mr-1">Date and time</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-sm">
+              <span className="mr-1">Amount</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-sm">
+              <span className="mr-1">Currency</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-sm">
+              <span className="mr-1">Status</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-sm">
+              <span className="mr-1">Payment method</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-sm">
+              <span className="mr-1">More filters</span>
+            </Button>
+          </div>
         </div>
         
         <div className="flex justify-end gap-2 mb-2">
@@ -377,6 +485,9 @@ const Transactions = () => {
                     Date
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Refunded date
                   </th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -391,13 +502,13 @@ const Transactions = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={11} className="px-4 py-4 text-center text-sm text-gray-500">
                       Loading transactions...
                     </td>
                   </tr>
                 ) : transactions && transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-4 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={11} className="px-4 py-4 text-center text-sm text-gray-500">
                       No transactions found
                     </td>
                   </tr>
@@ -418,7 +529,7 @@ const Transactions = () => {
                       <td className="px-3 py-3 whitespace-nowrap">
                         {transaction.transaction_type === 'payment' ? (
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-6 w-6 bg-blue-600 rounded flex items-center justify-center text-white">
+                            <div className="flex-shrink-0 h-6 w-6 bg-[#1AA47B] rounded flex items-center justify-center text-white">
                               <CreditCard className="h-4 w-4" />
                             </div>
                             <div className="ml-2">
@@ -440,6 +551,9 @@ const Transactions = () => {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
                         {format(new Date(transaction.created_at), 'd MMM, HH:mm')}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <StatusBadge status={transaction.status} />
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">—</td>
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">—</td>
@@ -488,17 +602,17 @@ const Transactions = () => {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <Dialog.Title className="text-xl font-semibold mb-4">
+            <Dialog.Title className="text-xl font-semibold mb-4 text-[#19363B]">
               Create New Transaction
             </Dialog.Title>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="merchant_name" className="text-sm font-medium">Merchant Name</label>
+                <label htmlFor="merchant_name" className="text-sm font-medium text-[#19363B]">Merchant Name</label>
                 <Input
                   id="merchant_name"
                   {...register("merchant_name")}
-                  className="w-full"
+                  className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
                 />
                 {errors.merchant_name && (
                   <p className="text-sm text-red-500">{errors.merchant_name.message}</p>
@@ -506,7 +620,7 @@ const Transactions = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="amount" className="text-sm font-medium">Amount</label>
+                <label htmlFor="amount" className="text-sm font-medium text-[#19363B]">Amount</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                   <Input
@@ -514,7 +628,7 @@ const Transactions = () => {
                     type="number"
                     step="0.01"
                     {...register("amount")}
-                    className="w-full pl-8"
+                    className="w-full pl-8 border-[#1AA47B] focus-visible:ring-[#1AA47B]"
                   />
                 </div>
                 {errors.amount && (
@@ -524,11 +638,11 @@ const Transactions = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="currency" className="text-sm font-medium">Currency</label>
+                  <label htmlFor="currency" className="text-sm font-medium text-[#19363B]">Currency</label>
                   <select
                     id="currency"
                     {...register("currency")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    className="w-full rounded-md border border-[#1AA47B] bg-background px-3 py-2 focus-visible:ring-[#1AA47B]"
                   >
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -538,11 +652,11 @@ const Transactions = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="transaction_type" className="text-sm font-medium">Type</label>
+                  <label htmlFor="transaction_type" className="text-sm font-medium text-[#19363B]">Type</label>
                   <select
                     id="transaction_type"
                     {...register("transaction_type")}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    className="w-full rounded-md border border-[#1AA47B] bg-background px-3 py-2 focus-visible:ring-[#1AA47B]"
                   >
                     <option value="payment">Payment</option>
                     <option value="refund">Refund</option>
@@ -553,20 +667,20 @@ const Transactions = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium">Description (optional)</label>
+                <label htmlFor="description" className="text-sm font-medium text-[#19363B]">Description (optional)</label>
                 <Input
                   id="description"
                   {...register("description")}
-                  className="w-full"
+                  className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
                 />
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="status" className="text-sm font-medium">Status</label>
+                <label htmlFor="status" className="text-sm font-medium text-[#19363B]">Status</label>
                 <select
                   id="status"
                   {...register("status")}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  className="w-full rounded-md border border-[#1AA47B] bg-background px-3 py-2 focus-visible:ring-[#1AA47B]"
                 >
                   <option value="pending">Pending</option>
                   <option value="completed">Completed</option>
@@ -581,8 +695,73 @@ const Transactions = () => {
                 <Button type="button" variant="outline" onClick={closeModal}>
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-[#6366f1] hover:bg-[#4f46e5]">
+                <Button type="submit" className="bg-[#1AA47B] hover:bg-[#19363B]">
                   Create Transaction
+                </Button>
+              </div>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* VGS Collect Payment Form */}
+      <Dialog.Root open={isVgsFormOpen} onOpenChange={closeModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <Dialog.Title className="text-xl font-semibold mb-4 text-[#19363B]">
+              Make a Payment
+            </Dialog.Title>
+            
+            <form id="vgs-payment-form" className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="cardholder-name" className="text-sm font-medium text-[#19363B]">Cardholder Name</label>
+                <Input
+                  id="cardholder-name"
+                  name="cardholder_name"
+                  placeholder="John Doe"
+                  className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="card-number-container" className="text-sm font-medium text-[#19363B]">Card Number</label>
+                <div id="card-number-container" className="h-12 w-full rounded-md border border-[#1AA47B] bg-background"></div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="card-expiry-container" className="text-sm font-medium text-[#19363B]">Expiry Date</label>
+                  <div id="card-expiry-container" className="h-12 w-full rounded-md border border-[#1AA47B] bg-background"></div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="card-cvc-container" className="text-sm font-medium text-[#19363B]">CVC</label>
+                  <div id="card-cvc-container" className="h-12 w-full rounded-md border border-[#1AA47B] bg-background"></div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="amount" className="text-sm font-medium text-[#19363B]">Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    defaultValue="100.00"
+                    className="w-full pl-8 border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={closeModal}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-[#1AA47B] hover:bg-[#19363B]">
+                  Pay Now
                 </Button>
               </div>
             </form>
