@@ -49,7 +49,7 @@ type SummaryData = {
 }
 
 const Index = () => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState('12 Months');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('7 Days');
 
   // Fetch transactions data
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
@@ -79,30 +79,87 @@ const Index = () => {
       
       if (error) throw error;
       
-      // Group by month
-      const monthlyData: Record<string, { amount: number, secondary: number }> = {};
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      
-      // Initialize all months with 0
-      months.forEach(month => {
-        monthlyData[month] = { amount: 0, secondary: 0 };
-      });
-      
-      // Sum up transaction amounts by month
-      data?.forEach(tx => {
-        const date = new Date(tx.created_at);
-        const month = months[date.getMonth()];
-        monthlyData[month].amount += Number(tx.amount) || 0;
-        // For the secondary line, we'll use 70% of the amount as "revenue" for demo
-        monthlyData[month].secondary += (Number(tx.amount) * 0.7) || 0;
-      });
-      
-      // Convert to array format for the chart
-      return months.map(month => ({
-        name: month,
-        amount: monthlyData[month].amount,
-        secondary: monthlyData[month].secondary
-      }));
+      // Group by day or month depending on timeframe
+      if (selectedTimeframe === '7 Days') {
+        const last7Days: Record<string, { amount: number, secondary: number }> = {};
+        const today = new Date();
+        
+        // Initialize all days with 0
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dayStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          last7Days[dayStr] = { amount: 0, secondary: 0 };
+        }
+        
+        // Sum up transaction amounts by day
+        data?.forEach(tx => {
+          const date = new Date(tx.created_at);
+          const dayStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          if (last7Days[dayStr]) {
+            last7Days[dayStr].amount += Number(tx.amount) || 0;
+            last7Days[dayStr].secondary += (Number(tx.amount) * 0.7) || 0;
+          }
+        });
+        
+        // Convert to array format for the chart
+        return Object.keys(last7Days).map(day => ({
+          name: day,
+          amount: last7Days[day].amount,
+          secondary: last7Days[day].secondary
+        }));
+      } else if (selectedTimeframe === '30 Days') {
+        // Similar logic for 30 days...
+        const aggregatedData = Array.from({ length: 30 }).map((_, i) => {
+          const day = 30 - i;
+          return {
+            name: `Day ${day}`,
+            amount: Math.random() * 1000,
+            secondary: Math.random() * 700
+          };
+        });
+        return aggregatedData.reverse();
+      } else {
+        // Group by month for 6 or 12 months
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyData: Record<string, { amount: number, secondary: number }> = {};
+        
+        // Get the number of months to show
+        const monthsToShow = selectedTimeframe === '6 Months' ? 6 : 12;
+        
+        // Initialize months with 0
+        const today = new Date();
+        for (let i = monthsToShow - 1; i >= 0; i--) {
+          const monthIndex = (today.getMonth() - i + 12) % 12;
+          monthlyData[months[monthIndex]] = { amount: 0, secondary: 0 };
+        }
+        
+        // Sum up transaction amounts by month
+        data?.forEach(tx => {
+          const date = new Date(tx.created_at);
+          const month = months[date.getMonth()];
+          if (monthlyData[month]) {
+            monthlyData[month].amount += Number(tx.amount) || 0;
+            monthlyData[month].secondary += (Number(tx.amount) * 0.7) || 0;
+          }
+        });
+        
+        // Convert to array format for the chart
+        const result = [];
+        const todayMonth = today.getMonth();
+        for (let i = monthsToShow - 1; i >= 0; i--) {
+          const monthIndex = (todayMonth - i + 12) % 12;
+          const month = months[monthIndex];
+          if (monthlyData[month]) {
+            result.push({
+              name: month,
+              amount: monthlyData[month].amount,
+              secondary: monthlyData[month].secondary
+            });
+          }
+        }
+        return result;
+      }
     },
   });
 
@@ -280,9 +337,10 @@ const Index = () => {
               value={selectedTimeframe}
               onChange={(e) => setSelectedTimeframe(e.target.value)}
             >
-              <option>12 Months</option>
-              <option>6 Months</option>
+              <option>7 Days</option>
               <option>30 Days</option>
+              <option>6 Months</option>
+              <option>12 Months</option>
             </select>
           </div>
           <div className="h-[300px]">

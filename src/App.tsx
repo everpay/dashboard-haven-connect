@@ -19,6 +19,8 @@ import Products from "./pages/Products"
 import PaymentLink from "./pages/PaymentLink"
 import Payment from "./pages/Payment"
 import Integrations from "./pages/Integrations"
+import Payins from "./pages/Payins"
+import Payouts from "./pages/Payouts"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +52,8 @@ const App = () => (
             <Route path="/invoicing" element={<Invoicing />} />
             <Route path="/products" element={<Products />} />
             <Route path="/integrations" element={<Integrations />} />
+            <Route path="/payins" element={<Payins />} />
+            <Route path="/payouts" element={<Payouts />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

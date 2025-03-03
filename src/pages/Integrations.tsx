@@ -26,7 +26,7 @@ const Integrations = () => {
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Payment Integrations</h1>
-          <Button onClick={handleRequestIntegration}>
+          <Button onClick={handleRequestIntegration} className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]">
             <Plus className="mr-2 h-4 w-4" /> Request Integration
           </Button>
         </div>
