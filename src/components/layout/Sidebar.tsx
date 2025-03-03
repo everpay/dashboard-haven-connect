@@ -97,7 +97,7 @@ export const Sidebar = () => {
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between p-4 border-b">
             <div className={cn('flex items-center', !expanded && 'justify-center w-full')}>
-              <img src="/lovable-uploads/everpay-icon.png" alt="Logo" className="h-8 w-8" />
+              <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
               {expanded && <h1 className="ml-3 text-xl font-semibold text-[#19363B]">everpay</h1>}
             </div>
             
