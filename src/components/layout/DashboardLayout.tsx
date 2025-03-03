@@ -32,19 +32,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="flex items-center justify-end">
               <div className="flex items-center gap-6">
                 <div className="relative w-72 hidden md:block">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="search"
-                    placeholder="Search for transactions"
-                    className="pl-10 pr-4 py-2 w-full bg-gray-50 border-0 focus:ring-0"
-                  />
-                </div>
-                <Button variant="ghost" size="icon" className="text-gray-500">
-                  <Settings className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-gray-500">
-                  <Bell className="h-5 w-5" />
-                </Button>
+
+                </div>      
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -62,7 +51,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       </div>
                       <div className="py-2">
                         <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer">
-                          <Link to="/account" className="w-full">Account Settings</Link>
+                          <Button variant="ghost" size="icon" className="text-gray-500">
+                           <Settings className="h-5 w-5" />
+                            <Link to="/account" className="w-full">Settings</Link>
+                         </Button>
                         </DropdownMenu.Item>
                         <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer">
                           <Link to="/billing" className="w-full">Billing</Link>
