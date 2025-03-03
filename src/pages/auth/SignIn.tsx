@@ -148,12 +148,12 @@ export default function SignIn() {
       <div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center">
         <div className="w-full max-w-md space-y-8">
           <div className="flex items-center gap-2">
-            <img src="/lovable-uploads/dbfe1c50-ec15-4baa-bc55-11a8d89afb54.png" alt="Logo" className="h-8 w-8" />
+            <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
           </div>
 
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              {isSignUp ? "Sign Up To DaPay" : "Welcome Back"}
+              {isSignUp ? "Sign Up To Everpay" : "Welcome Back"}
             </h1>
             {isSignUp && (
               <p className="text-gray-500">
