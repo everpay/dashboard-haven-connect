@@ -19,7 +19,9 @@ import {
   ChevronDown,
   ChevronRight,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Globe,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -236,6 +238,13 @@ export const Sidebar = () => {
                   onClick={closeMobile}
                 />
                 <SubLink
+                  to="/hosted-payment-page"
+                  label="Hosted Payment Page"
+                  isActive={isActive("/hosted-payment-page")}
+                  expanded={expanded}
+                  onClick={closeMobile}
+                />
+                <SubLink
                   to="/payins"
                   label="Payins"
                   isActive={isActive("/payins")}
@@ -273,6 +282,13 @@ export const Sidebar = () => {
                   to="/customers"
                   label="All Customers"
                   isActive={isActive("/customers")}
+                  expanded={expanded}
+                  onClick={closeMobile}
+                />
+                <SubLink
+                  to="/recipients"
+                  label="Recipients"
+                  isActive={isActive("/recipients")}
                   expanded={expanded}
                   onClick={closeMobile}
                 />

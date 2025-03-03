@@ -21,6 +21,8 @@ import Payment from "./pages/Payment"
 import Integrations from "./pages/Integrations"
 import Payins from "./pages/Payins"
 import Payouts from "./pages/Payouts"
+import Recipients from "./pages/Recipients"
+import HostedPaymentPage from "./pages/HostedPaymentPage"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +56,8 @@ const App = () => (
             <Route path="/integrations" element={<Integrations />} />
             <Route path="/payins" element={<Payins />} />
             <Route path="/payouts" element={<Payouts />} />
+            <Route path="/recipients" element={<Recipients />} />
+            <Route path="/hosted-payment-page" element={<HostedPaymentPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
