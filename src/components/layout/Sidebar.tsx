@@ -59,13 +59,13 @@ export const Sidebar = () => {
     { to: '/', icon: <Home size={20} />, label: 'Dashboard' },
     { to: '/transactions', icon: <BarChart2 size={20} />, label: 'Transactions' },
     { to: '/payment-link', icon: <LinkIcon size={20} />, label: 'Payment Links' },
+    { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/invoicing', icon: <FileText size={20} />, label: 'Invoicing' },
     { to: '/products', icon: <Package size={20} />, label: 'Products' },
-    { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/cards', icon: <CreditCard size={20} />, label: 'Cards' },
-    { to: '/billing', icon: <DollarSign size={20} />, label: 'Billing' },
     { to: '/team', icon: <Users size={20} />, label: 'Team' },
-    { to: '/account', icon: <User size={20} />, label: 'Settings' },
+    { to: '/billing', icon: <DollarSign size={20} />, label: 'Billing' },
+    { to: '/account', icon: <Settings size={20} />, label: 'Settings' },
   ];
 
   return (
