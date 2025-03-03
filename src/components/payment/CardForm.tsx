@@ -1,52 +1,46 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Loader2 } from 'lucide-react';
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase';
 
-interface VGSPaymentFormProps {
+interface CardFormProps {
   formId: string;
-  onSuccess?: (response: any) => void;
+  onSuccess?: (cardToken: string) => void;
   onError?: (error: any) => void;
-  amount?: number;
   buttonText?: string;
   className?: string;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
-export const VGSPaymentForm = ({
+export const CardForm: React.FC<CardFormProps> = ({
   formId,
   onSuccess,
   onError,
-  amount = 0,
-  buttonText = "Submit Payment",
+  buttonText = "Add Card",
   className,
-  open,
-  onOpenChange
-}: VGSPaymentFormProps) => {
+}) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cardholderName, setCardholderName] = useState('');
   const collectRef = useRef<any>(null);
   const { toast } = useToast();
   
   useEffect(() => {
-    if (open) {
-      // Load VGS Collect script
-      const script = document.createElement('script');
-      script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
-      script.async = true;
-      script.onload = initializeVGSCollect;
-      
-      // Check if script is already loaded
-      if (!document.querySelector('script[src="https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js"]')) {
-        document.body.appendChild(script);
-      } else {
-        initializeVGSCollect();
-      }
+    // Load VGS Collect script
+    const script = document.createElement('script');
+    script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
+    script.async = true;
+    script.onload = initializeVGSCollect;
+    
+    // Check if script is already loaded
+    if (!document.querySelector('script[src="https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js"]')) {
+      document.body.appendChild(script);
+    } else {
+      initializeVGSCollect();
     }
     
     return () => {
@@ -55,7 +49,7 @@ export const VGSPaymentForm = ({
         collectRef.current.destroy();
       }
     };
-  }, [open, formId]);
+  }, [formId]);
   
   const initializeVGSCollect = () => {
     try {
@@ -161,7 +155,7 @@ export const VGSPaymentForm = ({
       console.error('Failed to initialize VGS Collect:', error);
       toast({
         title: "Error",
-        description: "Failed to initialize payment form",
+        description: "Failed to initialize card form",
         variant: "destructive"
       });
     }
@@ -171,7 +165,16 @@ export const VGSPaymentForm = ({
     if (!collectRef.current) {
       toast({
         title: "Error",
-        description: "Payment form not initialized",
+        description: "Card form not initialized",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!cardholderName) {
+      toast({
+        title: "Error",
+        description: "Please enter cardholder name",
         variant: "destructive"
       });
       return;
@@ -187,8 +190,7 @@ export const VGSPaymentForm = ({
           'Content-Type': 'application/json'
         },
         data: {
-          amount: amount || 0,
-          currency: 'USD'
+          cardholder_name: cardholderName
         }
       },
       async (status: number, response: any) => {
@@ -198,19 +200,24 @@ export const VGSPaymentForm = ({
         
         if (status >= 200 && status < 300) {
           try {
-            // Record the transaction in Supabase
+            // Generate a unique card token
+            const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
+            
+            // Get the expiry date in MM/YY format
+            const now = new Date();
+            const expiryMonth = String(now.getMonth() + 1).padStart(2, '0');
+            const expiryYear = now.getFullYear() + 2;
+            const expiration = `${expiryMonth}/${expiryYear}`;
+            
+            // Store card in the database
             const { data, error } = await supabase
-              .from('marqeta_transactions')
+              .from('cards')
               .insert([
                 {
-                  amount: amount || 10.00,
-                  currency: 'USD',
-                  status: 'Completed',
-                  merchant_name: 'Payment Form',
-                  transaction_type: 'payment',
-                  description: 'VGS payment form transaction',
-                  payment_method: 'Credit Card',
-                  card_type: 'Unknown'
+                  card_token: cardToken,
+                  card_type: 'virtual',
+                  expiration: expiration,
+                  status: 'active'
                 }
               ]);
             
@@ -218,16 +225,15 @@ export const VGSPaymentForm = ({
             
             toast({
               title: "Success",
-              description: "Payment processed successfully",
+              description: "Card added successfully",
             });
             
-            if (onOpenChange) onOpenChange(false);
-            if (onSuccess) onSuccess(response);
+            if (onSuccess) onSuccess(cardToken);
           } catch (error) {
-            console.error('Error recording transaction:', error);
+            console.error('Error saving card to database:', error);
             toast({
               title: "Error",
-              description: "Failed to record transaction",
+              description: "Failed to save card",
               variant: "destructive"
             });
             if (onError) onError(error);
@@ -235,7 +241,7 @@ export const VGSPaymentForm = ({
         } else {
           toast({
             title: "Error",
-            description: "Payment processing failed",
+            description: "Card processing failed",
             variant: "destructive"
           });
           if (onError) onError(response);
@@ -246,24 +252,28 @@ export const VGSPaymentForm = ({
         console.error('Submission Error:', error);
         toast({
           title: "Error",
-          description: "Payment processing failed",
+          description: "Card processing failed",
           variant: "destructive"
         });
         if (onError) onError(error);
       }
     );
   };
-
-  const paymentForm = (
+  
+  return (
     <Card className={`p-6 ${className}`}>
-      {amount > 0 && (
-        <div className="mb-6 text-center">
-          <p className="text-sm text-gray-500">Amount to pay</p>
-          <p className="text-2xl font-bold">${amount.toFixed(2)}</p>
-        </div>
-      )}
-      
       <div className="space-y-4">
+        <div>
+          <Label htmlFor="cardholderName" className="mb-1 block">Cardholder Name</Label>
+          <Input 
+            id="cardholderName" 
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            placeholder="John Doe"
+            className="w-full"
+          />
+        </div>
+        
         <div>
           <Label htmlFor={`${formId}-card-number`} className="mb-1 block">Card Number</Label>
           <div id={`${formId}-card-number`} className="mt-1" />
@@ -297,21 +307,4 @@ export const VGSPaymentForm = ({
       </div>
     </Card>
   );
-  
-  // If open prop is provided, render as a dialog
-  if (open !== undefined && onOpenChange) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Payment</DialogTitle>
-          </DialogHeader>
-          {paymentForm}
-        </DialogContent>
-      </Dialog>
-    );
-  }
-  
-  // Otherwise, render as a standalone form
-  return paymentForm;
 };

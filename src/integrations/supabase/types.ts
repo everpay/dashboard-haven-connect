@@ -1699,6 +1699,7 @@ export type Database = {
           phone_number: string | null
           phone_verified: boolean | null
           role: string | null
+          user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1714,6 +1715,7 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean | null
           role?: string | null
+          user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1729,6 +1731,7 @@ export type Database = {
           phone_number?: string | null
           phone_verified?: boolean | null
           role?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

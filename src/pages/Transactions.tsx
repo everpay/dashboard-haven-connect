@@ -1,9 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, Filter, Plus, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +9,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { supabase } from "@/lib/supabase";
 import { useQuery } from '@tanstack/react-query';
+import { AddCardModal } from '@/components/payment/AddCardModal';
+import { VGSPaymentForm } from '@/components/payment/VGSPaymentForm';
 
 const Transactions = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -96,103 +97,19 @@ const Transactions = () => {
   });
 
   const handleOpenPaymentModal = () => {
-    // Load VGS Collect script dynamically
-    const script = document.createElement('script');
-    script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
-    script.async = true;
-    script.onload = () => {
-      initializeVGSCollect();
-    };
-    document.body.appendChild(script);
     setIsPaymentModalOpen(true);
   };
 
-  const initializeVGSCollect = () => {
-    // Type assertion for VGSCollect
-    const VGSCollect = (window as any).VGSCollect;
-    
-    if (VGSCollect) {
-      const collect = VGSCollect.create('tntxrsfst11', 'sandbox');
-      
-      collect.field('#card-number', {
-        type: 'cardNumber',
-        name: 'card_number',
-        placeholder: 'Card Number',
-        css: {
-          'color': '#333',
-          'font-size': '16px',
-          'padding': '10px',
-          'border': '1px solid #ccc',
-          'border-radius': '5px',
-          'margin-bottom': '10px'
-        }
-      });
+  const handleOpenAddCardModal = () => {
+    setIsAddCardModalOpen(true);
+  };
 
-      collect.field('#card-expiry', {
-        type: 'cardExpiryDate',
-        name: 'card_expiry',
-        placeholder: 'MM / YY',
-        css: {
-          'color': '#333',
-          'font-size': '16px',
-          'padding': '10px',
-          'border': '1px solid #ccc',
-          'border-radius': '5px',
-          'margin-bottom': '10px'
-        }
-      });
-
-      collect.field('#card-cvc', {
-        type: 'cardCVC',
-        name: 'card_cvc',
-        placeholder: 'CVC',
-        css: {
-          'color': '#333',
-          'font-size': '16px',
-          'padding': '10px',
-          'border': '1px solid #ccc',
-          'border-radius': '5px',
-          'margin-bottom': '10px'
-        }
-      });
-
-      // Optional: Add event listeners for validation and submit
-      collect.on('field:valid', (data: any) => {
-        console.log('Field Valid:', data);
-      });
-
-      collect.on('field:invalid', (data: any) => {
-        console.log('Field Invalid:', data);
-      });
-
-      const submitButton = document.getElementById('submit-button');
-      if (submitButton) {
-        submitButton.addEventListener('click', () => {
-          collect.submit('/post', {
-            extraHeaders: {
-              'X-Custom-Header': 'Your Custom Value'
-            },
-            form: {
-              "card_number": "{{card_number}}",
-              "card_expiry": "{{card_expiry}}",
-              "card_cvc": "{{card_cvc}}"
-            }
-          }, (status: number, response: any) => {
-            console.log('Response Status:', status);
-            console.log('Response Data:', response);
-            toast({ title: "Success", description: "Payment processed successfully!" });
-            setIsPaymentModalOpen(false);
-          }, (error: any) => {
-            console.error('Submission Error:', error);
-            toast({ 
-              title: "Error", 
-              description: "Payment processing failed.", 
-              variant: "destructive" 
-            });
-          });
-        });
-      }
-    }
+  const handleCardAdded = async (cardToken: string) => {
+    toast({
+      title: "Card Added",
+      description: "Your card has been added successfully.",
+    });
+    refetch();
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,13 +157,22 @@ const Transactions = () => {
             <h1 className="text-2xl font-bold text-[#19363B]">Transactions</h1>
             <p className="text-gray-500">View and manage your transactions</p>
           </div>
-          <Button 
-            onClick={handleOpenPaymentModal}
-            className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Payment
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              onClick={handleOpenAddCardModal}
+              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Card
+            </Button>
+            <Button 
+              onClick={handleOpenPaymentModal}
+              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Payment
+            </Button>
+          </div>
         </div>
         
         {/* Status filter cards */}
@@ -396,41 +322,34 @@ const Transactions = () => {
         </Card>
       </div>
 
+      {/* Add Card Modal */}
+      <AddCardModal 
+        open={isAddCardModalOpen} 
+        onOpenChange={setIsAddCardModalOpen}
+        onSuccess={handleCardAdded}
+      />
+
       {/* Payment Modal */}
-      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add Payment Method</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="card-number" className="text-right">
-                Card Number
-              </Label>
-              <div className="col-span-3">
-                <div id="card-number"></div>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="card-expiry" className="text-right">
-                Card Expiry
-              </Label>
-              <div className="col-span-3">
-                <div id="card-expiry"></div>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="card-cvc" className="text-right">
-                Card CVC
-              </Label>
-              <div className="col-span-3">
-                <div id="card-cvc"></div>
-              </div>
-            </div>
-          </div>
-          <Button id="submit-button" className="bg-[#1AA47B] hover:bg-[#19363B]">Submit Payment</Button>
-        </DialogContent>
-      </Dialog>
+      <VGSPaymentForm 
+        formId="payment-form"
+        open={isPaymentModalOpen}
+        onOpenChange={setIsPaymentModalOpen}
+        onSuccess={(response) => {
+          console.log('Payment successful:', response);
+          toast({
+            title: "Success",
+            description: "Payment processed successfully!"
+          });
+        }}
+        onError={(error) => {
+          console.error('Payment failed:', error);
+          toast({ 
+            title: "Error", 
+            description: "Payment processing failed.", 
+            variant: "destructive" 
+          });
+        }}
+      />
     </DashboardLayout>
   );
 };
