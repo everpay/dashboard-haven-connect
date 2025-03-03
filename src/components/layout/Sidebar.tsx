@@ -13,7 +13,8 @@ import {
   BarChart2,
   User,
   FileText,
-  Package
+  Package,
+  Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -57,6 +58,7 @@ export const Sidebar = () => {
   const links = [
     { to: '/', icon: <Home size={20} />, label: 'Dashboard' },
     { to: '/transactions', icon: <BarChart2 size={20} />, label: 'Transactions' },
+    { to: '/payment-link', icon: <LinkIcon size={20} />, label: 'Payment Links' },
     { to: '/invoicing', icon: <FileText size={20} />, label: 'Invoicing' },
     { to: '/products', icon: <Package size={20} />, label: 'Products' },
     { to: '/customers', icon: <Users size={20} />, label: 'Customers' },

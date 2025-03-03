@@ -16,6 +16,8 @@ import Customers from "./pages/Customers"
 import Cards from "./pages/Cards"
 import Invoicing from "./pages/Invoicing"
 import Products from "./pages/Products"
+import PaymentLink from "./pages/PaymentLink"
+import Payment from "./pages/Payment"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +42,8 @@ const App = () => (
             <Route path="/billing" element={<Billing />} />
             <Route path="/team" element={<Team />} />
             <Route path="/transactions" element={<Transactions />} />
+            <Route path="/payment-link" element={<PaymentLink />} />
+            <Route path="/payment/:paymentId" element={<Payment />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/cards" element={<Cards />} />
             <Route path="/invoicing" element={<Invoicing />} />
