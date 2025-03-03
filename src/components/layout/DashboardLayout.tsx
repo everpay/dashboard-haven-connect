@@ -51,10 +51,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       </div>
                       <div className="py-2">
                         <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer">
-                          <Button variant="ghost" size="icon" className="text-gray-500">
-                           <Settings className="h-5 w-5" />
+                           <Settings className="w-2" size="icon">
                             <Link to="/account" className="w-full">Settings</Link>
-                         </Button>
+                         </Settings>
                         </DropdownMenu.Item>
                         <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer">
                           <Link to="/billing" className="w-full">Billing</Link>
