@@ -458,7 +458,7 @@ export default function SignIn() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full"
-                    placeholder="john.doe@example.com"
+                    placeholder="richard.roe@example.com"
                     required
                   />
                 </div>
@@ -513,7 +513,7 @@ export default function SignIn() {
             <Link to="/privacy" className="hover:text-gray-600">
               Privacy Policy
             </Link>
-            <span>Copyright 2023</span>
+            <span>Copyright 2025 Everpay</span>
           </div>
         </div>
       </div>
@@ -523,9 +523,7 @@ export default function SignIn() {
         <div className="max-w-lg text-center z-10">
           <h2 className="text-5xl font-bold text-white mb-6">Get Smart With Money</h2>
           <p className="text-gray-300 text-lg">
-            DaPay help you set saving goals, earn cash back offers. Go to disclaimer
-            for more details and get paychecks up to two days early. Get a $20 bonus
-            when you receive qualifying direct deposits
+            Everpay helps you save money on your daily business transactions
           </p>
           <div className="flex justify-center gap-2 mt-8">
             <div className="w-2 h-2 rounded-full bg-white"></div>
