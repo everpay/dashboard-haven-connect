@@ -14,7 +14,8 @@ import {
   User,
   FileText,
   Package,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Plug
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +60,7 @@ export const Sidebar = () => {
     { to: '/', icon: <Home size={20} />, label: 'Dashboard' },
     { to: '/transactions', icon: <BarChart2 size={20} />, label: 'Transactions' },
     { to: '/payment-link', icon: <LinkIcon size={20} />, label: 'Payment Links' },
+    { to: '/integrations', icon: <Plug size={20} />, label: 'Integrations' },
     { to: '/customers', icon: <Users size={20} />, label: 'Customers' },
     { to: '/invoicing', icon: <FileText size={20} />, label: 'Invoicing' },
     { to: '/products', icon: <Package size={20} />, label: 'Products' },

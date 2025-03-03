@@ -2,6 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CardForm } from './CardForm';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AddCardModalProps {
   open: boolean;
@@ -14,9 +15,19 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
   onOpenChange,
   onSuccess
 }) => {
+  const { toast } = useToast();
+
   const handleCardAdded = (cardToken: string) => {
     if (onSuccess) onSuccess(cardToken);
     onOpenChange(false);
+  };
+
+  const handleError = (error: any) => {
+    toast({
+      title: "Error",
+      description: "There was a problem adding your card. Please try again.",
+      variant: "destructive"
+    });
   };
 
   return (
@@ -29,7 +40,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
           formId="add-card-form"
           buttonText="Add Card"
           onSuccess={handleCardAdded}
-          onError={() => {}}
+          onError={handleError}
         />
       </DialogContent>
     </Dialog>
