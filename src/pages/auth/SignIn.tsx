@@ -269,9 +269,9 @@ export default function SignIn() {
       {/* Left Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center">
         <div className="w-full max-w-md space-y-8">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
-            <h1 className="ml-1 text-xl font-bold text-[#19363B]">everpay</h1>
+            <h1 className="ml-1 text-2xl font-bold text-[#19363B]">everpay</h1>
           </div>
 
           <div>
