@@ -149,6 +149,7 @@ export default function SignIn() {
         <div className="w-full max-w-md space-y-8">
           <div className="flex items-center gap-2">
             <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
+            <h1 className="ml-3 text-xl font-bold text-[#19363B]">everpay</h1>
           </div>
 
           <div>
