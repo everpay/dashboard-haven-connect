@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,13 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreditCard, Link as LinkIcon, Copy, Eye, Download, Settings, Globe, Check, ExternalLink } from 'lucide-react';
+import { CreditCard, Link as LinkIcon, Copy, Eye, Download, Settings, Globe, Check, ExternalLink, FileText, FileIcon } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { useNavigate } from 'react-router-dom';
 
 const HostedPaymentPage = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [paymentLink, setPaymentLink] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [amount, setAmount] = useState('');
@@ -21,6 +24,7 @@ const HostedPaymentPage = () => {
   const [description, setDescription] = useState('');
   const [expiresAfter, setExpiresAfter] = useState('7');
   const [oneTime, setOneTime] = useState(true);
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
   
   // Theme options for payment page
   const [theme, setTheme] = useState('default');
@@ -35,7 +39,7 @@ const HostedPaymentPage = () => {
   const generatePaymentLink = () => {
     // This would typically call an API to create a payment link in a real application
     const randomId = Math.random().toString(36).substring(2, 10);
-    const mockPaymentLink = `https://pay.everpay.com/${randomId}`;
+    const mockPaymentLink = `https://pay.everpayinc.com/${randomId}`;
     setPaymentLink(mockPaymentLink);
     
     toast({
@@ -53,16 +57,305 @@ const HostedPaymentPage = () => {
   };
   
   const previewPaymentPage = () => {
-    window.open(paymentLink, '_blank');
-    // In a real application, we might want to show a modal with a preview instead
+    // Create a basic HTML preview of what the payment page would look like
+    if (previewIframeRef.current) {
+      const iframeDoc = previewIframeRef.current.contentDocument || previewIframeRef.current.contentWindow?.document;
+      
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Payment Preview</title>
+              <style>
+                body {
+                  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+                  margin: 0;
+                  padding: 20px;
+                  background-color: #f9f9f9;
+                }
+                .payment-container {
+                  max-width: 500px;
+                  margin: 0 auto;
+                  background-color: white;
+                  border-radius: 8px;
+                  padding: 20px;
+                  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                  display: flex;
+                  align-items: center;
+                  margin-bottom: 20px;
+                }
+                .logo {
+                  max-height: 40px;
+                  margin-right: 10px;
+                }
+                .title {
+                  font-size: 24px;
+                  font-weight: 600;
+                  color: #333;
+                }
+                .amount {
+                  font-size: 36px;
+                  font-weight: 700;
+                  margin: 20px 0;
+                  text-align: center;
+                }
+                .description {
+                  color: #666;
+                  margin-bottom: 20px;
+                }
+                .form-group {
+                  margin-bottom: 15px;
+                }
+                label {
+                  display: block;
+                  margin-bottom: 5px;
+                  font-weight: 500;
+                }
+                input {
+                  width: 100%;
+                  padding: 10px;
+                  border: 1px solid #ddd;
+                  border-radius: 4px;
+                  font-size: 16px;
+                }
+                .pay-button {
+                  width: 100%;
+                  padding: 12px;
+                  background-color: ${buttonColor};
+                  color: #19363B;
+                  border: none;
+                  border-radius: 4px;
+                  font-size: 16px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  margin-top: 20px;
+                }
+                .powered-by {
+                  text-align: center;
+                  font-size: 12px;
+                  color: #999;
+                  margin-top: 20px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="payment-container">
+                <div class="header">
+                  ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="Logo" />` : ''}
+                  <div class="title">Payment</div>
+                </div>
+                <div class="amount">${currency} ${parseFloat(amount || '0').toFixed(2)}</div>
+                <div class="description">${description || 'Payment'}</div>
+                
+                <div class="form-group">
+                  <label for="card">Card Information</label>
+                  <input type="text" id="card" placeholder="1234 1234 1234 1234" />
+                </div>
+                
+                <div class="form-group" style="display: flex; gap: 10px;">
+                  <div style="flex: 1;">
+                    <label for="expiry">Expiry</label>
+                    <input type="text" id="expiry" placeholder="MM/YY" />
+                  </div>
+                  <div style="flex: 1;">
+                    <label for="cvv">CVV</label>
+                    <input type="text" id="cvv" placeholder="123" />
+                  </div>
+                </div>
+                
+                ${collectBillingAddress ? `
+                <div class="form-group">
+                  <label for="billing">Billing Address</label>
+                  <input type="text" id="billing" placeholder="123 Main St" />
+                </div>
+                ` : ''}
+                
+                ${collectShippingAddress ? `
+                <div class="form-group">
+                  <label for="shipping">Shipping Address</label>
+                  <input type="text" id="shipping" placeholder="123 Main St" />
+                </div>
+                ` : ''}
+                
+                ${allowCoupons ? `
+                <div class="form-group">
+                  <label for="coupon">Promo Code</label>
+                  <input type="text" id="coupon" placeholder="Enter code" />
+                </div>
+                ` : ''}
+                
+                <button class="pay-button">Pay ${currency} ${parseFloat(amount || '0').toFixed(2)}</button>
+                
+                <div class="powered-by">Powered by everpayinc.com</div>
+              </div>
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
+      }
+    }
+    
+    toast({
+      title: "Preview generated",
+      description: "See the preview below",
+    });
+  };
+  
+  const exportToPDF = () => {
+    if (!amount) {
+      toast({
+        title: "Export failed",
+        description: "Please enter an amount before exporting",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const doc = new jsPDF();
+    
+    doc.setFontSize(22);
+    doc.text('Hosted Payment Page', 20, 20);
+    
+    doc.setFontSize(14);
+    doc.text(`Amount: ${currency} ${amount}`, 20, 40);
+    doc.text(`Description: ${description || 'N/A'}`, 20, 50);
+    doc.text(`Expires after: ${expiresAfter} days`, 20, 60);
+    doc.text(`One-time use: ${oneTime ? 'Yes' : 'No'}`, 20, 70);
+    
+    if (paymentLink) {
+      doc.text('Payment link:', 20, 90);
+      doc.setTextColor(0, 0, 255);
+      doc.text(paymentLink, 20, 100);
+    }
+    
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(10);
+    doc.text('Generated by everpayinc.com', 20, 120);
+    
+    doc.save('payment-page-details.pdf');
+    
+    toast({
+      title: "PDF exported",
+      description: "Payment page details have been exported to PDF",
+    });
+  };
+  
+  const exportToCSV = () => {
+    if (!amount) {
+      toast({
+        title: "Export failed",
+        description: "Please enter an amount before exporting",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const headers = ['Amount', 'Currency', 'Description', 'Expires After', 'One-Time Use', 'Payment Link'];
+    const data = [
+      amount,
+      currency,
+      description || 'N/A',
+      `${expiresAfter} days`,
+      oneTime ? 'Yes' : 'No',
+      paymentLink || 'N/A'
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      data.join(',')
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'payment-page-details.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "CSV exported",
+      description: "Payment page details have been exported to CSV",
+    });
+  };
+  
+  const exportToXML = () => {
+    if (!amount) {
+      toast({
+        title: "Export failed",
+        description: "Please enter an amount before exporting",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<PaymentPage>
+  <Amount>${amount}</Amount>
+  <Currency>${currency}</Currency>
+  <Description>${description || 'N/A'}</Description>
+  <ExpiresAfter>${expiresAfter} days</ExpiresAfter>
+  <OneTimeUse>${oneTime ? 'Yes' : 'No'}</OneTimeUse>
+  <PaymentLink>${paymentLink || 'N/A'}</PaymentLink>
+</PaymentPage>`;
+    
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'payment-page-details.xml');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "XML exported",
+      description: "Payment page details have been exported to XML",
+    });
   };
   
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Hosted Payment Page</h1>
-          <p className="text-gray-500">Create customizable payment pages for your customers</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Hosted Payment Page</h1>
+            <p className="text-gray-500">Create customizable payment pages for your customers</p>
+          </div>
+          
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={exportToPDF}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Export to PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={exportToCSV}
+            >
+              <FileIcon className="h-4 w-4 mr-2" />
+              Export to CSV
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={exportToXML}
+            >
+              <FileIcon className="h-4 w-4 mr-2" />
+              Export to XML
+            </Button>
+          </div>
         </div>
         
         <Tabs defaultValue="create">
@@ -245,6 +538,19 @@ const HostedPaymentPage = () => {
                 </CardContent>
               </Card>
             </div>
+            
+            {paymentLink && (
+              <div className="mt-6">
+                <h3 className="text-lg font-medium mb-4">Preview</h3>
+                <div className="border rounded-lg overflow-hidden h-[500px]">
+                  <iframe 
+                    ref={previewIframeRef}
+                    className="w-full h-full"
+                    title="Payment Preview"
+                  />
+                </div>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="customize">

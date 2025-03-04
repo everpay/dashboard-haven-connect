@@ -1118,18 +1118,21 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          supports_hosted_payment: boolean | null
           type: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
+          supports_hosted_payment?: boolean | null
           type: string
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
+          supports_hosted_payment?: boolean | null
           type?: string
         }
         Relationships: []
@@ -1141,6 +1144,7 @@ export type Database = {
           created_at: string | null
           flexify_private_key: string | null
           flexify_public_key: string | null
+          hosted_payment_metadata: Json | null
           id: string
           name: string
           payok_api_key: string | null
@@ -1155,6 +1159,7 @@ export type Database = {
           created_at?: string | null
           flexify_private_key?: string | null
           flexify_public_key?: string | null
+          hosted_payment_metadata?: Json | null
           id?: string
           name: string
           payok_api_key?: string | null
@@ -1169,6 +1174,7 @@ export type Database = {
           created_at?: string | null
           flexify_private_key?: string | null
           flexify_public_key?: string | null
+          hosted_payment_metadata?: Json | null
           id?: string
           name?: string
           payok_api_key?: string | null
