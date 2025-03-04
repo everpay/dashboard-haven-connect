@@ -181,7 +181,7 @@ export const Sidebar = () => {
           <div className="flex items-center justify-between p-4 border-b">
             <div className={cn('flex items-center', !expanded && 'justify-center w-full')}>
               <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
-              {expanded && <h1 className="ml-3 text-xl font-bold text-[#19363B]">everpay</h1>}
+              {expanded && <h1 className="ml-0 text-xl font-bold text-[#19363B]">everpay</h1>}
             </div>
             
             <Button
@@ -325,8 +325,8 @@ export const Sidebar = () => {
                 title="Settings"
                 icon={<Settings size={18} />}
                 expanded={expanded}
-                isOpen={isMenuOpen("Account")}
-                toggleOpen={() => toggleMenu("Account")}
+                isOpen={isMenuOpen("Settings")}
+                toggleOpen={() => toggleMenu("Settings")}
                 activePath={location.pathname}
                 closeMobile={closeMobile}
               >
