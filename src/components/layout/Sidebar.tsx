@@ -260,15 +260,6 @@ export const Sidebar = () => {
                 />
               </SidebarMenuGroup>
               
-              <SidebarLink
-                to="/integrations"
-                icon={<Plug size={18} />}
-                label="Integrations"
-                isActive={isActive("/integrations")}
-                expanded={expanded}
-                onClick={closeMobile}
-              />
-              
               <SidebarMenuGroup
                 title="Customers"
                 icon={<Users size={18} />}
@@ -317,6 +308,15 @@ export const Sidebar = () => {
                 icon={<CreditCard size={18} />}
                 label="Cards"
                 isActive={isActive("/cards")}
+                expanded={expanded}
+                onClick={closeMobile}
+              />
+
+              <SidebarLink
+                to="/integrations"
+                icon={<Plug size={18} />}
+                label="Integrations"
+                isActive={isActive("/integrations")}
                 expanded={expanded}
                 onClick={closeMobile}
               />
