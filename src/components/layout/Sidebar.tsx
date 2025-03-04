@@ -322,8 +322,8 @@ export const Sidebar = () => {
               />
               
               <SidebarMenuGroup
-                title="Account"
-                icon={<User size={18} />}
+                title="Settings"
+                icon={<Settings size={18} />}
                 expanded={expanded}
                 isOpen={isMenuOpen("Account")}
                 toggleOpen={() => toggleMenu("Account")}
@@ -346,7 +346,7 @@ export const Sidebar = () => {
                 />
                 <SubLink
                   to="/account"
-                  label="Settings"
+                  label="Account"
                   isActive={isActive("/account")}
                   expanded={expanded}
                   onClick={closeMobile}
