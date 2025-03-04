@@ -148,7 +148,7 @@ export default function SignIn() {
       <div className="w-full md:w-1/2 bg-white p-8 flex items-center justify-center">
         <div className="w-full max-w-md space-y-8">
           <div className="flex items-center gap-2">
-            <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-6" />
+            <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
             <h1 className="ml-1 text-xl font-bold text-[#19363B]">everpay</h1>
           </div>
 
@@ -209,7 +209,7 @@ export default function SignIn() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="w-full"
-                          placeholder="john.doe@example.com"
+                          placeholder="john.doe@yourcompany.com"
                           required
                         />
                       </div>
@@ -511,10 +511,10 @@ export default function SignIn() {
           </p>
 
           <div className="flex justify-between text-sm text-gray-400 pt-8">
-            <Link to="/privacy" className="hover:text-gray-600">
+            <Link to="//everpayinc.com/privacy-policy" className="hover:text-gray-600">
               Privacy Policy
             </Link>
-            <span>Copyright 2025 Everpay</span>
+            <span>© 2025 Everpay</span>
           </div>
         </div>
       </div>
