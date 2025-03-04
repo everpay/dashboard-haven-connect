@@ -1606,6 +1606,7 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          anomaly: boolean | null
           created_at: string | null
           currency: string | null
           customer_email: string
@@ -1613,11 +1614,13 @@ export type Database = {
           ip_address: unknown
           merchant_id: string
           payment_method: string | null
+          risk_score: number | null
           status: string | null
           updated_at: string | null
         }
         Insert: {
           amount: number
+          anomaly?: boolean | null
           created_at?: string | null
           currency?: string | null
           customer_email: string
@@ -1625,11 +1628,13 @@ export type Database = {
           ip_address: unknown
           merchant_id: string
           payment_method?: string | null
+          risk_score?: number | null
           status?: string | null
           updated_at?: string | null
         }
         Update: {
           amount?: number
+          anomaly?: boolean | null
           created_at?: string | null
           currency?: string | null
           customer_email?: string
@@ -1637,6 +1642,7 @@ export type Database = {
           ip_address?: unknown
           merchant_id?: string
           payment_method?: string | null
+          risk_score?: number | null
           status?: string | null
           updated_at?: string | null
         }
