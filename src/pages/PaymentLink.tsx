@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -6,15 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { VGSPaymentForm } from '@/components/payment/VGSPaymentForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { CopyIcon, Share2Icon, PlusIcon, CheckIcon } from 'lucide-react';
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
 import * as z from 'zod';
 import { withValidation } from '@/lib/zodMiddleware';
+import { Badge } from '@/components/ui/badge';
 
+// Define payment link schema
 const paymentLinkSchema = z.object({
-  amount: z.string().min(1, "Amount is required")
+  amount: z.string()
+    .min(1, "Amount is required")
     .refine(val => !isNaN(Number(val)), "Amount must be a number")
     .refine(val => Number(val) > 0, "Amount must be greater than 0"),
   description: z.string().min(1, "Description is required"),
@@ -33,7 +37,7 @@ const PaymentLink = () => {
   const [activeTab, setActiveTab] = useState<string>('create');
   const [paymentId, setPaymentId] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
-  const { toast } = useToast();
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
 
   const handleCreatePaymentLink = async () => {
     const formData: PaymentLinkFormValues = {
@@ -47,6 +51,7 @@ const PaymentLink = () => {
       paymentLinkSchema,
       async (validatedData) => {
         try {
+          setFormErrors({});
           const paymentId = uuidv4();
           
           const { data, error } = await supabase
@@ -74,30 +79,20 @@ const PaymentLink = () => {
           setPaymentId(paymentId);
           setActiveTab('share');
           
-          toast({
-            title: "Success",
-            description: "Payment link created successfully",
-          });
+          toast.success("Payment link created successfully");
         } catch (error: any) {
           console.error('Error creating payment link:', error);
-          toast({
-            title: "Error",
-            description: error.message || "Failed to create payment link",
-            variant: "destructive"
-          });
+          toast.error(error.message || "Failed to create payment link");
         }
       },
       (error) => {
+        setFormErrors(error.errors);
         const errorMessages = Object.values(error.errors)
           .flat()
           .filter(Boolean)
           .join(', ');
           
-        toast({
-          title: "Invalid form data",
-          description: errorMessages || "Please check the form fields",
-          variant: "destructive"
-        });
+        toast.error(errorMessages || "Please check the form fields");
       }
     )(formData);
   };
@@ -106,19 +101,12 @@ const PaymentLink = () => {
     try {
       await navigator.clipboard.writeText(generatedLink);
       setCopied(true);
-      toast({
-        title: "Copied",
-        description: "Payment link copied to clipboard",
-      });
+      toast.success("Payment link copied to clipboard");
       
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy:', error);
-      toast({
-        title: "Error",
-        description: "Failed to copy link",
-        variant: "destructive"
-      });
+      toast.error("Failed to copy link");
     }
   };
 
@@ -131,10 +119,7 @@ const PaymentLink = () => {
           url: generatedLink,
         });
         
-        toast({
-          title: "Shared",
-          description: "Payment link shared successfully",
-        });
+        toast.success("Payment link shared successfully");
       } else {
         copyToClipboard();
       }
@@ -142,6 +127,13 @@ const PaymentLink = () => {
       console.error('Error sharing:', error);
     }
   };
+
+  // Helper to show field error
+  const getFieldError = (field: string) => {
+    return formErrors[field] && formErrors[field].length > 0 ? (
+      <p className="text-xs text-red-500 mt-1">{formErrors[field][0]}</p>
+    ) : null
+  }
 
   return (
     <DashboardLayout>
@@ -172,7 +164,9 @@ const PaymentLink = () => {
                     step="0.01"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
+                    className={formErrors.amount ? 'border-red-500' : ''}
                   />
+                  {getFieldError('amount')}
                 </div>
                 
                 <div>
@@ -182,7 +176,9 @@ const PaymentLink = () => {
                     placeholder="Payment for services"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    className={formErrors.description ? 'border-red-500' : ''}
                   />
+                  {getFieldError('description')}
                 </div>
                 
                 <div>
@@ -192,7 +188,9 @@ const PaymentLink = () => {
                     placeholder="John Doe"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
+                    className={formErrors.customerName ? 'border-red-500' : ''}
                   />
+                  {getFieldError('customerName')}
                 </div>
                 
                 <div>
@@ -203,7 +201,9 @@ const PaymentLink = () => {
                     placeholder="customer@example.com"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
+                    className={formErrors.customerEmail ? 'border-red-500' : ''}
                   />
+                  {getFieldError('customerEmail')}
                 </div>
                 
                 <Button 
@@ -227,6 +227,9 @@ const PaymentLink = () => {
                   <p>Amount: ${parseFloat(amount).toFixed(2)}</p>
                   {description && <p>Description: {description}</p>}
                   {customerName && <p>Customer: {customerName}</p>}
+                  <div className="mt-2">
+                    <Badge variant="success">Ready to Share</Badge>
+                  </div>
                 </div>
                 
                 <div>
@@ -278,6 +281,7 @@ const PaymentLink = () => {
                     setCustomerEmail('');
                     setCustomerName('');
                     setGeneratedLink('');
+                    setFormErrors({});
                   }}
                 >
                   Create Another Link
@@ -296,9 +300,11 @@ const PaymentLink = () => {
             amount={parseFloat(amount) || 10.00}
             onSuccess={(response) => {
               console.log('Payment successful:', response);
+              toast.success("Test payment successful");
             }}
             onError={(error) => {
               console.error('Payment failed:', error);
+              toast.error("Test payment failed");
             }}
           />
         </Card>

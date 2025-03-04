@@ -9,6 +9,43 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import * as z from 'zod'
+import { withValidation } from "@/lib/zodMiddleware"
+import { Badge } from "@/components/ui/badge"
+
+// Define validation schemas
+const emailSchema = z.string().email('Invalid email address')
+const passwordSchema = z.string().min(8, 'Password must be at least 8 characters long')
+
+const basicInfoSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  phone: z.string().optional()
+})
+
+const addressInfoSchema = z.object({
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  addressLine1: z.string().min(1, 'Address is required'),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State is required'),
+  postalCode: z.string().min(1, 'Postal code is required'),
+  country: z.string().min(1, 'Country is required')
+})
+
+const ssnSchema = z.object({
+  ssnLastFour: z.string()
+    .length(4, 'Must be exactly 4 digits')
+    .regex(/^\d{4}$/, 'Must contain only numbers')
+})
+
+// Login schema
+const loginSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema
+})
 
 export default function SignIn() {
   const navigate = useNavigate()
@@ -16,6 +53,7 @@ export default function SignIn() {
   const [isSignUp, setIsSignUp] = useState(false) // Changed to false to default to login
   const [currentStep, setCurrentStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({})
   
   // Basic account info
   const [email, setEmail] = useState("")
@@ -36,76 +74,159 @@ export default function SignIn() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     
+    withValidation(
+      loginSchema,
+      async (validData) => {
+        setLoading(true)
+        try {
+          const { error } = await supabase.auth.signInWithPassword({
+            email: validData.email,
+            password: validData.password,
+          })
+          
+          if (error) throw error
+          toast.success("Successfully signed in!")
+          navigate("/")
+        } catch (error: any) {
+          toast.error(error.message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      (error) => {
+        setFormErrors(error.errors)
+        const errorMessages = Object.values(error.errors).flat().join(', ')
+        toast.error(errorMessages || "Invalid login details")
+      }
+    )({ email, password })
+  }
+
+  const validateCurrentStep = (): boolean => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      if (currentStep === 1) {
+        validateData(basicInfoSchema, { email, password, firstName, lastName, phone })
+      } else if (currentStep === 2) {
+        validateData(addressInfoSchema, { dateOfBirth, addressLine1, addressLine2, city, state, postalCode, country })
+      } else if (currentStep === 3) {
+        validateData(ssnSchema, { ssnLastFour })
+      }
+      setFormErrors({})
+      return true
+    } catch (error: any) {
+      if (error.errors) {
+        setFormErrors(error.errors)
+        const errorMessages = Object.values(error.errors).flat().join(', ')
+        toast.error(errorMessages || "Please fix the form errors")
+      }
+      return false
+    }
+  }
+
+  // Helper function for validation
+  const validateData = <T extends z.ZodType>(schema: T, data: any) => {
+    const result = schema.safeParse(data)
+    if (!result.success) {
+      const errors: Record<string, string[]> = {}
+      const formattedErrors = result.error.format()
+      
+      Object.entries(formattedErrors).forEach(([key, value]) => {
+        if (key !== '_errors') {
+          errors[key] = Array.isArray(value) ? value : (value._errors || [])
+        }
       })
       
-      if (error) throw error
-      toast.success("Successfully signed in!")
-      navigate("/")
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setLoading(false)
+      throw { errors }
     }
+    return result.data
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     
-    try {
-      // First create the user account
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: `${firstName} ${lastName}`,
-            first_name: firstName,
-            last_name: lastName,
-          },
-        },
-      })
-      
-      if (error) throw error
-
-      // If user was created successfully, update their profile with KYC data
-      if (data?.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            phone,
-            date_of_birth: dateOfBirth,
-            address_line_1: addressLine1,
-            address_line_2: addressLine2,
-            city,
-            state,
-            postal_code: postalCode,
-            country,
-            ssn_last_four: ssnLastFour,
-          })
-          .eq('id', data.user.id)
-        
-        if (profileError) {
-          console.error("Error updating profile:", profileError)
-          toast.error("Account created but profile update failed. Please update your profile later.")
-        } else {
-          toast.success("Account created successfully!")
-        }
-      }
-      
-      toast.success("Check your email for the confirmation link!")
-      setIsSignUp(false) // Switch to sign in
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setLoading(false)
+    // Combine all data for complete validation
+    const userData = {
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      dateOfBirth,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      postalCode,
+      country,
+      ssnLastFour
     }
+    
+    // Combine schemas for complete validation
+    const completeSchema = z.object({
+      ...basicInfoSchema.shape,
+      ...addressInfoSchema.shape,
+      ...ssnSchema.shape
+    })
+    
+    withValidation(
+      completeSchema,
+      async (validData) => {
+        setLoading(true)
+        try {
+          // First create the user account
+          const { data, error } = await supabase.auth.signUp({
+            email: validData.email,
+            password: validData.password,
+            options: {
+              data: {
+                full_name: `${validData.firstName} ${validData.lastName}`,
+                first_name: validData.firstName,
+                last_name: validData.lastName,
+              },
+            },
+          })
+          
+          if (error) throw error
+
+          // If user was created successfully, update their profile with KYC data
+          if (data?.user) {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update({
+                phone: validData.phone,
+                date_of_birth: validData.dateOfBirth,
+                address_line_1: validData.addressLine1,
+                address_line_2: validData.addressLine2,
+                city: validData.city,
+                state: validData.state,
+                postal_code: validData.postalCode,
+                country: validData.country,
+                ssn_last_four: validData.ssnLastFour,
+              })
+              .eq('id', data.user.id)
+            
+            if (profileError) {
+              console.error("Error updating profile:", profileError)
+              toast.error("Account created but profile update failed. Please update your profile later.")
+            } else {
+              toast.success("Account created successfully!")
+            }
+          }
+          
+          toast.success("Check your email for the confirmation link!")
+          setIsSignUp(false) // Switch to sign in
+        } catch (error: any) {
+          toast.error(error.message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      (error) => {
+        setFormErrors(error.errors)
+        const errorMessages = Object.values(error.errors).flat().join(', ')
+        toast.error(errorMessages || "Please fix the form errors")
+      }
+    )(userData)
   }
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -117,7 +238,7 @@ export default function SignIn() {
   }
 
   const nextStep = () => {
-    if (currentStep < maxSteps) {
+    if (validateCurrentStep() && currentStep < maxSteps) {
       setCurrentStep(prev => prev + 1)
     }
   }
@@ -125,6 +246,7 @@ export default function SignIn() {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1)
+      setFormErrors({}) // Clear errors when going back
     }
   }
 
@@ -132,14 +254,14 @@ export default function SignIn() {
 
   // Validate current step before allowing to proceed
   const canProceedToNextStep = () => {
-    if (currentStep === 1) {
-      return email.trim() !== "" && password.trim() !== "" && 
-             firstName.trim() !== "" && lastName.trim() !== ""
-    } else if (currentStep === 2) {
-      return dateOfBirth !== "" && addressLine1 !== "" && 
-             city !== "" && state !== "" && postalCode !== ""
-    }
-    return true
+    return validateCurrentStep()
+  }
+
+  // Helper to show field error
+  const getFieldError = (field: string) => {
+    return formErrors[field] && formErrors[field].length > 0 ? (
+      <p className="text-xs text-red-500 mt-1">{formErrors[field][0]}</p>
+    ) : null
   }
 
   return (
@@ -183,10 +305,11 @@ export default function SignIn() {
                             type="text"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
-                            className="w-full"
+                            className={`w-full ${formErrors.firstName ? 'border-red-500' : ''}`}
                             placeholder="John"
                             required
                           />
+                          {getFieldError('firstName')}
                         </div>
                         <div>
                           <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
@@ -195,10 +318,11 @@ export default function SignIn() {
                             type="text"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
-                            className="w-full"
+                            className={`w-full ${formErrors.lastName ? 'border-red-500' : ''}`}
                             placeholder="Doe"
                             required
                           />
+                          {getFieldError('lastName')}
                         </div>
                       </div>
                       <div>
@@ -208,10 +332,11 @@ export default function SignIn() {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className="w-full"
+                          className={`w-full ${formErrors.email ? 'border-red-500' : ''}`}
                           placeholder="john.doe@yourcompany.com"
                           required
                         />
+                        {getFieldError('email')}
                       </div>
                       <div>
                         <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
@@ -220,9 +345,10 @@ export default function SignIn() {
                           type="tel"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
-                          className="w-full"
+                          className={`w-full ${formErrors.phone ? 'border-red-500' : ''}`}
                           placeholder="+1 (555) 123-4567"
                         />
+                        {getFieldError('phone')}
                       </div>
                       <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
@@ -232,7 +358,7 @@ export default function SignIn() {
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pr-10"
+                            className={`w-full pr-10 ${formErrors.password ? 'border-red-500' : ''}`}
                             placeholder="••••••••••"
                             required
                           />
@@ -244,6 +370,7 @@ export default function SignIn() {
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                           </button>
                         </div>
+                        {getFieldError('password')}
                       </div>
                     </motion.div>
                   )}
@@ -263,9 +390,10 @@ export default function SignIn() {
                           type="date"
                           value={dateOfBirth}
                           onChange={(e) => setDateOfBirth(e.target.value)}
-                          className="w-full"
+                          className={`w-full ${formErrors.dateOfBirth ? 'border-red-500' : ''}`}
                           required
                         />
+                        {getFieldError('dateOfBirth')}
                       </div>
                       <div>
                         <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
@@ -274,10 +402,11 @@ export default function SignIn() {
                           type="text"
                           value={addressLine1}
                           onChange={(e) => setAddressLine1(e.target.value)}
-                          className="w-full"
+                          className={`w-full ${formErrors.addressLine1 ? 'border-red-500' : ''}`}
                           placeholder="123 Main St"
                           required
                         />
+                        {getFieldError('addressLine1')}
                       </div>
                       <div>
                         <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700 mb-1">Address Line 2 (Optional)</label>
@@ -298,10 +427,11 @@ export default function SignIn() {
                             type="text"
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
-                            className="w-full"
+                            className={`w-full ${formErrors.city ? 'border-red-500' : ''}`}
                             placeholder="New York"
                             required
                           />
+                          {getFieldError('city')}
                         </div>
                         <div>
                           <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">State</label>
@@ -310,10 +440,11 @@ export default function SignIn() {
                             type="text"
                             value={state}
                             onChange={(e) => setState(e.target.value)}
-                            className="w-full"
+                            className={`w-full ${formErrors.state ? 'border-red-500' : ''}`}
                             placeholder="NY"
                             required
                           />
+                          {getFieldError('state')}
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -324,10 +455,11 @@ export default function SignIn() {
                             type="text"
                             value={postalCode}
                             onChange={(e) => setPostalCode(e.target.value)}
-                            className="w-full"
+                            className={`w-full ${formErrors.postalCode ? 'border-red-500' : ''}`}
                             placeholder="10001"
                             required
                           />
+                          {getFieldError('postalCode')}
                         </div>
                         <div>
                           <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
@@ -336,10 +468,11 @@ export default function SignIn() {
                             type="text"
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
-                            className="w-full"
+                            className={`w-full ${formErrors.country ? 'border-red-500' : ''}`}
                             placeholder="US"
                             required
                           />
+                          {getFieldError('country')}
                         </div>
                       </div>
                     </motion.div>
@@ -366,13 +499,14 @@ export default function SignIn() {
                           type="text"
                           value={ssnLastFour}
                           onChange={(e) => setSsnLastFour(e.target.value)}
-                          className="w-full"
+                          className={`w-full ${formErrors.ssnLastFour ? 'border-red-500' : ''}`}
                           placeholder="1234"
                           maxLength={4}
                           pattern="\d{4}"
                           title="Please enter exactly 4 digits"
                           required
                         />
+                        {getFieldError('ssnLastFour')}
                         <p className="text-xs text-gray-500 mt-1">
                           We only store the last 4 digits for verification purposes.
                         </p>
@@ -433,14 +567,13 @@ export default function SignIn() {
                       type="button"
                       onClick={nextStep}
                       className="bg-[#e8fb5a] hover:bg-[#e0f347] text-gray-800"
-                      disabled={!canProceedToNextStep()}
                     >
                       Next <ChevronRight className="ml-1 h-4 w-4" />
                     </Button>
                   ) : (
                     <Button
                       type="submit"
-                      disabled={loading || ssnLastFour.length !== 4}
+                      disabled={loading}
                       className="bg-[#e8fb5a] hover:bg-[#e0f347] text-gray-800"
                     >
                       {loading ? "Creating Account..." : "Create Account"}
@@ -458,10 +591,11 @@ export default function SignIn() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full"
+                    className={`w-full ${formErrors.email ? 'border-red-500' : ''}`}
                     placeholder="richard.roe@example.com"
                     required
                   />
+                  {getFieldError('email')}
                 </div>
                 <div>
                   <label htmlFor="loginPassword" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
@@ -471,7 +605,7 @@ export default function SignIn() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pr-10"
+                      className={`w-full pr-10 ${formErrors.password ? 'border-red-500' : ''}`}
                       placeholder="••••••••••"
                       required
                     />
@@ -483,6 +617,7 @@ export default function SignIn() {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  {getFieldError('password')}
                 </div>
                 <Button
                   type="submit"
@@ -503,6 +638,7 @@ export default function SignIn() {
               onClick={() => {
                 setIsSignUp(!isSignUp)
                 setCurrentStep(1)
+                setFormErrors({})
               }} 
               className="text-[#013c3f] hover:underline font-medium"
             >

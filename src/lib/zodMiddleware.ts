@@ -26,8 +26,11 @@ export function validateData<T>(schema: ZodSchema<T>, data: unknown): T {
     const formattedErrors: Record<string, string[]> = {};
     
     Object.entries(errors).forEach(([key, value]) => {
-      if (key !== '_errors' && value?._errors) {
-        formattedErrors[key] = value._errors;
+      if (key !== '_errors') {
+        // Handle both array and object error formats
+        formattedErrors[key] = Array.isArray(value) 
+          ? value 
+          : (value._errors || []);
       }
     });
 

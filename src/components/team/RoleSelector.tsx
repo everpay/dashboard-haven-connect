@@ -1,120 +1,68 @@
 
-// Import needed modules, add zod validation, and fix the getUser() usage
-// The original error was: Property 'data' does not exist on type 'Promise<UserResponse>'
-// We'll fix this by using async/await properly
-
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as z from 'zod';
 import { withValidation } from '@/lib/zodMiddleware';
 
-// Zod schema for role validation
-const roleSchema = z.object({
-  role: z.enum(['owner', 'member', 'admin', 'merchant'], {
-    errorMap: () => ({ message: "Please select a valid role" })
-  })
+export const roleSchema = z.object({
+  role: z.enum(['owner', 'admin', 'member', 'viewer']),
 });
 
-type RoleFormValues = z.infer<typeof roleSchema>;
+type Role = z.infer<typeof roleSchema>;
 
 interface RoleSelectorProps {
-  userId: string;
-  currentRole?: string;
-  onUpdate?: (role: string) => void;
+  currentRole: string;
+  onRoleChange: (role: string) => void;
+  disabled?: boolean;
 }
 
-export function RoleSelector({ userId, currentRole = 'member', onUpdate }: RoleSelectorProps) {
-  const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState(currentRole);
-  const [userName, setUserName] = useState('');
-
-  const { handleSubmit, register, formState: { errors } } = useForm<RoleFormValues>({
-    resolver: zodResolver(roleSchema),
-    defaultValues: {
-      role: currentRole as any
-    }
-  });
-
-  useEffect(() => {
-    const getUserDetails = async () => {
-      try {
-        // Fix async/await usage to properly handle the Promise
-        const { data, error } = await supabase.auth.admin.getUserById(userId);
-        
-        if (error) throw error;
-        
-        if (data && data.user) {
-          const firstName = data.user.user_metadata?.first_name || '';
-          const lastName = data.user.user_metadata?.last_name || '';
-          setUserName(`${firstName} ${lastName}`.trim() || data.user.email || 'User');
-        }
-      } catch (error) {
-        console.error('Error fetching user details:', error);
+export function RoleSelector({ currentRole, onRoleChange, disabled = false }: RoleSelectorProps) {
+  const handleRoleChange = (value: string) => {
+    withValidation(
+      roleSchema,
+      (validatedData) => {
+        onRoleChange(validatedData.role);
       }
-    };
+    )({ role: value as Role['role'] });
+  };
 
-    getUserDetails();
-  }, [userId]);
-
-  const updateRole = async (values: RoleFormValues) => {
-    setLoading(true);
-    
-    try {
-      // Validate with Zod
-      const validatedData = withValidation(roleSchema, data => data)(values);
-      if (!validatedData) return;
-      
-      const { error } = await supabase
-        .from('users')
-        .update({ role: validatedData.role })
-        .eq('id', userId);
-      
-      if (error) throw error;
-      
-      setRole(validatedData.role);
-      if (onUpdate) onUpdate(validatedData.role);
-      
-      toast.success(`Role updated to ${validatedData.role}`);
-    } catch (error: any) {
-      toast.error('Failed to update role', {
-        description: error.message
-      });
-    } finally {
-      setLoading(false);
+  const getBadgeVariant = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return 'success' as const;
+      case 'admin':
+        return 'warning' as const;
+      case 'member':
+        return 'secondary' as const;
+      default:
+        return 'outline' as const;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(updateRole)} className="flex flex-col gap-4 p-4">
-      <div>
-        <h3 className="text-lg font-medium">{userName}</h3>
-        <p className="text-sm text-gray-500">Update user role and permissions</p>
-      </div>
+    <div className="flex items-center gap-2">
+      <Badge variant={getBadgeVariant(currentRole)} className="capitalize">
+        {currentRole}
+      </Badge>
       
-      <div className="space-y-2">
-        <label htmlFor="role" className="text-sm font-medium">Role</label>
-        <select
-          id="role"
-          {...register("role")}
-          className="w-full rounded-md border border-input bg-background px-3 py-2"
+      {!disabled && (
+        <Select
+          value={currentRole}
+          onValueChange={handleRoleChange}
+          disabled={disabled}
         >
-          <option value="owner">Owner</option>
-          <option value="admin">Admin</option>
-          <option value="merchant">Merchant</option>
-          <option value="member">Member</option>
-        </select>
-        {errors.role && (
-          <p className="text-sm text-red-500">{errors.role.message}</p>
-        )}
-      </div>
-      
-      <Button type="submit" disabled={loading}>
-        {loading ? 'Updating...' : 'Update Role'}
-      </Button>
-    </form>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Change role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="owner">Owner</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="member">Member</SelectItem>
+            <SelectItem value="viewer">Viewer</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
+    </div>
   );
 }
