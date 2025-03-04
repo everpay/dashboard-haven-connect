@@ -329,7 +329,7 @@ const Index = () => {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-medium">Sales report</h2>
+              <h2 className="text-lg font-medium">Total Revenue</h2>
               <p className="text-sm text-gray-500">Sales trends over time</p>
             </div>
             <select 
