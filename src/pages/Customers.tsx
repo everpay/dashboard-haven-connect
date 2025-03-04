@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -13,13 +12,17 @@ import * as Dialog from '@radix-ui/react-dialog';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { withValidation } from '@/lib/zodMiddleware';
 
 const customerSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  status: z.string().default("active")
+  status: z.enum(["active", "inactive", "pending"], {
+    errorMap: () => ({ message: "Invalid status" })
+  })
 });
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -40,7 +43,6 @@ const Customers = () => {
     }
   });
 
-  // Fetch customers
   const { data: customers, isLoading, error } = useQuery({
     queryKey: ['customers', currentPage],
     queryFn: async () => {
@@ -55,7 +57,6 @@ const Customers = () => {
     }
   });
 
-  // Count total customers
   const { data: countData } = useQuery({
     queryKey: ['customers-count'],
     queryFn: async () => {
@@ -68,19 +69,25 @@ const Customers = () => {
     }
   });
 
-  // Create customer mutation
   const createCustomer = useMutation({
     mutationFn: async (values: CustomerFormValues) => {
-      const { data, error } = await supabase
-        .from('marqeta_customers')
-        .insert([{
-          ...values,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        }])
-        .select();
-      
-      if (error) throw error;
-      return data[0];
+      try {
+        const validatedData = withValidation(customerSchema, (data) => data)(values);
+        if (!validatedData) throw new Error("Validation failed");
+        
+        const { data, error } = await supabase
+          .from('marqeta_customers')
+          .insert([{
+            ...validatedData,
+            user_id: (await supabase.auth.getUser()).data.user?.id
+          }])
+          .select();
+        
+        if (error) throw error;
+        return data[0];
+      } catch (error: any) {
+        throw new Error(error.message || "Failed to create customer");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
@@ -89,7 +96,7 @@ const Customers = () => {
       setIsNewCustomerOpen(false);
       reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to create customer", 
@@ -98,17 +105,23 @@ const Customers = () => {
     }
   });
 
-  // Update customer mutation
   const updateCustomer = useMutation({
     mutationFn: async ({ id, values }: { id: string, values: CustomerFormValues }) => {
-      const { data, error } = await supabase
-        .from('marqeta_customers')
-        .update(values)
-        .eq('id', id)
-        .select();
-      
-      if (error) throw error;
-      return data[0];
+      try {
+        const validatedData = withValidation(customerSchema, (data) => data)(values);
+        if (!validatedData) throw new Error("Validation failed");
+        
+        const { data, error } = await supabase
+          .from('marqeta_customers')
+          .update(validatedData)
+          .eq('id', id)
+          .select();
+        
+        if (error) throw error;
+        return data[0];
+      } catch (error: any) {
+        throw new Error(error.message || "Failed to update customer");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
@@ -116,7 +129,7 @@ const Customers = () => {
       setEditingCustomer(null);
       reset();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to update customer", 
@@ -125,7 +138,6 @@ const Customers = () => {
     }
   });
 
-  // Delete customer mutation
   const deleteCustomer = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -329,7 +341,6 @@ const Customers = () => {
         </Card>
       </div>
 
-      {/* Customer Form Dialog */}
       <Dialog.Root open={isNewCustomerOpen || !!editingCustomer} onOpenChange={closeModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />

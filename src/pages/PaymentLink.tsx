@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -11,6 +10,19 @@ import { useToast } from '@/components/ui/use-toast';
 import { CopyIcon, Share2Icon, PlusIcon, CheckIcon } from 'lucide-react';
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
+import * as z from 'zod';
+import { withValidation } from '@/lib/zodMiddleware';
+
+const paymentLinkSchema = z.object({
+  amount: z.string().min(1, "Amount is required")
+    .refine(val => !isNaN(Number(val)), "Amount must be a number")
+    .refine(val => Number(val) > 0, "Amount must be greater than 0"),
+  description: z.string().min(1, "Description is required"),
+  customerEmail: z.string().email("Invalid email address").optional().or(z.literal('')),
+  customerName: z.string().optional(),
+});
+
+type PaymentLinkFormValues = z.infer<typeof paymentLinkSchema>;
 
 const PaymentLink = () => {
   const [amount, setAmount] = useState<string>('');
@@ -24,64 +36,70 @@ const PaymentLink = () => {
   const { toast } = useToast();
 
   const handleCreatePaymentLink = async () => {
-    try {
-      if (!amount || parseFloat(amount) <= 0) {
-        toast({
-          title: "Error",
-          description: "Please enter a valid amount",
-          variant: "destructive"
-        });
-        return;
-      }
+    const formData: PaymentLinkFormValues = {
+      amount,
+      description,
+      customerEmail,
+      customerName
+    };
 
-      // Generate a unique payment ID
-      const paymentId = uuidv4();
-      
-      // Create a payment record in the database
-      const { data, error } = await supabase
-        .from('payment_links')
-        .insert([
-          { 
-            id: paymentId,
-            amount: parseFloat(amount),
-            description,
-            customer_email: customerEmail,
-            customer_name: customerName,
-            status: 'pending',
-            merchant_id: (await supabase.auth.getUser()).data.user?.id
+    withValidation(
+      paymentLinkSchema,
+      async (validatedData) => {
+        try {
+          const paymentId = uuidv4();
+          
+          const { data, error } = await supabase
+            .from('payment_links')
+            .insert([
+              { 
+                id: paymentId,
+                amount: parseFloat(validatedData.amount),
+                description: validatedData.description,
+                customer_email: validatedData.customerEmail,
+                customer_name: validatedData.customerName,
+                status: 'pending',
+                merchant_id: (await supabase.auth.getUser()).data.user?.id
+              }
+            ]);
+
+          if (error) {
+            throw error;
           }
-        ]);
 
-      if (error) {
-        console.error('Error creating payment link:', error);
+          const baseUrl = window.location.origin;
+          const link = `${baseUrl}/payment/${paymentId}`;
+          
+          setGeneratedLink(link);
+          setPaymentId(paymentId);
+          setActiveTab('share');
+          
+          toast({
+            title: "Success",
+            description: "Payment link created successfully",
+          });
+        } catch (error: any) {
+          console.error('Error creating payment link:', error);
+          toast({
+            title: "Error",
+            description: error.message || "Failed to create payment link",
+            variant: "destructive"
+          });
+        }
+      },
+      (error) => {
+        const errorMessages = Object.values(error.errors)
+          .flat()
+          .filter(Boolean)
+          .join(', ');
+          
         toast({
-          title: "Error",
-          description: "Failed to create payment link",
+          title: "Invalid form data",
+          description: errorMessages || "Please check the form fields",
           variant: "destructive"
         });
-        return;
       }
-
-      // Generate the payment link
-      const baseUrl = window.location.origin;
-      const link = `${baseUrl}/payment/${paymentId}`;
-      
-      setGeneratedLink(link);
-      setPaymentId(paymentId);
-      setActiveTab('share');
-      
-      toast({
-        title: "Success",
-        description: "Payment link created successfully",
-      });
-    } catch (error) {
-      console.error('Error creating payment link:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create payment link",
-        variant: "destructive"
-      });
-    }
+    )(formData);
   };
 
   const copyToClipboard = async () => {
@@ -93,7 +111,6 @@ const PaymentLink = () => {
         description: "Payment link copied to clipboard",
       });
       
-      // Reset copied state after 2 seconds
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy:', error);
@@ -119,7 +136,6 @@ const PaymentLink = () => {
           description: "Payment link shared successfully",
         });
       } else {
-        // Fallback to clipboard if Web Share API is not available
         copyToClipboard();
       }
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -8,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { Link } from 'react-router-dom';
 
 interface Subscription {
   id: string;
@@ -83,6 +81,10 @@ const Billing = () => {
     }
   };
 
+  const handleUpgrade = async () => {
+    toast.info('Contact your account representative to upgrade your subscription.');
+  };
+
   const getPlanDetails = () => {
     if (subscription && subscription.status === 'active') {
       return {
@@ -113,11 +115,9 @@ const Billing = () => {
             {!loadingSubscription && (
               <Button 
                 variant="outline" 
-                asChild
+                onClick={handleUpgrade}
               >
-                <Link to="/pricing">
-                  View Plans <ArrowRightIcon className="ml-2 h-4 w-4" />
-                </Link>
+                View Plans <ArrowRightIcon className="ml-2 h-4 w-4" />
               </Button>
             )}
           </div>
@@ -183,11 +183,9 @@ const Billing = () => {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    asChild
+                    onClick={handleUpgrade}
                   >
-                    <Link to="/pricing">
-                      Upgrade Plan
-                    </Link>
+                    Upgrade Plan
                   </Button>
                 </div>
               </div>
@@ -218,10 +216,8 @@ const Billing = () => {
           ) : (
             <div className="border rounded-lg p-8 text-center">
               <p className="text-gray-500">No payment methods on file</p>
-              <Button variant="outline" className="mt-4" asChild>
-                <Link to="/pricing">
-                  Add Payment Method
-                </Link>
+              <Button variant="outline" className="mt-4" onClick={handleUpgrade}>
+                Add Payment Method
               </Button>
             </div>
           )}

@@ -11,7 +11,6 @@ import SignIn from "./pages/auth/SignIn"
 import NotFound from "./pages/NotFound"
 import Account from "./pages/Account"
 import Billing from "./pages/Billing"
-import Pricing from "./pages/Pricing"
 import Team from "./pages/Team"
 import Transactions from "./pages/Transactions"
 import Customers from "./pages/Customers"
@@ -49,7 +48,6 @@ const App = () => (
               <Route path="/auth" element={<SignIn />} />
               <Route path="/account" element={<Account />} />
               <Route path="/billing" element={<Billing />} />
-              <Route path="/pricing" element={<Pricing />} />
               <Route path="/team" element={<Team />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/payment-link" element={<PaymentLink />} />
