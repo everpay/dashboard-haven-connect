@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,41 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Search, Plus, Download, ArrowUpRight, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { exportAsCSV, exportAsXML, exportAsPDF } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const Payins = () => {
+  const [payins, setPayins] = useState<any[]>([]);
+  
+  // This would normally be loaded from an API or database
+  React.useEffect(() => {
+    // Mock data for demonstration
+    const mockPayins = Array.from({ length: 5 }).map((_, i) => ({
+      id: `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+      source: ["Bank Transfer", "Credit Card", "PayPal", "Stripe", "Square"][i % 5],
+      method: ["ACH", "Card", "Direct", "Wallet", "Bank Transfer"][i % 5],
+      date: new Date(Date.now() - i * 86400000).toISOString(),
+      status: i % 3 === 0 ? "Completed" : i % 3 === 1 ? "Processing" : "Pending",
+      amount: parseFloat((Math.random() * 1000).toFixed(2))
+    }));
+    
+    setPayins(mockPayins);
+  }, []);
+
+  const handleExport = (format: 'csv' | 'xml' | 'pdf') => {
+    switch (format) {
+      case 'csv':
+        exportAsCSV(payins, 'payins-export');
+        break;
+      case 'xml':
+        exportAsXML(payins, 'payins-export', 'payins', 'payin');
+        break;
+      case 'pdf':
+        exportAsPDF(payins, 'Payins Export', ['id', 'source', 'method', 'date', 'status', 'amount']);
+        break;
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col space-y-6">
@@ -35,10 +68,25 @@ const Payins = () => {
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('xml')}>
+                  Export as XML
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         

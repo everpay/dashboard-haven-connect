@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -15,6 +14,9 @@ import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
+import { PayInvoiceModal } from '@/components/payment/PayInvoiceModal';
+import { exportAsCSV, exportAsXML, exportAsPDF } from '@/utils/exportUtils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Invoice schema
 const invoiceSchema = z.object({
@@ -85,6 +87,8 @@ const Invoicing = () => {
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isPayInvoiceOpen, setIsPayInvoiceOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const limit = 10;
@@ -99,7 +103,6 @@ const Invoicing = () => {
     }
   });
 
-  // Fetch invoices
   const { data: invoices, isLoading } = useQuery({
     queryKey: ['invoices', currentPage, activeFilter, searchTerm],
     queryFn: async () => {
@@ -107,17 +110,14 @@ const Invoicing = () => {
         .from('invoices')
         .select('*');
       
-      // Apply status filter
       if (activeFilter !== 'all') {
         query = query.eq('status', activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1));
       }
       
-      // Apply search filter
       if (searchTerm) {
         query = query.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
       }
       
-      // Apply pagination
       query = query
         .order('issue_date', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -128,7 +128,6 @@ const Invoicing = () => {
     },
   });
 
-  // Get status counts
   const { data: statusCounts } = useQuery({
     queryKey: ['invoices-status-count', searchTerm],
     queryFn: async () => {
@@ -141,7 +140,6 @@ const Invoicing = () => {
           .select('*', { count: 'exact', head: true })
           .eq('status', status);
         
-        // Apply search filter if present
         if (searchTerm) {
           query = query.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
         }
@@ -158,10 +156,8 @@ const Invoicing = () => {
     },
   });
 
-  // Create invoice mutation
   const createInvoice = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
-      // First, get the next invoice ID
       const { data: maxIdData, error: maxIdError } = await supabase
         .from('invoices')
         .select('id')
@@ -172,7 +168,6 @@ const Invoicing = () => {
       
       const nextId = maxIdData && maxIdData.length > 0 ? Number(maxIdData[0].id) + 1 : 1001;
       
-      // Then create the invoice
       const { data, error } = await supabase
         .from('invoices')
         .insert([{
@@ -189,11 +184,10 @@ const Invoicing = () => {
       
       if (error) throw error;
       
-      // Create a default invoice item
       await supabase
         .from('invoice_items')
         .insert([{
-          id: nextId * 10000 + 1, // Generate a unique ID for the item
+          id: nextId * 10000 + 1,
           invoice_id: nextId,
           description: "Service",
           quantity: 1,
@@ -241,6 +235,42 @@ const Invoicing = () => {
     setCurrentPage(1);
   };
 
+  const handleExport = (format: 'csv' | 'xml' | 'pdf') => {
+    if (!invoices) return;
+    
+    const data = invoices.map(invoice => ({
+      invoice_number: `INV-${String(invoice.id).padStart(5, '0')}`,
+      customer: invoice.customer_name,
+      customer_email: invoice.customer_email,
+      amount: invoice.total_amount,
+      issue_date: new Date(invoice.issue_date).toLocaleDateString(),
+      due_date: new Date(invoice.due_date).toLocaleDateString(),
+      status: invoice.status
+    }));
+    
+    switch (format) {
+      case 'csv':
+        exportAsCSV(data, 'invoices-export');
+        break;
+      case 'xml':
+        exportAsXML(data, 'invoices-export', 'invoices', 'invoice');
+        break;
+      case 'pdf':
+        exportAsPDF(data, 'Invoices Export');
+        break;
+    }
+  };
+
+  const handlePayInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setIsPayInvoiceOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    queryClient.invalidateQueries({ queryKey: ['invoices-status-count'] });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -262,7 +292,6 @@ const Invoicing = () => {
           </div>
         </div>
         
-        {/* Notification banner */}
         <div className="bg-[#f8fafc] border rounded-md p-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="p-1 bg-[#1AA47B] bg-opacity-10 rounded-full">
@@ -279,7 +308,7 @@ const Invoicing = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="link" className="text-[#1AA47B] px-2 py-1 h-auto">
+            <Button variant="link" className="text-[#19363B] px-2 py-1 h-auto">
               Set Up Now
             </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -288,7 +317,6 @@ const Invoicing = () => {
           </div>
         </div>
         
-        {/* Status filter cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <FilterButton 
             label="All" 
@@ -328,7 +356,6 @@ const Invoicing = () => {
           />
         </div>
         
-        {/* Search bar and filter buttons */}
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div className="relative w-full md:w-auto md:flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -360,16 +387,30 @@ const Invoicing = () => {
         </div>
         
         <div className="flex justify-end gap-2 mb-2">
-          <Button variant="outline" size="sm" className="text-sm">
-            <Download className="h-4 w-4 mr-1" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="text-sm">
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleExport('csv')}>
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                Export as PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('xml')}>
+                Export as XML
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" size="sm" className="text-sm">
             Batch Actions
           </Button>
         </div>
         
-        {/* Invoices table */}
         <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full divide-y divide-gray-200">
@@ -447,9 +488,16 @@ const Invoicing = () => {
                         <StatusBadge status={invoice.status} />
                       </td>
                       <td className="pr-3 py-3 whitespace-nowrap text-right">
-                        <button className="text-gray-400 hover:text-gray-500">
-                          <MoreHorizontal className="h-5 w-5" />
-                        </button>
+                        {invoice.status === 'Pending' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-[#1AA47B] hover:text-[#19363B] hover:bg-[#E3FFCC]"
+                            onClick={() => handlePayInvoice(invoice)}
+                          >
+                            Pay
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -458,7 +506,6 @@ const Invoicing = () => {
             </table>
           </div>
           
-          {/* Pagination footer */}
           <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="text-sm text-gray-500">
               {invoices?.length || 0} results
@@ -485,7 +532,6 @@ const Invoicing = () => {
         </div>
       </div>
 
-      {/* New Invoice Dialog */}
       <Dialog.Root open={isNewInvoiceOpen} onOpenChange={closeModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
@@ -592,6 +638,15 @@ const Invoicing = () => {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {selectedInvoice && (
+        <PayInvoiceModal
+          open={isPayInvoiceOpen}
+          onOpenChange={setIsPayInvoiceOpen}
+          invoice={selectedInvoice}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
     </DashboardLayout>
   );
 };

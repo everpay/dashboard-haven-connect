@@ -1710,7 +1710,7 @@ export type Database = {
           password_hash: string | null
           phone_number: string | null
           phone_verified: boolean | null
-          role: string | null
+          role: string
           user_id: string | null
         }
         Insert: {
@@ -1726,7 +1726,7 @@ export type Database = {
           password_hash?: string | null
           phone_number?: string | null
           phone_verified?: boolean | null
-          role?: string | null
+          role?: string
           user_id?: string | null
         }
         Update: {
@@ -1742,7 +1742,7 @@ export type Database = {
           password_hash?: string | null
           phone_number?: string | null
           phone_verified?: boolean | null
-          role?: string | null
+          role?: string
           user_id?: string | null
         }
         Relationships: []
