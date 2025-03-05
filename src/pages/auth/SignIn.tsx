@@ -274,11 +274,11 @@ export default function SignIn() {
         <div className="w-full max-w-md space-y-8">
           <div className="flex items-center justify-center gap-2">
             <img src="/lovable-uploads/Everpay-icon.png" alt="Logo" className="h-8 w-8" />
-            <h1 className="ml-1 text-2xl font-bold text-[#19363B]">everpay</h1>
+            <h1 className="ml-1 text-3xl font-bold text-[#19363B]">everpay</h1>
           </div>
 
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl items-center justify-center font-bold text-gray-900 mb-2">
               {isSignUp ? "Sign Up To Everpay" : "Welcome Back"}
             </h1>
             {isSignUp && (
