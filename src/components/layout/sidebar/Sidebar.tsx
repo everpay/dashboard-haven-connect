@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -25,11 +24,11 @@ import { SidebarMenuGroup } from './SidebarMenuGroup';
 import { MobileToggle } from './MobileToggle';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { Button } from '@/components/ui/button';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Sidebar = () => {
-  const { expanded, toggleExpanded, closeMobile } = useSidebar();
-  const isMobile = useMobile();
+  const { expanded, setExpanded, mobileOpen, toggleMobile, closeMobile } = useSidebar();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
   const activePath = location.pathname;
@@ -64,6 +63,10 @@ export const Sidebar = () => {
     }
   };
 
+  const toggleExpanded = () => {
+    setExpanded(!expanded);
+  };
+
   return (
     <div 
       className={`h-screen bg-white border-r border-gray-100 flex flex-col transition-all duration-300 ${
@@ -91,7 +94,7 @@ export const Sidebar = () => {
             {expanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </Button>
         )}
-        {isMobile && <MobileToggle />}
+        {isMobile && <MobileToggle mobileOpen={mobileOpen} toggleMobile={toggleMobile} closeMobile={closeMobile} />}
       </div>
       
       <div className="flex-1 overflow-y-auto py-2 px-2">

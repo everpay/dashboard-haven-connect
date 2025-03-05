@@ -20,7 +20,7 @@ export const MobileToggle: React.FC<MobileToggleProps> = ({
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="md:hidden"
         onClick={toggleMobile}
       >
         <Menu size={24} />

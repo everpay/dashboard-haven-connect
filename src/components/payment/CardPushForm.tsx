@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { getItsPaidService } from '@/services/ItsPaidService';
+import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
 
 interface CardPushFormProps {
   amount: number;
@@ -47,7 +47,7 @@ export const CardPushForm = ({ amount, onSuccess, onError }: CardPushFormProps) 
 
       // Format data for card push
       const transactionData = {
-        SEND_METHOD: 'CARD_PUSH',
+        SEND_METHOD: 'CARD_PUSH' as PaymentMethod, // Type cast as PaymentMethod
         SEND_CURRENCY_ISO3: 'USD',
         SEND_AMOUNT: amount,
         RECIPIENT_FULL_NAME: recipientName,
