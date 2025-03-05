@@ -278,7 +278,7 @@ export default function SignIn() {
           </div>
 
           <div>
-            <h1 className="text-4xl items-center justify-center font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl text-center items-center justify-center font-bold text-gray-900 mb-3">
               {isSignUp ? "Sign Up To Everpay" : "Welcome Back"}
             </h1>
             {isSignUp && (
