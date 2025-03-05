@@ -1,12 +1,7 @@
 
-interface MarqetaJS {
-  initialize: (options: { applicationToken: string }) => void;
+// Extend the Window interface to include marqeta property
+interface Window {
+  marqeta?: {
+    initialize: (config: { applicationToken: string }) => void;
+  };
 }
-
-declare global {
-  interface Window {
-    marqeta?: MarqetaJS;
-  }
-}
-
-export {};
