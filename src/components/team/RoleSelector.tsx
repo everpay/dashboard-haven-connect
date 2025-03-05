@@ -12,12 +12,13 @@ export const roleSchema = z.object({
 type Role = z.infer<typeof roleSchema>;
 
 interface RoleSelectorProps {
+  userId?: string; // Added userId prop as optional
   currentRole: string;
   onRoleChange: (role: string) => void;
   disabled?: boolean;
 }
 
-export function RoleSelector({ currentRole, onRoleChange, disabled = false }: RoleSelectorProps) {
+export function RoleSelector({ userId, currentRole, onRoleChange, disabled = false }: RoleSelectorProps) {
   const handleRoleChange = (value: string) => {
     withValidation(
       roleSchema,
