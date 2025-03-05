@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useRBAC, RoleGuard } from '@/lib/rbac';
 import { withRole, logUserActivity } from '@/lib/middleware';
-import RoleSelector from '@/components/team/RoleSelector';
+import { RoleSelector } from '@/components/team/RoleSelector';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 interface TeamMember {
   id: string;
@@ -55,27 +61,23 @@ const Team = () => {
   const fetchTeamMembers = async () => {
     setLoading(true);
     try {
-      // Get all users with their profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
       if (profilesError) throw profilesError;
 
-      // Get roles for each user
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Create a roles map for quicker access
       const rolesMap = rolesData.reduce((acc, role) => {
         acc[role.user_id] = role.role;
         return acc;
       }, {});
 
-      // Map profiles to team members with roles
       const members = profilesData.map((profile) => ({
         id: profile.id,
         email: profile.email || '',
@@ -109,19 +111,16 @@ const Team = () => {
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    // Update local state
     setTeamMembers((prev) =>
       prev.map((member) =>
         member.id === userId ? { ...member, role: newRole } : member
       )
     );
 
-    // If current user's role was changed, refresh the RBAC context
     if (userId === currentUserId) {
       await refreshRole();
     }
 
-    // Log the activity
     if (currentUserId) {
       await logUserActivity(currentUserId, 'role_updated', {
         target_user_id: userId,
@@ -138,9 +137,7 @@ const Team = () => {
 
     setSendingInvite(true);
     try {
-      // Only owners can send invites
       const result = await withRole(['owner'], async () => {
-        // Create invite in the database
         const { data, error } = await supabase
           .from('team_invites')
           .insert({
@@ -154,9 +151,6 @@ const Team = () => {
 
         if (error) throw error;
 
-        // Here you would typically send an email invite as well
-        // using a Supabase Edge Function
-
         return data;
       });
 
@@ -169,7 +163,6 @@ const Team = () => {
       setInviteDialogOpen(false);
       fetchPendingInvites();
 
-      // Log the activity
       if (currentUserId) {
         await logUserActivity(currentUserId, 'invite_sent', {
           invited_email: inviteEmail,
@@ -186,7 +179,6 @@ const Team = () => {
 
   const handleCancelInvite = async (inviteId: string) => {
     try {
-      // Only owners can cancel invites
       const result = await withRole(['owner'], async () => {
         const { error } = await supabase
           .from('team_invites')
@@ -204,7 +196,6 @@ const Team = () => {
       toast.success('Invitation canceled');
       fetchPendingInvites();
 
-      // Log the activity
       if (currentUserId) {
         await logUserActivity(currentUserId, 'invite_canceled', {
           invite_id: inviteId,
@@ -415,7 +406,6 @@ const Team = () => {
         </Card>
       </div>
 
-      {/* Invite Member Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

@@ -248,6 +248,44 @@ export type Database = {
           },
         ]
       }
+      cardholders: {
+        Row: {
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          marqeta_token: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          marqeta_token: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          marqeta_token?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cardholders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           card_token: string
@@ -471,6 +509,38 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funding: {
+        Row: {
+          amount: number
+          card_id: string | null
+          created_at: string | null
+          id: string
+          method: string | null
+        }
+        Insert: {
+          amount: number
+          card_id?: string | null
+          created_at?: string | null
+          id?: string
+          method?: string | null
+        }
+        Update: {
+          amount?: number
+          card_id?: string | null
+          created_at?: string | null
+          id?: string
+          method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funding_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
             referencedColumns: ["id"]
           },
         ]
@@ -1310,6 +1380,9 @@ export type Database = {
           created_at: string | null
           currency: string
           id: string
+          p2p_batch_id: string | null
+          p2p_status: string | null
+          p2p_task_id: string | null
           recipient_details: Json
           status: string | null
           updated_at: string | null
@@ -1320,6 +1393,9 @@ export type Database = {
           created_at?: string | null
           currency: string
           id?: string
+          p2p_batch_id?: string | null
+          p2p_status?: string | null
+          p2p_task_id?: string | null
           recipient_details: Json
           status?: string | null
           updated_at?: string | null
@@ -1330,6 +1406,9 @@ export type Database = {
           created_at?: string | null
           currency?: string
           id?: string
+          p2p_batch_id?: string | null
+          p2p_status?: string | null
+          p2p_task_id?: string | null
           recipient_details?: Json
           status?: string | null
           updated_at?: string | null
@@ -1456,6 +1535,7 @@ export type Database = {
           first_names: string
           full_name: string
           last_names: string
+          merchant_id: string | null
           postal_code: string | null
           recipient_id: number
           region: string | null
@@ -1463,6 +1543,7 @@ export type Database = {
           street_2: string | null
           telephone_country_iso2: string | null
           telephone_number: string | null
+          user_id: string | null
           zelle_address: string | null
         }
         Insert: {
@@ -1474,6 +1555,7 @@ export type Database = {
           first_names: string
           full_name: string
           last_names: string
+          merchant_id?: string | null
           postal_code?: string | null
           recipient_id?: number
           region?: string | null
@@ -1481,6 +1563,7 @@ export type Database = {
           street_2?: string | null
           telephone_country_iso2?: string | null
           telephone_number?: string | null
+          user_id?: string | null
           zelle_address?: string | null
         }
         Update: {
@@ -1492,6 +1575,7 @@ export type Database = {
           first_names?: string
           full_name?: string
           last_names?: string
+          merchant_id?: string | null
           postal_code?: string | null
           recipient_id?: number
           region?: string | null
@@ -1499,9 +1583,18 @@ export type Database = {
           street_2?: string | null
           telephone_country_iso2?: string | null
           telephone_number?: string | null
+          user_id?: string | null
           zelle_address?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recipients_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resellers: {
         Row: {
@@ -1715,7 +1808,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
-          clerk_id: string
+          clerk_id?: string
           country?: string | null
           email: string
           email_verified?: string | null

@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Link } from "react-router-dom"
@@ -125,20 +124,24 @@ export default function SignIn() {
 
   // Helper function for validation
   const validateData = <T extends z.ZodType>(schema: T, data: any) => {
-    const result = schema.safeParse(data)
+    const result = schema.safeParse(data);
     if (!result.success) {
-      const errors: Record<string, string[]> = {}
-      const formattedErrors = result.error.format()
+      const errors: Record<string, string[]> = {};
+      const formattedErrors = result.error.format();
       
       Object.entries(formattedErrors).forEach(([key, value]) => {
         if (key !== '_errors') {
-          errors[key] = Array.isArray(value) ? value : (value._errors || [])
+          if (value && typeof value === 'object' && '_errors' in value) {
+            errors[key] = value._errors as string[];
+          } else {
+            errors[key] = Array.isArray(value) ? value : [];
+          }
         }
-      })
+      });
       
-      throw { errors }
+      throw { errors };
     }
-    return result.data
+    return result.data;
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
