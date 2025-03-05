@@ -26,6 +26,9 @@ import Recipients from "./pages/Recipients"
 import HostedPaymentPage from "./pages/HostedPaymentPage"
 import PaymentWidget from "./pages/PaymentWidget"
 import WidgetDemo from "./pages/WidgetDemo"
+import ReportsOverview from "./pages/reports/Overview"
+import ReportsAnalytics from "./pages/reports/Analytics"
+import LoadMarqetaJS from "./components/LoadMarqetaJS"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +47,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <RBACProvider>
+            <LoadMarqetaJS />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<SignIn />} />
@@ -64,6 +68,8 @@ const App = () => (
               <Route path="/hosted-payment-page" element={<HostedPaymentPage />} />
               <Route path="/payment-widget" element={<PaymentWidget />} />
               <Route path="/widget-demo" element={<WidgetDemo />} />
+              <Route path="/reports/overview" element={<ReportsOverview />} />
+              <Route path="/reports/analytics" element={<ReportsAnalytics />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </RBACProvider>

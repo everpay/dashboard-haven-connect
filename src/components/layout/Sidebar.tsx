@@ -21,7 +21,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Globe,
-  UserPlus
+  UserPlus,
+  LineChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -131,7 +132,7 @@ export const Sidebar = () => {
   const [expanded, setExpanded] = useState(true);
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['Transactions']);
+  const [openMenus, setOpenMenus] = useState<string[]>(['Transactions', 'Reports']);
 
   const toggleSidebar = () => setExpanded(!expanded);
   const toggleMobile = () => setMobileOpen(!mobileOpen);
@@ -255,6 +256,32 @@ export const Sidebar = () => {
                   to="/payouts"
                   label="Payouts"
                   isActive={isActive("/payouts")}
+                  expanded={expanded}
+                  onClick={closeMobile}
+                />
+              </SidebarMenuGroup>
+
+              {/* New Reports Menu Group */}
+              <SidebarMenuGroup
+                title="Reports"
+                icon={<LineChart size={18} />}
+                expanded={expanded}
+                isOpen={isMenuOpen("Reports")}
+                toggleOpen={() => toggleMenu("Reports")}
+                activePath={location.pathname}
+                closeMobile={closeMobile}
+              >
+                <SubLink
+                  to="/reports/overview"
+                  label="Overview"
+                  isActive={isActive("/reports/overview")}
+                  expanded={expanded}
+                  onClick={closeMobile}
+                />
+                <SubLink
+                  to="/reports/analytics"
+                  label="Analytics"
+                  isActive={isActive("/reports/analytics")}
                   expanded={expanded}
                   onClick={closeMobile}
                 />
