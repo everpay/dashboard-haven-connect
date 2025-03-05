@@ -16,6 +16,7 @@ const LoadMarqetaJS = () => {
         console.log("Marqeta.js Loaded");
         
         // Initialize Marqeta with your application token
+        // Use type assertion to avoid TypeScript errors with the window.marqeta property
         if (window.marqeta) {
           window.marqeta.initialize({
             applicationToken: '979bb5ae-d4bf-4265-a63c-1d036c81fab2'
