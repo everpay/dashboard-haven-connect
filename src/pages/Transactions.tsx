@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +18,9 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const { toast } = useToast();
-  const limit = 10;
+  const limit = 25;
   const offset = (currentPage - 1) * limit;
 
-  // Get transactions data
   const { data: transactions, isLoading, error, refetch } = useQuery({
     queryKey: ['transactions', currentPage, statusFilter, searchTerm],
     queryFn: async () => {
@@ -31,17 +29,14 @@ const Transactions = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      // Apply search filter
       if (searchTerm) {
         query = query.or(`merchant_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
       
-      // Apply status filter
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
       
-      // Apply pagination
       query = query.range(offset, offset + limit - 1);
       
       const { data, error } = await query;
@@ -50,7 +45,6 @@ const Transactions = () => {
     },
   });
 
-  // Count total transactions for pagination
   const { data: countData } = useQuery({
     queryKey: ['transactions-count', statusFilter, searchTerm],
     queryFn: async () => {
@@ -58,12 +52,10 @@ const Transactions = () => {
         .from('marqeta_transactions')
         .select('*', { count: 'exact', head: true });
       
-      // Apply search filter
       if (searchTerm) {
         query = query.or(`merchant_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
       
-      // Apply status filter
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
@@ -74,7 +66,6 @@ const Transactions = () => {
     },
   });
 
-  // Get transaction count by status for summary
   const { data: statusCounts } = useQuery({
     queryKey: ['transactions-status-count'],
     queryFn: async () => {
@@ -175,7 +166,6 @@ const Transactions = () => {
           </div>
         </div>
         
-        {/* Status filter cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card 
             className={`p-4 cursor-pointer border ${statusFilter === 'all' ? 'border-[#1AA47B] bg-[#f0f4ff]' : ''}`}
@@ -211,7 +201,6 @@ const Transactions = () => {
         </div>
         
         <Card className="p-6">
-          {/* Search and filters */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -235,7 +224,6 @@ const Transactions = () => {
             </div>
           </div>
           
-          {/* Transactions table */}
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -291,7 +279,6 @@ const Transactions = () => {
             </table>
           </div>
           
-          {/* Pagination */}
           {totalPages > 0 && (
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-500">
@@ -308,6 +295,7 @@ const Transactions = () => {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
+                <span className="text-sm mx-2">Page {currentPage} of {totalPages}</span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -322,14 +310,12 @@ const Transactions = () => {
         </Card>
       </div>
 
-      {/* Add Card Modal */}
       <AddCardModal 
         open={isAddCardModalOpen} 
         onOpenChange={setIsAddCardModalOpen}
         onSuccess={handleCardAdded}
       />
 
-      {/* Payment Modal */}
       <VGSPaymentForm 
         formId="payment-form"
         open={isPaymentModalOpen}

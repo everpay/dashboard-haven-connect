@@ -14,6 +14,13 @@ const LoadMarqetaJS = () => {
 
       script.onload = () => {
         console.log("Marqeta.js Loaded");
+        
+        // Initialize Marqeta with your application token
+        if (window.marqeta) {
+          window.marqeta.initialize({
+            applicationToken: '979bb5ae-d4bf-4265-a63c-1d036c81fab2'
+          });
+        }
       };
     }
   }, [isAllowed]);
