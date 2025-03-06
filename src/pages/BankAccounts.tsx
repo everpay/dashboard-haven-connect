@@ -1,127 +1,180 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PlusCircle, Check, Clock, XCircle, Building, CreditCard, Download, ArrowUpDown, Trash2, ExternalLink, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, Building, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from "@/lib/supabase";
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/use-toast';
+import PlaidLinkButton from '@/components/bank/PlaidLinkButton';
+import { supabase } from '@/lib/supabase';
+
+// Load Plaid script
+const loadPlaidScript = () => {
+  if (!document.getElementById('plaid-script')) {
+    const script = document.createElement('script');
+    script.id = 'plaid-script';
+    script.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+    script.async = true;
+    script.onload = () => {
+      console.log("Plaid script loaded successfully");
+    };
+    script.onerror = () => {
+      console.error("Failed to load Plaid script");
+    };
+    document.body.appendChild(script);
+  }
+};
+
+// Sample bank account data
+const sampleBankAccounts = [
+  {
+    id: 'acct_123456',
+    name: 'Chase Checking',
+    accountNumber: '••••7890',
+    routingNumber: '021000021',
+    accountType: 'Checking',
+    status: 'verified',
+    isDefault: true,
+    bank: {
+      name: 'JPMorgan Chase',
+      logo: 'https://logo.clearbit.com/chase.com'
+    }
+  },
+  {
+    id: 'acct_789012',
+    name: 'Bank of America Savings',
+    accountNumber: '••••4567',
+    routingNumber: '026009593',
+    accountType: 'Savings',
+    status: 'verified',
+    isDefault: false,
+    bank: {
+      name: 'Bank of America',
+      logo: 'https://logo.clearbit.com/bankofamerica.com'
+    }
+  },
+  {
+    id: 'acct_345678',
+    name: 'Wells Fargo Business',
+    accountNumber: '••••1234',
+    routingNumber: '121000248',
+    accountType: 'Business',
+    status: 'pending',
+    isDefault: false,
+    bank: {
+      name: 'Wells Fargo',
+      logo: 'https://logo.clearbit.com/wellsfargo.com'
+    }
+  }
+];
 
 const BankAccounts = () => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [bankAccounts, setBankAccounts] = useState(sampleBankAccounts);
+  const [plaidLoaded, setPlaidLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const [revealedAccountIndexes, setRevealedAccountIndexes] = useState<{ [key: number]: boolean }>({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const limit = 6;
-  const offset = (currentPage - 1) * limit;
 
-  // Fetch bank accounts from Supabase
-  const { data: accounts, isLoading, error, refetch } = useQuery({
-    queryKey: ['bank-accounts', currentPage, searchTerm],
-    queryFn: async () => {
-      let query = supabase
-        .from('funding_sources')
-        .select('*')
-        .eq('funding_type', 'bank_account')
-        .order('created_at', { ascending: false });
-      
-      // Apply search filter if provided
-      if (searchTerm) {
-        query = query.or(`account_number.ilike.%${searchTerm}%,routing_number.ilike.%${searchTerm}%`);
+  // Load Plaid script when component mounts
+  useEffect(() => {
+    loadPlaidScript();
+    
+    // Check if Plaid is loaded
+    const checkPlaid = setInterval(() => {
+      if (window.Plaid) {
+        setPlaidLoaded(true);
+        clearInterval(checkPlaid);
       }
-      
-      // Apply pagination
-      query = query.range(offset, offset + limit - 1);
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
-    },
-  });
+    }, 500);
+    
+    return () => clearInterval(checkPlaid);
+  }, []);
 
-  // Count total accounts for pagination
-  const { data: countData } = useQuery({
-    queryKey: ['bank-accounts-count', searchTerm],
-    queryFn: async () => {
-      let query = supabase
-        .from('funding_sources')
-        .select('*', { count: 'exact', head: true })
-        .eq('funding_type', 'bank_account');
-      
-      // Apply search filter if provided
-      if (searchTerm) {
-        query = query.or(`account_number.ilike.%${searchTerm}%,routing_number.ilike.%${searchTerm}%`);
+  const handlePlaidSuccess = (publicToken: string, metadata: any) => {
+    // In a real application, you would send this token to your backend
+    console.log('Plaid public token:', publicToken);
+    console.log('Account metadata:', metadata);
+    
+    // For demo purposes, we'll add a mock bank account
+    const newAccount = {
+      id: `acct_${Math.random().toString(36).substr(2, 6)}`,
+      name: metadata.accounts?.[0]?.name || `Account ${bankAccounts.length + 1}`,
+      accountNumber: `••••${Math.floor(1000 + Math.random() * 9000)}`,
+      routingNumber: '021000021',
+      accountType: metadata.accounts?.[0]?.type || 'Checking',
+      status: 'verified',
+      isDefault: bankAccounts.length === 0,
+      bank: {
+        name: metadata.institution?.name || 'Example Bank',
+        logo: `https://logo.clearbit.com/${metadata.institution?.name?.toLowerCase().replace(/\s+/g, '') || 'bank'}.com`
       }
-      
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
-    },
-  });
+    };
+    
+    setBankAccounts([...bankAccounts, newAccount]);
+    
+    // Save to Supabase (this would normally be done through a secure API)
+    saveBankAccountToSupabase(newAccount);
+  };
 
-  const linkBankAccount = async () => {
+  // Function to simulate saving bank account to Supabase
+  const saveBankAccountToSupabase = async (account: any) => {
+    setLoading(true);
     try {
-      // In a real implementation, this would integrate with Plaid or Finicity
-      // For this demo, we'll just create a mock bank account
-      const accountNumber = `******${Math.floor(1000 + Math.random() * 9000)}`;
-      const routingNumber = `0${Math.floor(10000000 + Math.random() * 90000000)}`;
-      
+      // In a real app, this would be a secure API call
       const { data, error } = await supabase
-        .from('funding_sources')
+        .from('bank_accounts')
         .insert([
           {
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            funding_type: 'bank_account',
-            account_number: accountNumber,
-            routing_number: routingNumber,
-            balance: (Math.random() * 10000).toFixed(2)
+            bank_account_number: account.accountNumber,
+            bank_routing_number: account.routingNumber,
+            bank_name: account.bank.name,
           }
-        ])
-        .select();
+        ]);
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
+      
+      console.log('Saved bank account to Supabase:', data);
       
       toast({
-        title: "Bank account linked",
-        description: "Your bank account has been linked successfully."
+        title: "Bank Account Added",
+        description: "Your bank account has been successfully added.",
       });
-      
-      // Refresh the accounts list
-      refetch();
     } catch (error) {
-      console.error('Error linking bank account:', error);
+      console.error('Error saving bank account:', error);
       toast({
         title: "Error",
-        description: "Failed to link bank account. Please try again.",
+        description: "Failed to save bank account information.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggleAccountReveal = (index: number) => {
-    setRevealedAccountIndexes(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
+  const handleRemoveAccount = (id: string) => {
+    setBankAccounts(bankAccounts.filter(account => account.id !== id));
+    toast({
+      title: "Bank Account Removed",
+      description: "The bank account has been removed successfully.",
+    });
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
+  const handleSetDefault = (id: string) => {
+    setBankAccounts(
+      bankAccounts.map(account => ({
+        ...account,
+        isDefault: account.id === id
+      }))
+    );
+    toast({
+      title: "Default Account Updated",
+      description: "Your default bank account has been updated.",
+    });
   };
-
-  const formatAccountNumber = (number: string) => {
-    if (!number) return '****';
-    // Extract the last 4 digits
-    const last4 = number.slice(-4);
-    return last4;
-  };
-
-  const totalPages = Math.ceil((countData || 0) / limit);
 
   return (
     <DashboardLayout>
@@ -131,200 +184,170 @@ const BankAccounts = () => {
             <h1 className="text-2xl font-bold">Bank Accounts</h1>
             <p className="text-gray-500">Manage your connected bank accounts</p>
           </div>
-          <Button onClick={linkBankAccount} className="bg-[#1AA47B] hover:bg-[#19363B]">
-            <Plus className="h-4 w-4 mr-2" />
-            Link Bank Account
-          </Button>
+          
+          <PlaidLinkButton 
+            onSuccess={handlePlaidSuccess}
+            className="bg-[#1AA47B] text-white hover:bg-[#19363B]"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Bank Account
+          </PlaidLinkButton>
         </div>
         
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-[#1AA47B]" />
-          </div>
-        ) : error ? (
-          <Card className="p-6">
-            <div className="text-center text-red-500">
-              Failed to load bank accounts. Please try again.
-            </div>
-          </Card>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {accounts && accounts.length > 0 ? (
-                accounts.map((account: any, index: number) => (
-                  <Card key={account.id} className="p-6 relative overflow-hidden">
-                    <div className="flex justify-between mb-8">
-                      <div className="flex items-center gap-2">
-                        <Building className="h-5 w-5 text-blue-500" />
-                        <span className="font-medium">Bank Account</span>
+        <Tabs defaultValue="accounts" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="accounts">
+              <Building className="h-4 w-4 mr-2" />
+              Bank Accounts
+            </TabsTrigger>
+            <TabsTrigger value="transactions">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              Bank Transactions
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="accounts">
+            <div className="grid gap-6">
+              {bankAccounts.length > 0 ? (
+                bankAccounts.map(account => (
+                  <Card key={account.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="h-12 w-12 rounded-lg border flex items-center justify-center bg-white">
+                            <img 
+                              src={account.bank.logo} 
+                              alt={account.bank.name}
+                              className="h-8 w-8 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/lovable-uploads/Everpay-icon.png';
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg font-medium">
+                              {account.name}
+                              {account.isDefault && (
+                                <Badge className="ml-2 bg-[#E3FFCC] text-[#19363B]">Default</Badge>
+                              )}
+                            </CardTitle>
+                            <CardDescription>
+                              {account.bank.name} • {account.accountType}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={
+                            account.status === 'verified' ? 'success' : 
+                            account.status === 'pending' ? 'warning' : 'destructive'
+                          }
+                          className="flex items-center"
+                        >
+                          {account.status === 'verified' && <Check className="mr-1 h-3 w-3" />}
+                          {account.status === 'pending' && <Clock className="mr-1 h-3 w-3" />}
+                          {account.status === 'failed' && <XCircle className="mr-1 h-3 w-3" />}
+                          {account.status.charAt(0).toUpperCase() + account.status.slice(1)}
+                        </Badge>
                       </div>
-                      <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                        Verified
-                      </span>
-                    </div>
-                    
-                    <div className="bg-gradient-to-r from-indigo-500 to-indigo-700 p-5 rounded-lg text-white shadow-md mb-4">
-                      <div className="flex justify-between mb-8">
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs opacity-80">Account Number</p>
-                          <p className="font-mono">
-                            •••• •••• •••• {revealedAccountIndexes[index] ? (account.account_number.slice(-4) || "1234") : formatAccountNumber(account.account_number)}
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="ml-2 text-white h-5 w-5"
-                              onClick={() => toggleAccountReveal(index)}
-                            >
-                              {revealedAccountIndexes[index] ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </Button>
-                          </p>
+                          <p className="text-sm font-medium text-gray-500">Account Number</p>
+                          <p>{account.accountNumber}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs opacity-80">Routing</p>
-                          <p>{account.routing_number ? `****${account.routing_number.slice(-4)}` : '****'}</p>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Routing Number</p>
+                          <p>{account.routingNumber}</p>
                         </div>
                       </div>
-                      <p className="uppercase text-sm">Bank Account</p>
-                    </div>
-                    
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Added on {new Date(account.created_at).toLocaleDateString()}</span>
-                      <Button variant="link" size="sm" className="p-0 h-auto">Manage</Button>
-                    </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between">
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleRemoveAccount(account.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
+                        {!account.isDefault && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSetDefault(account.id)}
+                          >
+                            <Check className="h-4 w-4 mr-2" />
+                            Set as Default
+                          </Button>
+                        )}
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                    </CardFooter>
                   </Card>
                 ))
               ) : (
-                <div className="col-span-full text-center p-12 border border-dashed rounded-lg">
-                  <Building className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No bank accounts found</h3>
-                  <p className="text-gray-500 mb-4">You haven't linked any bank accounts yet.</p>
-                  <Button onClick={linkBankAccount} className="bg-[#1AA47B] hover:bg-[#19363B]">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Link Bank Account
-                  </Button>
-                </div>
+                <Card>
+                  <CardContent className="py-10 text-center">
+                    <Building className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                    <CardTitle className="text-xl mb-2">No Bank Accounts</CardTitle>
+                    <CardDescription className="max-w-md mx-auto mb-6">
+                      You haven't connected any bank accounts yet. Add a bank account to enable payments and transfers.
+                    </CardDescription>
+                    
+                    <PlaidLinkButton 
+                      onSuccess={handlePlaidSuccess}
+                      className="mx-auto bg-[#1AA47B] text-white hover:bg-[#19363B]"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Your First Bank Account
+                    </PlaidLinkButton>
+                  </CardContent>
+                </Card>
               )}
             </div>
-
-            <Card className="p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div className="relative w-full md:w-96">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Search accounts"
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={handleSearch}
-                  />
-                </div>
-                
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                  <Button variant="outline" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filter
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <Download className="h-4 w-4" />
+          </TabsContent>
+          
+          <TabsContent value="transactions">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Recent Bank Transactions</CardTitle>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
                 </div>
-              </div>
-              
-              <div className="overflow-x-auto rounded-lg border">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account Details</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Routing Number</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {isLoading ? (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-4 text-center">
-                          <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#1AA47B]" />
-                        </td>
-                      </tr>
-                    ) : error ? (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-4 text-center text-red-500">
-                          Failed to load bank accounts
-                        </td>
-                      </tr>
-                    ) : accounts && accounts.length > 0 ? (
-                      accounts.map((account: any) => (
-                        <tr key={account.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <Building className="h-4 w-4 text-indigo-600" />
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">Bank Account</div>
-                                <div className="text-sm text-gray-500">•••• {formatAccountNumber(account.account_number)}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">•••• {account.routing_number ? account.routing_number.slice(-4) : '****'}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">${parseFloat(account.balance || 0).toFixed(2)}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              Verified
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Button variant="ghost" size="sm">View</Button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                          No bank accounts found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              
-              {countData && countData > 0 && (
-                <div className="flex items-center justify-between mt-6">
-                  <div className="text-sm text-gray-500">
-                    Showing <span className="font-medium">{offset + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(offset + limit, countData)}</span> of{' '}
-                    <span className="font-medium">{countData}</span> results
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                <CardDescription>
+                  View recent transactions from your connected bank accounts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-500">
+                  <Building className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <p className="mb-4">Bank transactions will appear here after you connect a bank account.</p>
+                  {!plaidLoaded ? (
+                    <div className="flex justify-center items-center">
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Loading Plaid integration...
+                    </div>
+                  ) : (
+                    <PlaidLinkButton 
+                      onSuccess={handlePlaidSuccess}
+                      className="mx-auto bg-[#1AA47B] text-white hover:bg-[#19363B]"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
+                      Connect Bank Account
+                    </PlaidLinkButton>
+                  )}
                 </div>
-              )}
+              </CardContent>
             </Card>
-          </>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

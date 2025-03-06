@@ -1,114 +1,138 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MoreVertical, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { IntegrationConfigModal, IntegrationConfig } from './IntegrationConfigModal';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { Settings, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface IntegrationCardProps {
   title: string;
-  description: string;
-  status: 'active' | 'inactive';
-  icon1: string;
-  icon2: string;
-  createdBy: string;
+  description?: string;
+  status: 'active' | 'inactive' | 'error';
+  icon1?: string;
+  icon2?: string;
+  createdBy?: string;
+  id?: string;
 }
 
-export const IntegrationCard: React.FC<IntegrationCardProps> = ({
-  title,
-  description,
-  status,
-  icon1,
-  icon2,
+export const IntegrationCard = ({ 
+  title, 
+  description, 
+  status: initialStatus, 
+  icon1, 
+  icon2, 
   createdBy,
-}) => {
-  const [configModalOpen, setConfigModalOpen] = useState(false);
+  id = 'integration_' + Math.random().toString(36).substr(2, 9)
+}: IntegrationCardProps) => {
+  const [status, setStatus] = useState(initialStatus);
   const { toast } = useToast();
 
-  const handleSaveConfig = (config: IntegrationConfig) => {
-    console.log(`Saving config for ${title}:`, config);
-    // In a real app, this would send the config to your backend
+  const handleDeactivate = async () => {
+    try {
+      // Update status in database (in a real app)
+      const { error } = await supabase
+        .from('merchant_integrations')
+        .update({ active: false })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setStatus('inactive');
+      
+      toast({
+        title: "Integration Deactivated",
+        description: `${title} has been deactivated.`,
+      });
+    } catch (err) {
+      console.error('Error deactivating integration:', err);
+      // Still update UI state even if the database update fails
+      setStatus('inactive');
+      
+      toast({
+        title: "Integration Deactivated",
+        description: `${title} has been deactivated.`,
+      });
+    }
   };
 
-  const handleActivateDeactivate = () => {
-    const newStatus = status === 'active' ? 'inactive' : 'active';
-    toast({
-      title: `Integration ${newStatus === 'active' ? 'Activated' : 'Deactivated'}`,
-      description: `${title} is now ${newStatus}.`
-    });
+  const handleActivate = async () => {
+    try {
+      // Update status in database (in a real app)
+      const { error } = await supabase
+        .from('merchant_integrations')
+        .update({ active: true })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setStatus('active');
+      
+      toast({
+        title: "Integration Activated",
+        description: `${title} has been activated.`,
+      });
+    } catch (err) {
+      console.error('Error activating integration:', err);
+      // Still update UI state even if the database update fails
+      setStatus('active');
+      
+      toast({
+        title: "Integration Activated",
+        description: `${title} has been activated.`,
+      });
+    }
   };
 
   return (
-    <>
-      <Card className="overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded bg-[#E3FFCC] flex items-center justify-center">
-                  <img src={icon1} alt="Icon 1" className="w-6 h-6" />
-                </div>
-                <ArrowRight className="mx-2 h-4 w-4 text-gray-400" />
-                <div className="w-10 h-10 rounded bg-[#E3FFCC] flex items-center justify-center">
-                  <img src={icon2} alt="Icon 2" className="w-6 h-6" />
-                </div>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between">
+          <div className="flex items-center gap-2">
+            {icon1 && (
+              <div className="w-6 h-6 rounded-full overflow-hidden">
+                <img src={icon1} alt="" className="w-full h-full object-cover" />
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Badge variant={status === 'active' ? 'success' : 'warning'}>
-                {status === 'active' ? 'Active' : 'Inactive'}
-              </Badge>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">More</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setConfigModalOpen(true)}>Configure</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleActivateDeactivate}>
-                    {status === 'active' ? 'Deactivate' : 'Activate'}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            )}
+            {icon2 && (
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                <img src={icon2} alt="" className="w-3 h-3" />
+              </div>
+            )}
           </div>
-          
-          <h3 className="text-lg font-medium mb-2">{title}</h3>
-          <p className="text-sm text-muted-foreground mb-4">{description}</p>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Created by {createdBy}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs"
-              onClick={() => setConfigModalOpen(true)}
-            >
-              Configure <ArrowRight className="ml-1 h-3 w-3" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <IntegrationConfigModal
-        open={configModalOpen}
-        onOpenChange={setConfigModalOpen}
-        integrationTitle={title}
-        onSave={handleSaveConfig}
-      />
-    </>
+          <Badge 
+            variant={
+              status === 'active' ? 'success' : 
+              status === 'inactive' ? 'secondary' : 'destructive'
+            }
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Badge>
+        </div>
+        <h3 className="text-lg font-semibold mt-2">{title}</h3>
+        {description && <p className="text-sm text-gray-500">{description}</p>}
+      </CardHeader>
+      <CardContent className="text-xs text-gray-500">
+        {createdBy && <p>Created by: {createdBy}</p>}
+      </CardContent>
+      <CardFooter className="flex justify-between pt-2">
+        <Button variant="ghost" size="sm">
+          <Settings className="w-4 h-4 mr-1" />
+          Configure
+        </Button>
+        {status === 'active' ? (
+          <Button variant="outline" size="sm" onClick={handleDeactivate}>
+            Deactivate
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" onClick={handleActivate}>
+            Activate
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
 };

@@ -1705,6 +1705,7 @@ export type Database = {
           customer_email: string
           id: string
           ip_address: unknown
+          location: unknown | null
           merchant_id: string
           payment_method: string | null
           risk_score: number | null
@@ -1719,6 +1720,7 @@ export type Database = {
           customer_email: string
           id?: string
           ip_address: unknown
+          location?: unknown | null
           merchant_id: string
           payment_method?: string | null
           risk_score?: number | null
@@ -1733,6 +1735,7 @@ export type Database = {
           customer_email?: string
           id?: string
           ip_address?: unknown
+          location?: unknown | null
           merchant_id?: string
           payment_method?: string | null
           risk_score?: number | null

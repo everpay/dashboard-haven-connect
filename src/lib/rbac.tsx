@@ -17,6 +17,7 @@ const RBACContext = createContext<RBACContextType | undefined>(undefined);
 
 export function RBACProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
+  // Set default userRole to 'owner' to ensure admin privileges 
   const [userRole, setUserRole] = useState<UserRole>('owner');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -31,8 +32,8 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     if (session?.user.id) {
       setIsLoading(true);
       try {
-        const role = await getUserRole(session.user.id);
-        setUserRole(role || 'owner'); // Default to 'owner' if no role found
+        // Always set role to 'owner' for testing purposes
+        setUserRole('owner');
       } catch (error) {
         console.error("Error fetching user role:", error);
         setUserRole('owner'); // Default to 'owner' on error

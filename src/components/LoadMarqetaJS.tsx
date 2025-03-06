@@ -11,7 +11,8 @@ const LoadMarqetaJS = () => {
   useEffect(() => {
     if (isAllowed && !isLoaded) {
       const script = document.createElement("script");
-      script.src = "https://sandbox-assets.marqeta.com/marqeta.js"; // Use production URL if needed
+      // Fix: Use correct URL for Marqeta.js
+      script.src = "https://assets.marqeta.com/core/marqeta.js"; 
       script.async = true;
       
       script.onload = () => {
@@ -43,7 +44,7 @@ const LoadMarqetaJS = () => {
         });
       };
       
-      if (!document.querySelector('script[src="https://sandbox-assets.marqeta.com/marqeta.js"]')) {
+      if (!document.querySelector('script[src="https://assets.marqeta.com/core/marqeta.js"]')) {
         document.body.appendChild(script);
       } else {
         if (window.marqeta) {

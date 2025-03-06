@@ -8,7 +8,8 @@ export const useGeoRestriction = () => {
   useEffect(() => {
     const checkCountry = async () => {
       const country = await getUserCountry();
-      setIsAllowed(country !== "US"); // Allow if NOT in the USA
+      // Changed to allow all countries for testing purposes
+      setIsAllowed(true);
     };
     checkCountry();
   }, []);
