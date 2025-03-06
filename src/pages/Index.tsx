@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
@@ -10,17 +9,16 @@ import {
   SendIcon,
   ArrowUpRight,
   ArrowDownRight,
-  Search,
-  Download,
-  CreditCard
+  CreditCard,
+  Clock
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { supabase } from "@/lib/supabase"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useQuery } from '@tanstack/react-query'
+import { format, formatDistanceToNow } from 'date-fns'
 
 // Types for our data
 type Transaction = {
@@ -46,6 +44,7 @@ type SummaryData = {
   todayIncrease: number;
   salesIncrease: number;
   customersIncrease: number;
+  availableBalance: number;
 }
 
 const Index = () => {
@@ -202,14 +201,15 @@ const Index = () => {
       
       const totalSales = allTransactions?.reduce((sum, tx) => sum + Number(tx.amount), 0) || 0;
       
-      // For demo purposes, we'll create some fictional increases
+      // For demo purposes, we'll create some fictional increases and available balance
       return {
         todaySales,
         totalSales,
         totalCustomers: customerCount || 0,
         todayIncrease: 36,
         salesIncrease: -14,
-        customersIncrease: 28
+        customersIncrease: 28,
+        availableBalance: 10540.50
       };
     },
     enabled: !!customerCount,
@@ -246,14 +246,10 @@ const Index = () => {
     }
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(date);
+    return formatDistanceToNow(date, { addSuffix: true });
   };
 
   return (
@@ -291,7 +287,7 @@ const Index = () => {
             </div>
           </Card>
 
-          {/* Customers - renamed from "Total Orders" */}
+          {/* Customers */}
           <Card className="p-6">
             <p className="text-sm text-gray-500 mb-1">Customers</p>
             <div className="flex items-center justify-between">
@@ -303,10 +299,13 @@ const Index = () => {
             </div>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Available Balance & Quick Actions */}
           <Card className="p-6">
-            <p className="text-sm text-gray-500 mb-1">Quick Actions</p>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <p className="text-sm text-gray-500 mb-1">Available Balance</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold">${summaryData?.availableBalance.toFixed(2) || "0.00"}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-4">
               <Button 
                 variant="outline" 
                 className="flex items-center justify-start gap-2 h-10 px-3"
@@ -377,22 +376,14 @@ const Index = () => {
         {/* Recent Transactions */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-medium">Transactions</h2>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 w-64 bg-gray-50 border-0 focus:ring-0"
-              />
-            </div>
+            <h2 className="text-lg font-medium">Recent Transactions</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="text-left border-b">
                   <th className="pb-2 pl-4 pr-2 font-medium text-sm text-gray-500">Customer</th>
-                  <th className="pb-2 px-2 font-medium text-sm text-gray-500">Date</th>
+                  <th className="pb-2 px-2 font-medium text-sm text-gray-500">Time</th>
                   <th className="pb-2 px-2 font-medium text-sm text-gray-500">Status</th>
                   <th className="pb-2 px-2 font-medium text-sm text-gray-500">Payment</th>
                   <th className="pb-2 px-2 text-right font-medium text-sm text-gray-500">Amount</th>
@@ -420,8 +411,11 @@ const Index = () => {
                           <span className="font-medium">{transaction.merchant_name || 'Unknown Customer'}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-2 text-gray-600">
-                        {transaction.created_at ? formatDate(transaction.created_at) : 'N/A'}
+                      <td className="py-4 px-2 text-gray-600 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1 text-gray-400" />
+                          {transaction.created_at ? formatRelativeTime(transaction.created_at) : 'N/A'}
+                        </div>
                       </td>
                       <td className="py-4 px-2">
                         <Badge variant="outline" className={getStatusColor(transaction.status || 'pending')}>
@@ -447,11 +441,7 @@ const Index = () => {
             </table>
           </div>
           <div className="mt-4 flex justify-between items-center">
-            <p className="text-sm text-gray-500">Showing {transactions?.length || 0} of {transactions?.length || 0} transactions</p>
-            <Button variant="outline" className="text-sm" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            <p className="text-sm text-gray-500">Showing {transactions?.length || 0} recent transactions</p>
           </div>
         </Card>
       </div>

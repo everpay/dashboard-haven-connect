@@ -18,7 +18,6 @@ import {
   BoxIcon,
   Wallet,
   Plug2,
-  PiggyBank,
   Building
 } from 'lucide-react';
 import { SidebarLink, SubLink } from './SidebarLink';
@@ -272,12 +271,11 @@ export const Sidebar = () => {
       <div className="p-4 border-t">
         {expanded ? (
           <div className="w-full bg-gray-50 rounded-md p-2">
-            <div className="text-xs text-gray-500">Available Balance</div>
-            <div className="font-semibold mt-1">$10,540.50</div>
+            <div className="text-xs text-gray-500">Everpay</div>
           </div>
         ) : (
           <div className="flex justify-center">
-            <PiggyBank className="h-6 w-6 text-gray-400" />
+            <Building className="h-6 w-6 text-gray-400" />
           </div>
         )}
       </div>

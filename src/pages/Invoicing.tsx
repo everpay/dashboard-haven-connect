@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Check, X, ChevronLeft, ChevronRight, Download, Plus, MoreHorizontal, FileText, Search } from 'lucide-react';
+import { Check, X, ChevronLeft, ChevronRight, FileText, Link, Download, Plus, MoreHorizontal, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -24,8 +24,7 @@ const invoiceSchema = z.object({
   customer_email: z.string().email("Valid email is required"),
   total_amount: z.string().min(1, "Amount is required"),
   issue_date: z.string().min(1, "Issue date is required"),
-  due_date: z.string().min(1, "Due date is required"),
-  status: z.string().default("Pending")
+  due_date: z.string().min(1, "Due date is required")
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
@@ -97,7 +96,6 @@ const Invoicing = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      status: "Pending",
       issue_date: new Date().toISOString().split('T')[0],
       due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     }
@@ -158,6 +156,7 @@ const Invoicing = () => {
 
   const createInvoice = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
+      // First, get the next ID 
       const { data: maxIdData, error: maxIdError } = await supabase
         .from('invoices')
         .select('id')
@@ -168,6 +167,7 @@ const Invoicing = () => {
       
       const nextId = maxIdData && maxIdData.length > 0 ? Number(maxIdData[0].id) + 1 : 1001;
       
+      // Insert the invoice with the next ID
       const { data, error } = await supabase
         .from('invoices')
         .insert([{
@@ -178,22 +178,24 @@ const Invoicing = () => {
           total_amount: Number(values.total_amount),
           issue_date: values.issue_date,
           due_date: values.due_date,
-          status: values.status
+          status: 'Pending'
         }])
         .select();
       
       if (error) throw error;
       
-      await supabase
+      // Now add the invoice item
+      const { error: itemError } = await supabase
         .from('invoice_items')
         .insert([{
-          id: nextId * 10000 + 1,
           invoice_id: nextId,
           description: "Service",
           quantity: 1,
           unit_price: Number(values.total_amount),
           amount: Number(values.total_amount)
         }]);
+        
+      if (itemError) throw itemError;
       
       return data[0];
     },
@@ -270,6 +272,11 @@ const Invoicing = () => {
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
     queryClient.invalidateQueries({ queryKey: ['invoices-status-count'] });
   };
+  
+  const navigateToSubscriptions = () => {
+    // Navigate to subscription section
+    window.location.href = '/billing';
+  };
 
   return (
     <DashboardLayout>
@@ -308,7 +315,11 @@ const Invoicing = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="link" className="text-[#19363B] px-2 py-1 h-auto">
+            <Button 
+              variant="link" 
+              className="text-[#19363B] px-2 py-1 h-auto"
+              onClick={navigateToSubscriptions}
+            >
               Set Up Now
             </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -609,21 +620,6 @@ const Invoicing = () => {
                     <p className="text-sm text-red-500">{errors.due_date.message}</p>
                   )}
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="status" className="text-sm font-medium text-[#19363B]">Status</label>
-                <select
-                  id="status"
-                  {...register("status")}
-                  className="w-full rounded-md border border-[#1AA47B] bg-background px-3 py-2 focus-visible:ring-[#1AA47B]"
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Paid">Paid</option>
-                  <option value="Overdue">Overdue</option>
-                  <option value="Draft">Draft</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
               </div>
               
               <div className="flex justify-end gap-2 pt-4">
