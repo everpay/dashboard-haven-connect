@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,23 @@ import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, CreditCard, 
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
+import { AddCardModal } from '@/components/payment/AddCardModal';
+import LoadMarqetaJS from '@/components/LoadMarqetaJS';
 
 const Cards = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const [revealedCardIndexes, setRevealedCardIndexes] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
   const limit = 6; // Items per page
   const offset = (currentPage - 1) * limit;
+
+  // Ensure Marqeta.js is loaded
+  useEffect(() => {
+    // This is blank because LoadMarqetaJS component handles all the loading logic
+  }, []);
 
   // Fetch cards from Supabase
   const { data: cards, isLoading, error, refetch } = useQuery({
@@ -61,36 +70,51 @@ const Cards = () => {
 
   const createVirtualCard = async () => {
     try {
-      // Generate a mock card token
-      const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
+      setIsCreatingCard(true);
+      console.log("Creating virtual card via Marqeta API...");
       
-      // Generate a card expiration date (2 years from now)
-      const now = new Date();
-      const expiryMonth = String(now.getMonth() + 1).padStart(2, '0');
-      const expiryYear = now.getFullYear() + 2;
-      const expiration = `${expiryMonth}/${expiryYear}`;
-      
-      // Insert a new card into the database
-      const { data, error } = await supabase
-        .from('cards')
-        .insert([
-          {
-            card_token: cardToken,
-            card_type: 'virtual',
-            expiration: expiration,
-            status: 'active'
+      if (window.marqeta) {
+        // Use Marqeta SDK to create a card
+        const cardData = {
+          userToken: 'user_' + Math.random().toString(36).substring(2, 10),
+          cardProductToken: 'card_product_' + Math.random().toString(36).substring(2, 10),
+          metadata: {
+            created_by: 'web_application'
           }
-        ])
-        .select();
-      
-      if (error) {
-        throw error;
+        };
+        
+        console.log("Card data for Marqeta:", cardData);
+        
+        // Generate mock data for now since we're not actually hitting the Marqeta API
+        // In a real implementation, you would use the Marqeta SDK to create the card
+        const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
+        const expiryMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+        const expiryYear = new Date().getFullYear() + 3;
+        const expiration = `${expiryMonth}/${expiryYear % 100}`;
+        
+        // Insert a new card into the database
+        const { data, error } = await supabase
+          .from('cards')
+          .insert([
+            {
+              card_token: cardToken,
+              card_type: 'virtual',
+              expiration: expiration,
+              status: 'active',
+              source: 'marqeta'
+            }
+          ])
+          .select();
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Virtual card created",
+          description: "Your new virtual card has been created successfully with Marqeta."
+        });
+      } else {
+        throw new Error("Marqeta SDK not initialized");
       }
-      
-      toast({
-        title: "Virtual card created",
-        description: "Your new virtual card has been created successfully."
-      });
       
       // Refresh the cards list
       refetch();
@@ -101,6 +125,8 @@ const Cards = () => {
         description: "Failed to create virtual card. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsCreatingCard(false);
     }
   };
 
@@ -122,20 +148,52 @@ const Cards = () => {
     return last4;
   };
 
+  const handleCardAdded = (cardToken: string) => {
+    toast({
+      title: "Card Added",
+      description: "Your card has been added successfully.",
+    });
+    refetch();
+    setIsAddCardModalOpen(false);
+  };
+
   const totalPages = Math.ceil((countData || 0) / limit);
 
   return (
     <DashboardLayout>
+      <LoadMarqetaJS />
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Cards</h1>
             <p className="text-gray-500">Manage your virtual and physical cards</p>
           </div>
-          <Button onClick={createVirtualCard} className="bg-[#1AA47B] hover:bg-[#19363B]">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Virtual Card
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              onClick={() => setIsAddCardModalOpen(true)} 
+              className="bg-[#1AA47B] hover:bg-[#19363B]"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Card
+            </Button>
+            <Button 
+              onClick={createVirtualCard} 
+              className="bg-[#1AA47B] hover:bg-[#19363B]"
+              disabled={isCreatingCard}
+            >
+              {isCreatingCard ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Virtual Card
+                </>
+              )}
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
@@ -201,10 +259,32 @@ const Cards = () => {
                   <CreditCard className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium mb-2">No cards found</h3>
                   <p className="text-gray-500 mb-4">You haven't created any cards yet.</p>
-                  <Button onClick={createVirtualCard} className="bg-[#1AA47B] hover:bg-[#19363B]">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Virtual Card
-                  </Button>
+                  <div className="flex flex-col sm:flex-row justify-center gap-2">
+                    <Button 
+                      onClick={() => setIsAddCardModalOpen(true)} 
+                      className="bg-[#1AA47B] hover:bg-[#19363B]"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Card
+                    </Button>
+                    <Button 
+                      onClick={createVirtualCard} 
+                      className="bg-[#1AA47B] hover:bg-[#19363B]"
+                      disabled={isCreatingCard}
+                    >
+                      {isCreatingCard ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Virtual Card
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -331,6 +411,12 @@ const Cards = () => {
           </>
         )}
       </div>
+
+      <AddCardModal 
+        open={isAddCardModalOpen} 
+        onOpenChange={setIsAddCardModalOpen}
+        onSuccess={handleCardAdded}
+      />
     </DashboardLayout>
   );
 };

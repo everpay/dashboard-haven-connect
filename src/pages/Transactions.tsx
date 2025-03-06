@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Plus, Download, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { useQuery } from '@tanstack/react-query';
 import { AddCardModal } from '@/components/payment/AddCardModal';
 import { VGSPaymentForm } from '@/components/payment/VGSPaymentForm';
+import LoadMarqetaJS from '@/components/LoadMarqetaJS';
 
 const Transactions = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -17,9 +19,50 @@ const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [availableBalance, setAvailableBalance] = useState(10540.50); // Default balance
   const { toast } = useToast();
   const limit = 25;
   const offset = (currentPage - 1) * limit;
+
+  // Ensure Marqeta.js is loaded
+  useEffect(() => {
+    // This is blank because LoadMarqetaJS component handles all the loading logic
+  }, []);
+
+  // Fetch the available balance
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        // In a real app, you would fetch the balance from your API
+        // This is a mock implementation
+        const response = await supabase
+          .from('marqeta_transactions')
+          .select('amount, transaction_type')
+          .in('status', ['Completed', 'Pending']);
+          
+        if (response.error) throw response.error;
+        
+        if (response.data && response.data.length > 0) {
+          // Calculate balance based on transactions
+          let balance = 10000; // Starting balance
+          
+          response.data.forEach((transaction: any) => {
+            if (transaction.transaction_type === 'payment') {
+              balance -= transaction.amount || 0;
+            } else if (transaction.transaction_type === 'deposit') {
+              balance += transaction.amount || 0;
+            }
+          });
+          
+          setAvailableBalance(balance);
+        }
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+      }
+    };
+    
+    fetchBalance();
+  }, []);
 
   const { data: transactions, isLoading, error, refetch } = useQuery({
     queryKey: ['transactions', currentPage, statusFilter, searchTerm],
@@ -113,7 +156,9 @@ const Transactions = () => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     }).format(date);
   };
 
@@ -142,6 +187,7 @@ const Transactions = () => {
 
   return (
     <DashboardLayout>
+      <LoadMarqetaJS />
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -149,16 +195,20 @@ const Transactions = () => {
             <p className="text-gray-500">View and manage your transactions</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
+            <div className="text-right bg-white p-4 rounded-lg shadow-sm border">
+              <p className="text-sm text-gray-500">Available Balance</p>
+              <p className="text-2xl font-bold text-[#1AA47B]">${availableBalance.toFixed(2)}</p>
+            </div>
             <Button 
               onClick={handleOpenAddCardModal}
-              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+              className="bg-[#1AA47B] hover:bg-[#19363B] text-white whitespace-nowrap"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Card
             </Button>
             <Button 
               onClick={handleOpenPaymentModal}
-              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+              className="bg-[#1AA47B] hover:bg-[#19363B] text-white whitespace-nowrap"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Payment
@@ -210,17 +260,6 @@ const Transactions = () => {
                 value={searchTerm}
                 onChange={handleSearch}
               />
-            </div>
-            
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <Button variant="outline" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
             </div>
           </div>
           
@@ -326,6 +365,7 @@ const Transactions = () => {
             title: "Success",
             description: "Payment processed successfully!"
           });
+          refetch();
         }}
         onError={(error) => {
           console.error('Payment failed:', error);

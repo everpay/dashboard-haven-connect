@@ -26,19 +26,35 @@ export const CardForm: React.FC<CardFormProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardholderName, setCardholderName] = useState('');
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const collectRef = useRef<any>(null);
   const { toast } = useToast();
   
   useEffect(() => {
     // Load VGS Collect script
-    const script = document.createElement('script');
-    script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
-    script.async = true;
-    script.onload = initializeVGSCollect;
-    
-    // Check if script is already loaded
-    if (!document.querySelector('script[src="https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js"]')) {
-      document.body.appendChild(script);
+    if (!scriptLoaded) {
+      const script = document.createElement('script');
+      script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
+      script.async = true;
+      script.onload = () => {
+        setScriptLoaded(true);
+        console.log('VGS Collect script loaded successfully');
+      };
+      script.onerror = () => {
+        console.error('Failed to load VGS Collect script');
+        toast({
+          title: "Error",
+          description: "Failed to load card form components",
+          variant: "destructive"
+        });
+      };
+      
+      // Check if script is already loaded
+      if (!document.querySelector('script[src="https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js"]')) {
+        document.body.appendChild(script);
+      } else {
+        setScriptLoaded(true);
+      }
     } else {
       initializeVGSCollect();
     }
@@ -49,7 +65,7 @@ export const CardForm: React.FC<CardFormProps> = ({
         collectRef.current.destroy();
       }
     };
-  }, [formId]);
+  }, [formId, scriptLoaded]);
   
   const initializeVGSCollect = () => {
     try {
@@ -57,6 +73,8 @@ export const CardForm: React.FC<CardFormProps> = ({
       const VGSCollect = (window as any).VGSCollect;
       
       if (VGSCollect) {
+        console.log('Initializing VGS Collect with form ID:', formId);
+        
         // Initialize VGS Collect with the Vault ID
         collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox');
         
@@ -150,6 +168,14 @@ export const CardForm: React.FC<CardFormProps> = ({
         });
         
         setIsLoaded(true);
+        console.log('VGS Collect fields initialized successfully');
+      } else {
+        console.error('VGSCollect not found in window object');
+        toast({
+          title: "Error",
+          description: "Failed to initialize card form",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Failed to initialize VGS Collect:', error);
@@ -181,6 +207,7 @@ export const CardForm: React.FC<CardFormProps> = ({
     }
     
     setIsSubmitting(true);
+    console.log('Submitting card form data...');
     
     // VGS form submission to inbound route
     collectRef.current.submit(
@@ -276,18 +303,18 @@ export const CardForm: React.FC<CardFormProps> = ({
         
         <div>
           <Label htmlFor={`${formId}-card-number`} className="mb-1 block">Card Number</Label>
-          <div id={`${formId}-card-number`} className="mt-1" />
+          <div id={`${formId}-card-number`} className="mt-1" style={{ height: '40px' }} />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor={`${formId}-card-expiry`} className="mb-1 block">Expiration Date</Label>
-            <div id={`${formId}-card-expiry`} className="mt-1" />
+            <div id={`${formId}-card-expiry`} className="mt-1" style={{ height: '40px' }} />
           </div>
           
           <div>
             <Label htmlFor={`${formId}-card-cvc`} className="mb-1 block">CVC</Label>
-            <div id={`${formId}-card-cvc`} className="mt-1" />
+            <div id={`${formId}-card-cvc`} className="mt-1" style={{ height: '40px' }} />
           </div>
         </div>
         
