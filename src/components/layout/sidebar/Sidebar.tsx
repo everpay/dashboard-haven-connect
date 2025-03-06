@@ -85,7 +85,7 @@ export const Sidebar = () => {
             className="h-8 w-8"
           />
           {expanded && (
-            <span className="ml-3 font-bold text-xl text-[#19363B]">Everpay</span>
+            <span className="ml-3 font-bold text-3xl text-[#19363B]">everpay</span>
           )}
         </div>
         {!isMobile && (
