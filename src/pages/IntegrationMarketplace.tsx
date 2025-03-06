@@ -26,7 +26,7 @@ const integrations = [
   {
     id: 'stripe',
     name: 'Stripe',
-    description: 'Accept payments online with Stripe's flexible and scalable payment platform.',
+    description: 'Accept payments online with Stripe\'s flexible and scalable payment platform.',
     logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/stripe.svg',
     type: 'credit-card',
     popular: true,
@@ -44,7 +44,7 @@ const integrations = [
   {
     id: 'square',
     name: 'Square',
-    description: 'Process payments online and in-person with Square's secure platform.',
+    description: 'Process payments online and in-person with Square\'s secure platform.',
     logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/square.svg',
     type: 'credit-card',
     popular: false,
