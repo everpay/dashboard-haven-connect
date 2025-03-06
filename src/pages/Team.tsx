@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -8,8 +9,6 @@ import { PlusIcon, Mail, Trash2, X, UserPlus, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useRBAC, RoleGuard } from '@/lib/rbac';
-import { withRole, logUserActivity } from '@/lib/middleware';
 import { RoleSelector } from '@/components/team/RoleSelector';
 import {
   Dialog,
@@ -40,7 +39,6 @@ interface TeamMember {
 const Team = () => {
   const { session } = useAuth();
   const currentUserId = session?.user.id;
-  const { refreshRole } = useRBAC();
   
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,15 +115,18 @@ const Team = () => {
       )
     );
 
-    if (userId === currentUserId) {
-      await refreshRole();
-    }
-
-    if (currentUserId) {
-      await logUserActivity(currentUserId, 'role_updated', {
-        target_user_id: userId,
-        new_role: newRole,
-      });
+    try {
+      await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: newRole
+        });
+        
+      toast.success('Role updated successfully');
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast.error('Failed to update role');
     }
   };
 
@@ -137,38 +138,23 @@ const Team = () => {
 
     setSendingInvite(true);
     try {
-      const result = await withRole(['owner'], async () => {
-        const { data, error } = await supabase
-          .from('team_invites')
-          .insert({
-            email: inviteEmail.toLowerCase().trim(),
-            role: inviteRole,
-            invited_by: currentUserId,
-            status: 'pending',
-          })
-          .select()
-          .single();
+      const { data, error } = await supabase
+        .from('team_invites')
+        .insert({
+          email: inviteEmail.toLowerCase().trim(),
+          role: inviteRole,
+          invited_by: currentUserId,
+          status: 'pending',
+        })
+        .select()
+        .single();
 
-        if (error) throw error;
-
-        return data;
-      });
-
-      if ('error' in result) {
-        throw new Error(result.error);
-      }
+      if (error) throw error;
 
       toast.success(`Invitation sent to ${inviteEmail}`);
       setInviteEmail('');
       setInviteDialogOpen(false);
       fetchPendingInvites();
-
-      if (currentUserId) {
-        await logUserActivity(currentUserId, 'invite_sent', {
-          invited_email: inviteEmail,
-          assigned_role: inviteRole,
-        });
-      }
     } catch (error) {
       console.error('Error sending invite:', error);
       toast.error('Failed to send invitation');
@@ -179,28 +165,15 @@ const Team = () => {
 
   const handleCancelInvite = async (inviteId: string) => {
     try {
-      const result = await withRole(['owner'], async () => {
-        const { error } = await supabase
-          .from('team_invites')
-          .delete()
-          .eq('id', inviteId);
+      const { error } = await supabase
+        .from('team_invites')
+        .delete()
+        .eq('id', inviteId);
 
-        if (error) throw error;
-        return { success: true };
-      });
-
-      if ('error' in result) {
-        throw new Error(result.error);
-      }
+      if (error) throw error;
 
       toast.success('Invitation canceled');
       fetchPendingInvites();
-
-      if (currentUserId) {
-        await logUserActivity(currentUserId, 'invite_canceled', {
-          invite_id: inviteId,
-        });
-      }
     } catch (error) {
       console.error('Error canceling invite:', error);
       toast.error('Failed to cancel invitation');
@@ -222,22 +195,13 @@ const Team = () => {
             <h1 className="text-2xl font-bold">Team Management</h1>
             <p className="text-gray-500">Invite and manage your team members</p>
           </div>
-          <RoleGuard 
-            requiredRoles={['owner']} 
-            fallback={
-              <Badge variant="outline" className="px-3 py-1">
-                Contact your admin to invite team members
-              </Badge>
-            }
+          <Button 
+            className="bg-[#013c3f]"
+            onClick={() => setInviteDialogOpen(true)}
           >
-            <Button 
-              className="bg-[#013c3f]"
-              onClick={() => setInviteDialogOpen(true)}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Invite Member
-            </Button>
-          </RoleGuard>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Invite Member
+          </Button>
         </div>
         
         <Card className="p-6">
@@ -328,16 +292,11 @@ const Team = () => {
                           <Button variant="ghost" size="sm">
                             <Mail className="h-4 w-4" />
                           </Button>
-                          <RoleGuard
-                            requiredRoles={['owner']}
-                            fallback={null}
-                          >
-                            {member.id !== currentUserId && (
-                              <Button variant="ghost" size="sm" className="text-red-500">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </RoleGuard>
+                          {member.id !== currentUserId && (
+                            <Button variant="ghost" size="sm" className="text-red-500">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -383,19 +342,14 @@ const Team = () => {
                         {new Date(invite.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <RoleGuard
-                          requiredRoles={['owner']}
-                          fallback={null}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-500"
+                          onClick={() => handleCancelInvite(invite.id)}
                         >
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-red-500"
-                            onClick={() => handleCancelInvite(invite.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </RoleGuard>
+                          <X className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}

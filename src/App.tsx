@@ -15,11 +15,13 @@ import Team from "./pages/Team"
 import Transactions from "./pages/Transactions"
 import Customers from "./pages/Customers"
 import Cards from "./pages/Cards"
+import BankAccounts from "./pages/BankAccounts"
 import Invoicing from "./pages/Invoicing"
 import Products from "./pages/Products"
 import PaymentLink from "./pages/PaymentLink"
 import Payment from "./pages/Payment"
 import Integrations from "./pages/Integrations"
+import IntegrationMarketplace from "./pages/IntegrationMarketplace"
 import Payins from "./pages/Payins"
 import Payouts from "./pages/Payouts"
 import Recipients from "./pages/Recipients"
@@ -59,9 +61,11 @@ const App = () => (
               <Route path="/payment/:paymentId" element={<Payment />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/cards" element={<Cards />} />
+              <Route path="/bank-accounts" element={<BankAccounts />} />
               <Route path="/invoicing" element={<Invoicing />} />
               <Route path="/products" element={<Products />} />
               <Route path="/integrations" element={<Integrations />} />
+              <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />
               <Route path="/payins" element={<Payins />} />
               <Route path="/payouts" element={<Payouts />} />
               <Route path="/recipients" element={<Recipients />} />

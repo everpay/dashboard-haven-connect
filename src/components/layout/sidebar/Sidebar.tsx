@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -17,7 +18,8 @@ import {
   BoxIcon,
   Wallet,
   Plug2,
-  PiggyBank
+  PiggyBank,
+  Building
 } from 'lucide-react';
 import { SidebarLink, SubLink } from './SidebarLink';
 import { SidebarMenuGroup } from './SidebarMenuGroup';
@@ -36,6 +38,7 @@ export const Sidebar = () => {
   const [menuGroups, setMenuGroups] = useState({
     reports: false,
     payments: false,
+    settings: false,
   });
   
   // Toggle menu group open/closed state
@@ -52,6 +55,8 @@ export const Sidebar = () => {
       setMenuGroups(prev => ({ ...prev, reports: true }));
     } else if (activePath.includes('/payment') || activePath.includes('/transactions')) {
       setMenuGroups(prev => ({ ...prev, payments: true }));
+    } else if (activePath.includes('/account') || activePath.includes('/team') || activePath.includes('/cards') || activePath.includes('/billing') || activePath.includes('/bank-accounts')) {
+      setMenuGroups(prev => ({ ...prev, settings: true }));
     }
   }, [activePath]);
   
@@ -108,30 +113,14 @@ export const Sidebar = () => {
             onClick={() => navigateTo('/')}
           />
           
-          <SidebarMenuGroup
-            title="Reports"
+          <SidebarLink
+            to="/reports/overview"
             icon={<BarChart2 className="h-5 w-5" />}
+            label="Reports"
+            isActive={activePath.includes('/reports')}
             expanded={expanded}
-            isOpen={menuGroups.reports}
-            toggleOpen={() => toggleMenuGroup('reports')}
-            activePath={activePath}
-            closeMobile={isMobile ? closeMobile : undefined}
-          >
-            <SubLink
-              to="/reports/overview"
-              label="Overview"
-              isActive={activePath === '/reports/overview'}
-              expanded={expanded}
-              onClick={() => navigateTo('/reports/overview')}
-            />
-            <SubLink
-              to="/reports/analytics"
-              label="Analytics"
-              isActive={activePath === '/reports/analytics'}
-              expanded={expanded}
-              onClick={() => navigateTo('/reports/analytics')}
-            />
-          </SidebarMenuGroup>
+            onClick={() => navigateTo('/reports/overview')}
+          />
           
           <SidebarMenuGroup
             title="Payments"
@@ -180,48 +169,12 @@ export const Sidebar = () => {
           </SidebarMenuGroup>
           
           <SidebarLink
-            to="/cards"
-            icon={<CreditCard className="h-5 w-5" />}
-            label="Cards"
-            isActive={activePath === '/cards'}
+            to="/payins"
+            icon={<ArrowUpRight className="h-5 w-5" />}
+            label="Pay-ins"
+            isActive={activePath === '/payins'}
             expanded={expanded}
-            onClick={() => navigateTo('/cards')}
-          />
-          
-          <SidebarLink
-            to="/billing"
-            icon={<CalendarClock className="h-5 w-5" />}
-            label="Billing"
-            isActive={activePath === '/billing'}
-            expanded={expanded}
-            onClick={() => navigateTo('/billing')}
-          />
-          
-          <SidebarLink
-            to="/customers"
-            icon={<Users className="h-5 w-5" />}
-            label="Customers"
-            isActive={activePath === '/customers'}
-            expanded={expanded}
-            onClick={() => navigateTo('/customers')}
-          />
-          
-          <SidebarLink
-            to="/products"
-            icon={<Package className="h-5 w-5" />}
-            label="Products"
-            isActive={activePath === '/products'}
-            expanded={expanded}
-            onClick={() => navigateTo('/products')}
-          />
-          
-          <SidebarLink
-            to="/recipients"
-            icon={<User className="h-5 w-5" />}
-            label="Recipients"
-            isActive={activePath === '/recipients'}
-            expanded={expanded}
-            onClick={() => navigateTo('/recipients')}
+            onClick={() => navigateTo('/payins')}
           />
           
           <SidebarLink
@@ -234,12 +187,29 @@ export const Sidebar = () => {
           />
           
           <SidebarLink
-            to="/payins"
-            icon={<ArrowUpRight className="h-5 w-5" />}
-            label="Pay-ins"
-            isActive={activePath === '/payins'}
+            to="/products"
+            icon={<Package className="h-5 w-5" />}
+            label="Products"
+            isActive={activePath === '/products'}
             expanded={expanded}
-            onClick={() => navigateTo('/payins')}
+            onClick={() => navigateTo('/products')}
+          />
+          
+          <SidebarLink
+            to="/customers"
+            icon={<Users className="h-5 w-5" />}
+            label="Customers"
+            isActive={activePath === '/customers'}
+            expanded={expanded}
+            onClick={() => navigateTo('/customers')}
+          />
+          
+          <SubLink
+            to="/recipients"
+            label="Recipients"
+            isActive={activePath === '/recipients'}
+            expanded={expanded}
+            onClick={() => navigateTo('/recipients')}
           />
           
           <SidebarLink
@@ -251,23 +221,51 @@ export const Sidebar = () => {
             onClick={() => navigateTo('/integrations')}
           />
           
-          <SidebarLink
-            to="/team"
-            icon={<Users className="h-5 w-5" />}
-            label="Team"
-            isActive={activePath === '/team'}
-            expanded={expanded}
-            onClick={() => navigateTo('/team')}
-          />
-          
-          <SidebarLink
-            to="/account"
+          <SidebarMenuGroup
+            title="Settings"
             icon={<Settings className="h-5 w-5" />}
-            label="Account"
-            isActive={activePath === '/account'}
             expanded={expanded}
-            onClick={() => navigateTo('/account')}
-          />
+            isOpen={menuGroups.settings}
+            toggleOpen={() => toggleMenuGroup('settings')}
+            activePath={activePath}
+            closeMobile={isMobile ? closeMobile : undefined}
+          >
+            <SubLink
+              to="/account"
+              label="Account"
+              isActive={activePath === '/account'}
+              expanded={expanded}
+              onClick={() => navigateTo('/account')}
+            />
+            <SubLink
+              to="/team"
+              label="Team"
+              isActive={activePath === '/team'}
+              expanded={expanded}
+              onClick={() => navigateTo('/team')}
+            />
+            <SubLink
+              to="/cards"
+              label="Cards"
+              isActive={activePath === '/cards'}
+              expanded={expanded}
+              onClick={() => navigateTo('/cards')}
+            />
+            <SubLink
+              to="/bank-accounts"
+              label="Bank Accounts"
+              isActive={activePath === '/bank-accounts'}
+              expanded={expanded}
+              onClick={() => navigateTo('/bank-accounts')}
+            />
+            <SubLink
+              to="/billing"
+              label="Billing"
+              isActive={activePath === '/billing'}
+              expanded={expanded}
+              onClick={() => navigateTo('/billing')}
+            />
+          </SidebarMenuGroup>
         </div>
       </div>
       

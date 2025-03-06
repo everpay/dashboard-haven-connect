@@ -9,9 +9,14 @@ import { Search, Plus, Download, ArrowUpRight, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { exportAsCSV, exportAsXML, exportAsPDF } from '@/utils/exportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PayinModal } from '@/components/payment/PayinModal';
 
 const Payins = () => {
   const [payins, setPayins] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isPayinModalOpen, setIsPayinModalOpen] = useState(false);
+  const limit = 5;
+  const totalPayins = 24; // Mock total count
   
   // This would normally be loaded from an API or database
   React.useEffect(() => {
@@ -26,7 +31,7 @@ const Payins = () => {
     }));
     
     setPayins(mockPayins);
-  }, []);
+  }, [currentPage]);
 
   const handleExport = (format: 'csv' | 'xml' | 'pdf') => {
     switch (format) {
@@ -42,6 +47,34 @@ const Payins = () => {
     }
   };
 
+  const handlePayinSuccess = () => {
+    // Here we would normally update the payins list
+    // For now, let's just refresh with mock data
+    const newPayin = {
+      id: `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+      source: "Credit Card",
+      method: "Card",
+      date: new Date().toISOString(),
+      status: "Processing",
+      amount: Math.floor(100 + Math.random() * 900)
+    };
+    
+    setPayins([newPayin, ...payins.slice(0, -1)]);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    const maxPage = Math.ceil(totalPayins / limit);
+    if (currentPage < maxPage) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col space-y-6">
@@ -50,7 +83,10 @@ const Payins = () => {
             <h1 className="text-2xl font-bold">Payins</h1>
             <p className="text-muted-foreground mt-1">Manage incoming payments and deposits</p>
           </div>
-          <Button className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]">
+          <Button 
+            className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]"
+            onClick={() => setIsPayinModalOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" /> New Payin
           </Button>
         </div>
@@ -109,26 +145,22 @@ const Payins = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {Array.from({ length: 5 }).map((_, i) => (
+                  {payins.map((payin, i) => (
                     <tr key={i} className="hover:bg-muted/50">
-                      <td className="py-3 pl-4">{`PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`}</td>
+                      <td className="py-3 pl-4">{payin.id}</td>
+                      <td className="py-3">{payin.source}</td>
+                      <td className="py-3">{payin.method}</td>
                       <td className="py-3">
-                        {["Bank Transfer", "Credit Card", "PayPal", "Stripe", "Square"][i % 5]}
+                        {new Date(payin.date).toLocaleDateString()}
                       </td>
                       <td className="py-3">
-                        {["ACH", "Card", "Direct", "Wallet", "Bank Transfer"][i % 5]}
-                      </td>
-                      <td className="py-3">
-                        {new Date(Date.now() - i * 86400000).toLocaleDateString()}
-                      </td>
-                      <td className="py-3">
-                        <Badge variant={i % 3 === 0 ? "success" : i % 3 === 1 ? "default" : "secondary"}>
-                          {i % 3 === 0 ? "Completed" : i % 3 === 1 ? "Processing" : "Pending"}
+                        <Badge variant={payin.status === "Completed" ? "success" : payin.status === "Processing" ? "default" : "secondary"}>
+                          {payin.status}
                         </Badge>
                       </td>
                       <td className="py-3 pr-4 text-right">
                         <span className="font-medium text-green-600">
-                          ${(Math.random() * 1000).toFixed(2)}
+                          ${payin.amount.toFixed(2)}
                         </span>
                       </td>
                     </tr>
@@ -139,11 +171,25 @@ const Payins = () => {
             
             <div className="flex justify-between items-center mt-4">
               <div className="text-sm text-muted-foreground">
-                Showing 5 of 24 payins
+                Showing {(currentPage - 1) * limit + 1} to {Math.min(currentPage * limit, totalPayins)} of {totalPayins} payins
               </div>
               <div className="flex space-x-2">
-                <Button variant="outline" size="sm" disabled>Previous</Button>
-                <Button variant="outline" size="sm">Next</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={handlePrevPage}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled={currentPage >= Math.ceil(totalPayins / limit)}
+                  onClick={handleNextPage}
+                >
+                  Next
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -199,6 +245,12 @@ const Payins = () => {
           </Card>
         </div>
       </div>
+
+      <PayinModal
+        open={isPayinModalOpen}
+        onOpenChange={setIsPayinModalOpen}
+        onPaymentSuccess={handlePayinSuccess}
+      />
     </DashboardLayout>
   );
 };
