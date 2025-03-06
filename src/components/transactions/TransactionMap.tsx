@@ -1,123 +1,104 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
 
+// Define the Transaction interface
 interface Transaction {
   id: string;
   amount: number;
-  location?: any;
-  merchant_name?: string;
-  customer_email?: string;
+  location?: string;
   currency?: string;
+  merchant_name?: string;
+  status?: string;
+  customer_email?: string;
 }
 
-interface TransactionMapProps {
-  transactions: Transaction[];
-}
-
-const TransactionMap: React.FC<TransactionMapProps> = ({ transactions }) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const { toast } = useToast();
-
+const TransactionMap: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
+  
   useEffect(() => {
-    // Load Leaflet library from CDN
-    const loadLeaflet = () => {
-      // Load CSS
-      if (!document.getElementById('leaflet-css')) {
-        const link = document.createElement('link');
-        link.id = 'leaflet-css';
-        link.rel = 'stylesheet';
-        link.href = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.css';
-        document.head.appendChild(link);
-      }
-
-      // Load JS
-      if (!document.getElementById('leaflet-js')) {
-        const script = document.createElement('script');
-        script.id = 'leaflet-js';
-        script.src = 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.js';
-        script.onload = initializeMap;
-        document.body.appendChild(script);
-      } else if (window.L) {
-        initializeMap();
-      }
-    };
-
-    // Initialize map
-    const initializeMap = () => {
-      if (!mapContainerRef.current) return;
-      
-      if (mapRef.current) {
-        mapRef.current.remove();
-      }
-
+    if (!mapRef.current || mapInitialized) return;
+    
+    // Dynamically import Leaflet to avoid window.L errors
+    const loadLeaflet = async () => {
       try {
-        const L = window.L;
-        mapRef.current = L.map(mapContainerRef.current).setView([20, 0], 2);
-
+        // Dynamically import leaflet
+        const L = (await import('leaflet')).default;
+        
+        // Import leaflet CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+        
+        // Initialize map
+        const map = L.map(mapRef.current).setView([40, -95], 4);
+        
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mapRef.current);
-
-        // Add markers for transactions
+        }).addTo(map);
+        
+        // Add markers for transactions with location data
         transactions.forEach(transaction => {
           if (transaction.location) {
             try {
-              // Parse location string like "POINT(longitude latitude)"
-              const matches = transaction.location.match(/POINT\(([^ ]+) ([^)]+)\)/);
-              if (matches && matches.length === 3) {
-                const lng = parseFloat(matches[1]);
-                const lat = parseFloat(matches[2]);
+              // Parse the location string to extract coordinates
+              const match = transaction.location.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
+              if (match) {
+                const lng = parseFloat(match[1]);
+                const lat = parseFloat(match[2]);
                 
-                if (!isNaN(lng) && !isNaN(lat)) {
-                  const marker = L.marker([lat, lng]).addTo(mapRef.current);
-                  marker.bindPopup(`
-                    <b>${transaction.merchant_name || 'Transaction'}</b><br>
-                    Amount: ${transaction.currency || '$'}${transaction.amount}<br>
-                    ${transaction.customer_email ? `Customer: ${transaction.customer_email}` : ''}
-                  `);
-                }
+                // Create marker with popup
+                const marker = L.marker([lat, lng]).addTo(map);
+                marker.bindPopup(`
+                  <b>${transaction.merchant_name || 'Transaction'}</b><br>
+                  Amount: ${transaction.currency || '$'}${transaction.amount}<br>
+                  Status: ${transaction.status || 'Unknown'}<br>
+                  Email: ${transaction.customer_email || 'Not provided'}
+                `);
               }
             } catch (err) {
-              console.error('Error parsing location data:', err);
+              console.error("Error parsing location:", err);
             }
           }
         });
+        
+        // Adjust map view after adding markers
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+        
+        setMapInitialized(true);
+        
+        // Cleanup on unmount
+        return () => {
+          map.remove();
+        };
       } catch (error) {
-        console.error('Error initializing map:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize transaction map.",
-          variant: "destructive"
-        });
+        console.error("Error loading map:", error);
       }
     };
-
+    
     loadLeaflet();
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-      }
-    };
-  }, [transactions, toast]);
-
+  }, [transactions, mapInitialized]);
+  
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Transaction Locations</CardTitle>
+        <CardTitle>Transaction Map</CardTitle>
       </CardHeader>
       <CardContent>
         <div 
-          ref={mapContainerRef} 
-          style={{ height: '400px', width: '100%', borderRadius: '0.5rem' }}
-          className="border"
-        />
-        <p className="text-xs text-gray-500 mt-2 text-center">
-          Map shows the geographical distribution of your transactions.
-        </p>
+          ref={mapRef} 
+          className="h-[400px] w-full rounded-md bg-gray-100"
+        >
+          {!mapInitialized && (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-gray-500">Loading map...</p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

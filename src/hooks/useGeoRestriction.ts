@@ -7,10 +7,17 @@ export const useGeoRestriction = () => {
 
   useEffect(() => {
     const checkCountry = async () => {
-      const country = await getUserCountry();
-      // Changed to allow all countries for testing purposes
-      setIsAllowed(true);
+      try {
+        const country = await getUserCountry();
+        // Changed to always allow for testing
+        setIsAllowed(true);
+      } catch (error) {
+        console.error("Error checking country:", error);
+        // Fall back to allowing access if there's an error
+        setIsAllowed(true);
+      }
     };
+    
     checkCountry();
   }, []);
 

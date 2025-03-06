@@ -3,6 +3,15 @@ import { useGeoRestriction } from "@/hooks/useGeoRestriction";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
+// Define the window.marqeta interface
+declare global {
+  interface Window {
+    marqeta?: {
+      initialize: (config: { applicationToken: string }) => void;
+    };
+  }
+}
+
 const LoadMarqetaJS = () => {
   const isAllowed = useGeoRestriction();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -11,7 +20,7 @@ const LoadMarqetaJS = () => {
   useEffect(() => {
     if (isAllowed && !isLoaded) {
       const script = document.createElement("script");
-      // Fix: Use correct URL for Marqeta.js
+      // Use correct URL for Marqeta.js
       script.src = "https://assets.marqeta.com/core/marqeta.js"; 
       script.async = true;
       
@@ -44,6 +53,7 @@ const LoadMarqetaJS = () => {
         });
       };
       
+      // Check if script already exists to avoid duplicates
       if (!document.querySelector('script[src="https://assets.marqeta.com/core/marqeta.js"]')) {
         document.body.appendChild(script);
       } else {
