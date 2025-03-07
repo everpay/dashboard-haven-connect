@@ -423,6 +423,7 @@ export type Database = {
           gateway_api_key: string
           payout_balance: number | null
           reserve_balance: number | null
+          user_id: string | null
         }
         Insert: {
           corporate_account_id: string
@@ -431,6 +432,7 @@ export type Database = {
           gateway_api_key: string
           payout_balance?: number | null
           reserve_balance?: number | null
+          user_id?: string | null
         }
         Update: {
           corporate_account_id?: string
@@ -439,6 +441,7 @@ export type Database = {
           gateway_api_key?: string
           payout_balance?: number | null
           reserve_balance?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -520,6 +523,7 @@ export type Database = {
           created_at: string | null
           id: string
           method: string | null
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -527,6 +531,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           method?: string | null
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -534,6 +539,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           method?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1080,6 +1086,7 @@ export type Database = {
           transaction_id: string
           transaction_status: string
           transfer_method: string
+          user_id: string | null
         }
         Insert: {
           bank_account_id?: number | null
@@ -1108,6 +1115,7 @@ export type Database = {
           transaction_id: string
           transaction_status: string
           transfer_method?: string
+          user_id?: string | null
         }
         Update: {
           bank_account_id?: number | null
@@ -1136,6 +1144,7 @@ export type Database = {
           transaction_id?: string
           transaction_status?: string
           transfer_method?: string
+          user_id?: string | null
         }
         Relationships: [
           {

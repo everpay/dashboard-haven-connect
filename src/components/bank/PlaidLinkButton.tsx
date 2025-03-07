@@ -8,6 +8,8 @@ interface PlaidLinkButtonProps {
   onExit?: () => void;
   buttonText?: string;
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  className?: string;
+  children?: React.ReactNode;
 }
 
 // Define a PlaidLinkOptions type
@@ -33,8 +35,10 @@ declare global {
 const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
   onSuccess,
   onExit,
-  buttonText = 'Link Account',
-  variant = 'default'
+  buttonText,
+  variant = 'default',
+  className,
+  children
 }) => {
   const [isPlaidLoaded, setIsPlaidLoaded] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);
@@ -114,9 +118,10 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
     <Button 
       onClick={handleClick} 
       variant={variant}
+      className={className}
       disabled={!isPlaidLoaded || !linkToken}
     >
-      {!isPlaidLoaded || !linkToken ? 'Loading...' : buttonText}
+      {!isPlaidLoaded || !linkToken ? 'Loading...' : (children || buttonText || 'Link Account')}
     </Button>
   );
 };
