@@ -13,14 +13,14 @@ declare global {
 }
 
 const LoadMarqetaJS = () => {
-  const isAllowed = useGeoRestriction();
+  const { isAllowed, isLoading: geoLoading, error: geoError } = useGeoRestriction();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     // Only proceed if geo-restriction check is complete and allowed
-    if (isAllowed === null) {
+    if (geoLoading || isAllowed === null) {
       return; // Still loading geo check
     }
 
@@ -93,7 +93,7 @@ const LoadMarqetaJS = () => {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [isAllowed, isLoaded, isError, toast]);
+  }, [isAllowed, geoLoading, isLoaded, isError, toast]);
 
   // If error occurred, provide a retry button
   if (isError) {
