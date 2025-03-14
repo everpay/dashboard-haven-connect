@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,8 +15,9 @@ const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters' }),
   description: z.string().min(5, { message: 'Description must be at least 5 characters' }),
   price: z.coerce.number().positive({ message: 'Price must be a positive number' }),
-  inventory: z.coerce.number().int().nonnegative({ message: 'Inventory must be a non-negative integer' }),
+  stock: z.coerce.number().int().nonnegative({ message: 'Stock must be a non-negative integer' }),
   image_url: z.string().url({ message: 'Please enter a valid URL for the image' }).optional().or(z.literal('')),
+  product_type: z.enum(['physical', 'digital', 'subscription']).default('physical'),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
@@ -39,8 +39,9 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
       name: '',
       description: '',
       price: 0,
-      inventory: 0,
+      stock: 0,
       image_url: '',
+      product_type: 'physical',
     },
   });
 
@@ -58,7 +59,6 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
 
     try {
       if (id) {
-        // Update existing product
         const { error } = await supabase
           .from('products')
           .update(data)
@@ -71,7 +71,6 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
           description: "Your product has been updated successfully.",
         });
       } else {
-        // Create new product with a UUID and user_id
         const { error } = await supabase
           .from('products')
           .insert({
@@ -151,14 +150,35 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
 
           <FormField
             control={form.control}
-            name="inventory"
+            name="stock"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Inventory</FormLabel>
+                <FormLabel>Stock</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
                 </FormControl>
                 <FormDescription>Number of items in stock</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="product_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Product Type</FormLabel>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  >
+                    <option value="physical">Physical Product</option>
+                    <option value="digital">Digital Product</option>
+                    <option value="subscription">Subscription</option>
+                  </select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

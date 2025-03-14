@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -70,8 +69,8 @@ export function ProductList({ products, onProductUpdated }: ProductListProps) {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <CardTitle className="text-xl">{product.name}</CardTitle>
-              <Badge variant={product.inventory > 0 ? "success" : "destructive"}>
-                {product.inventory > 0 ? `In Stock (${product.inventory})` : "Out of Stock"}
+              <Badge variant={product.stock > 0 ? "success" : "destructive"}>
+                {product.stock > 0 ? `In Stock (${product.stock})` : "Out of Stock"}
               </Badge>
             </div>
             <CardDescription className="line-clamp-2">{product.description}</CardDescription>

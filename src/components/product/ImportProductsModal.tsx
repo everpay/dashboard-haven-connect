@@ -31,10 +31,10 @@ export function ImportProductsModal({ open, onOpenChange, onSuccess }: ImportPro
   };
 
   const processCSV = async (file: File) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<any[]>((resolve, reject) => {
       Papa.parse(file, {
         header: true,
-        complete: (results) => resolve(results.data),
+        complete: (results) => resolve(results.data as any[]),
         error: (error) => reject(error)
       });
     });
@@ -52,7 +52,7 @@ export function ImportProductsModal({ open, onOpenChange, onSuccess }: ImportPro
 
     setImporting(true);
     try {
-      let products = [];
+      let products: any[] = [];
 
       switch (source) {
         case 'file':
@@ -87,17 +87,25 @@ export function ImportProductsModal({ open, onOpenChange, onSuccess }: ImportPro
           });
           // Simulated delay to show import process
           await new Promise(resolve => setTimeout(resolve, 2000));
+          products = simulateImportFromPlatform(source);
           break;
       }
 
       if (products.length > 0) {
+        // Map products to match the database schema (stock instead of inventory)
+        const formattedProducts = products.map(product => ({
+          ...product,
+          user_id: session.user.id,
+          id: crypto.randomUUID(),
+          // Ensure stock is set if inventory was provided, or set a default
+          stock: product.stock || product.inventory || 0,
+          // Set a default product_type if not provided
+          product_type: product.product_type || 'physical'
+        }));
+
         const { error } = await supabase
           .from('products')
-          .insert(products.map(product => ({
-            ...product,
-            user_id: session.user.id,
-            id: crypto.randomUUID()
-          })));
+          .insert(formattedProducts);
 
         if (error) throw error;
       }
@@ -119,6 +127,37 @@ export function ImportProductsModal({ open, onOpenChange, onSuccess }: ImportPro
       setFile(null);
       setApiKey('');
     }
+  };
+
+  // Simulate import from platforms with sample data
+  const simulateImportFromPlatform = (platform: string): any[] => {
+    // Return 3 sample products based on the platform
+    return [
+      {
+        name: `${platform} Product 1`,
+        description: `Imported from ${platform} - product description 1`,
+        price: 19.99,
+        stock: 100,
+        image_url: `https://placehold.co/600x400?text=${platform}+Product+1`,
+        product_type: 'physical'
+      },
+      {
+        name: `${platform} Product 2`,
+        description: `Imported from ${platform} - product description 2`,
+        price: 29.99,
+        stock: 50,
+        image_url: `https://placehold.co/600x400?text=${platform}+Product+2`,
+        product_type: 'digital'
+      },
+      {
+        name: `${platform} Product 3`,
+        description: `Imported from ${platform} - product description 3`,
+        price: 39.99,
+        stock: 75,
+        image_url: `https://placehold.co/600x400?text=${platform}+Product+3`,
+        product_type: 'subscription'
+      }
+    ];
   };
 
   return (

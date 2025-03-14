@@ -19,7 +19,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  inventory: number;
+  stock: number; // Using stock instead of inventory to match the database
   image_url?: string;
   user_id: string;
   created_at: string;
