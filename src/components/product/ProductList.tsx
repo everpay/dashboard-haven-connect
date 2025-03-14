@@ -1,0 +1,155 @@
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ProductForm, ProductFormValues } from './ProductForm';
+import { Product } from '@/pages/Products';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { Edit, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+interface ProductListProps {
+  products: Product[];
+  onProductUpdated: () => void;
+}
+
+export function ProductList({ products, onProductUpdated }: ProductListProps) {
+  const { toast } = useToast();
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Product Deleted",
+        description: "The product has been deleted successfully.",
+      });
+      onProductUpdated();
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred while deleting the product.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setIsDialogOpen(false);
+    onProductUpdated();
+  };
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground mb-4">No products found</p>
+        <DialogTrigger asChild>
+          <Button>Add Your First Product</Button>
+        </DialogTrigger>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {products.map((product) => (
+        <Card key={product.id} className="flex flex-col h-full">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-xl">{product.name}</CardTitle>
+              <Badge variant={product.inventory > 0 ? "success" : "destructive"}>
+                {product.inventory > 0 ? `In Stock (${product.inventory})` : "Out of Stock"}
+              </Badge>
+            </div>
+            <CardDescription className="line-clamp-2">{product.description}</CardDescription>
+          </CardHeader>
+          
+          <CardContent className="py-2 flex-grow">
+            {product.image_url && (
+              <div className="aspect-video relative rounded-md overflow-hidden mb-4">
+                <img 
+                  src={product.image_url} 
+                  alt={product.name} 
+                  className="object-cover w-full h-full"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://placehold.co/600x400?text=No+Image";
+                  }}
+                />
+              </div>
+            )}
+            <div className="pt-2">
+              <p className="font-bold text-lg">${product.price.toFixed(2)}</p>
+            </div>
+          </CardContent>
+          
+          <CardFooter className="flex justify-between pt-2">
+            <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
+              <Edit className="mr-1 h-4 w-4" /> Edit
+            </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-destructive">
+                  <Trash2 className="mr-1 h-4 w-4" /> Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the product
+                    "{product.name}" from your account.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleDelete(product.id)}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardFooter>
+        </Card>
+      ))}
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <ProductForm 
+              defaultValues={{
+                name: editingProduct.name,
+                description: editingProduct.description,
+                price: editingProduct.price,
+                inventory: editingProduct.inventory,
+                image_url: editingProduct.image_url || '',
+              }}
+              id={editingProduct.id}
+              onSuccess={handleEditSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
