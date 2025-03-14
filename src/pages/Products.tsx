@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -42,10 +43,10 @@ export default function Products() {
         return;
       }
 
+      // Remove the user_id filter since that column doesn't exist in the database
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
