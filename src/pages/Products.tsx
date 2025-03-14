@@ -10,8 +10,9 @@ import { ProductForm } from '@/components/product/ProductForm';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, FileUp, Database } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { ImportProductsModal } from '@/components/product/ImportProductsModal';
 
 export interface Product {
   id: string;
@@ -22,6 +23,7 @@ export interface Product {
   image_url?: string;
   user_id: string;
   created_at: string;
+  product_type?: 'physical' | 'digital' | 'subscription';
 }
 
 export default function Products() {
@@ -29,13 +31,17 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('products')
@@ -52,6 +58,7 @@ export default function Products() {
         });
         setProducts([]);
       } else {
+        console.log('Products fetched:', data);
         setProducts(data || []);
       }
     } catch (error: any) {
@@ -80,9 +87,18 @@ export default function Products() {
     fetchProducts();
   };
 
+  const handleImportSuccess = () => {
+    setImportOpen(false);
+    fetchProducts();
+    toast({
+      title: "Products Imported",
+      description: "Your products have been successfully imported.",
+    });
+  };
+
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -96,22 +112,31 @@ export default function Products() {
             </p>
           </div>
           
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogTrigger asChild>
-              <Button>Add New Product</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Add New Product</DialogTitle>
-              </DialogHeader>
-              <ProductForm onSuccess={handleCreateSuccess} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex space-x-2">
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+              <DialogTrigger asChild>
+                <Button>Add New Product</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Product</DialogTitle>
+                </DialogHeader>
+                <ProductForm onSuccess={handleCreateSuccess} />
+              </DialogContent>
+            </Dialog>
+
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <FileUp className="mr-2 h-4 w-4" /> Import
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
             <TabsTrigger value="all">All Products</TabsTrigger>
+            <TabsTrigger value="physical">Physical</TabsTrigger>
+            <TabsTrigger value="digital">Digital</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="in-stock">In Stock</TabsTrigger>
             <TabsTrigger value="out-of-stock">Out of Stock</TabsTrigger>
           </TabsList>
@@ -130,8 +155,52 @@ export default function Products() {
               <div className="flex justify-center items-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : (
+            ) : filteredProducts.length > 0 ? (
               <ProductList products={filteredProducts} onProductUpdated={fetchProducts} />
+            ) : (
+              <div className="text-center p-8">
+                <p className="text-muted-foreground mb-4">No products found</p>
+                <Button onClick={() => setOpenDialog(true)}>Add Your First Product</Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="physical">
+            {loading ? (
+              <div className="flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <ProductList 
+                products={filteredProducts.filter(p => p.product_type === 'physical')} 
+                onProductUpdated={fetchProducts} 
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="digital">
+            {loading ? (
+              <div className="flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <ProductList 
+                products={filteredProducts.filter(p => p.product_type === 'digital')} 
+                onProductUpdated={fetchProducts} 
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="subscription">
+            {loading ? (
+              <div className="flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <ProductList 
+                products={filteredProducts.filter(p => p.product_type === 'subscription')} 
+                onProductUpdated={fetchProducts} 
+              />
             )}
           </TabsContent>
 
@@ -161,6 +230,12 @@ export default function Products() {
             )}
           </TabsContent>
         </Tabs>
+
+        <ImportProductsModal 
+          open={importOpen} 
+          onOpenChange={setImportOpen}
+          onSuccess={handleImportSuccess}
+        />
       </div>
     </DashboardLayout>
   );
