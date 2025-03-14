@@ -1,20 +1,8 @@
-
 import { useGeoRestriction } from "@/hooks/useGeoRestriction";
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
-// Define the window.marqeta interface
-declare global {
-  interface Window {
-    marqeta?: {
-      initialize: (config: { 
-        applicationToken: string;
-        baseUrl?: string;
-        adminAccessToken?: string;
-      }) => void;
-    };
-  }
-}
+// No need to redefine the Window interface here as it's defined in src/types/marqeta.d.ts
 
 const LoadMarqetaJS = () => {
   const { isAllowed, isLoading: geoLoading, error: geoError } = useGeoRestriction();
