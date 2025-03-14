@@ -94,6 +94,186 @@ export type Database = {
           },
         ]
       }
+      business_addresses: {
+        Row: {
+          address_type: string
+          city: string
+          country: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          postal_code: string
+          state: string
+          street_address: string
+          unit_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address_type: string
+          city: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          postal_code: string
+          state: string
+          street_address: string
+          unit_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address_type?: string
+          city?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          postal_code?: string
+          state?: string
+          street_address?: string
+          unit_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_details: {
+        Row: {
+          annual_revenue: number | null
+          business_category: string
+          business_description: string | null
+          business_name: string
+          business_type: string
+          created_at: string | null
+          employee_count: number | null
+          id: string
+          phone_number: string | null
+          tax_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          annual_revenue?: number | null
+          business_category: string
+          business_description?: string | null
+          business_name: string
+          business_type: string
+          created_at?: string | null
+          employee_count?: number | null
+          id?: string
+          phone_number?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          annual_revenue?: number | null
+          business_category?: string
+          business_description?: string | null
+          business_name?: string
+          business_type?: string
+          created_at?: string | null
+          employee_count?: number | null
+          id?: string
+          phone_number?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_details_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_owners: {
+        Row: {
+          city: string
+          country: string
+          created_at: string | null
+          date_of_birth: string
+          email: string
+          first_name: string
+          id: string
+          is_primary: boolean | null
+          last_name: string
+          ownership_percentage: number
+          phone_number: string | null
+          postal_code: string
+          ssn_last_four: string
+          state: string
+          street_address: string
+          unit_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city: string
+          country?: string
+          created_at?: string | null
+          date_of_birth: string
+          email: string
+          first_name: string
+          id?: string
+          is_primary?: boolean | null
+          last_name: string
+          ownership_percentage: number
+          phone_number?: string | null
+          postal_code: string
+          ssn_last_four: string
+          state: string
+          street_address: string
+          unit_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string | null
+          date_of_birth?: string
+          email?: string
+          first_name?: string
+          id?: string
+          is_primary?: boolean | null
+          last_name?: string
+          ownership_percentage?: number
+          phone_number?: string | null
+          postal_code?: string
+          ssn_last_four?: string
+          state?: string
+          street_address?: string
+          unit_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_owners_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_profiles: {
         Row: {
           business_category: string | null
@@ -101,15 +281,18 @@ export type Database = {
           business_type: string
           created_at: string | null
           email_verified: boolean | null
+          email_verified_at: string | null
           employer_id: string | null
           first_name: string
           id: string
           last_name: string
+          onboarding_completed: boolean | null
           payment_types: string[]
           projected_volume: string
           status: string
           updated_at: string | null
           user_id: string | null
+          verification_token: string | null
         }
         Insert: {
           business_category?: string | null
@@ -117,15 +300,18 @@ export type Database = {
           business_type: string
           created_at?: string | null
           email_verified?: boolean | null
+          email_verified_at?: string | null
           employer_id?: string | null
           first_name: string
           id?: string
           last_name: string
+          onboarding_completed?: boolean | null
           payment_types: string[]
           projected_volume: string
           status?: string
           updated_at?: string | null
           user_id?: string | null
+          verification_token?: string | null
         }
         Update: {
           business_category?: string | null
@@ -133,17 +319,28 @@ export type Database = {
           business_type?: string
           created_at?: string | null
           email_verified?: boolean | null
+          email_verified_at?: string | null
           employer_id?: string | null
           first_name?: string
           id?: string
           last_name?: string
+          onboarding_completed?: boolean | null
           payment_types?: string[]
           projected_volume?: string
           status?: string
           updated_at?: string | null
           user_id?: string | null
+          verification_token?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       card_accounts: {
         Row: {
@@ -463,23 +660,35 @@ export type Database = {
       customers: {
         Row: {
           created_at: string | null
+          description: string | null
           email: string
           id: string
+          metadata: Json | null
           name: string | null
+          phone: string | null
+          stripe_customer_id: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           email: string
           id?: string
+          metadata?: Json | null
           name?: string | null
+          phone?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           email?: string
           id?: string
+          metadata?: Json | null
           name?: string | null
+          phone?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -762,7 +971,15 @@ export type Database = {
           timestamp?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ip_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kyc_verifications: {
         Row: {
@@ -836,7 +1053,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marqeta_customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marqeta_transactions: {
         Row: {
@@ -887,7 +1112,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marqeta_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       merchant_integrations: {
         Row: {
@@ -1004,7 +1237,29 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_merchant_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       merchants: {
         Row: {
@@ -1191,6 +1446,53 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      onboarding_steps: {
+        Row: {
+          bank_details_completed: boolean | null
+          business_address_completed: boolean | null
+          business_details_completed: boolean | null
+          business_type_completed: boolean | null
+          created_at: string | null
+          current_step: string
+          id: string
+          owner_details_completed: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bank_details_completed?: boolean | null
+          business_address_completed?: boolean | null
+          business_details_completed?: boolean | null
+          business_type_completed?: boolean | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          owner_details_completed?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bank_details_completed?: boolean | null
+          business_address_completed?: boolean | null
+          business_details_completed?: boolean | null
+          business_type_completed?: boolean | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          owner_details_completed?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_steps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_methods: {
         Row: {
@@ -1488,6 +1790,7 @@ export type Database = {
           last_name: string | null
           phone: string | null
           postal_code: string | null
+          role: string | null
           ssn_last_four: string | null
           state: string | null
           updated_at: string | null
@@ -1508,6 +1811,7 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           postal_code?: string | null
+          role?: string | null
           ssn_last_four?: string | null
           state?: string | null
           updated_at?: string | null
@@ -1528,11 +1832,20 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           postal_code?: string | null
+          role?: string | null
           ssn_last_four?: string | null
           state?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipients: {
         Row: {
@@ -1799,7 +2112,15 @@ export type Database = {
           os_version?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -1990,6 +2311,45 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_verification_status: {
+        Row: {
+          id: string | null
+          is_email_verified: boolean | null
+          onboarding_completed: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string | null
+          is_email_verified?: never
+          onboarding_completed?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string | null
+          is_email_verified?: never
+          onboarding_completed?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
       sales_by_payment_method: {
         Row: {
           payment_method: string | null
@@ -2008,7 +2368,40 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      check_tables_exist: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_resellers: {
+        Args: Record<PropertyKey, never>
+        Returns: Json[]
+      }
+      get_settlements: {
+        Args: Record<PropertyKey, never>
+        Returns: Json[]
+      }
+      get_transaction_chart_data: {
+        Args: {
+          days_back?: number
+        }
+        Returns: Json[]
+      }
+      get_transactions_paginated: {
+        Args: {
+          page_number: number
+          page_size: number
+        }
+        Returns: {
+          data: Json
+          total_count: number
+        }[]
+      }
+      verify_merchant_email: {
+        Args: {
+          token: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
