@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -58,7 +59,11 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
     setIsSubmitting(true);
 
     try {
+      // Add a fixed product ID for new products
+      const productId = id || uuidv4();
+      
       if (id) {
+        // Update existing product
         const { error } = await supabase
           .from('products')
           .update(data)
@@ -71,12 +76,13 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
           description: "Your product has been updated successfully.",
         });
       } else {
+        // Create new product - Don't include user_id field as it doesn't exist in the database
         const { error } = await supabase
           .from('products')
           .insert({
-            id: uuidv4(),
+            id: productId,
             ...data,
-            user_id: session.user.id,
+            // No user_id field anymore
           });
 
         if (error) throw error;
