@@ -7,7 +7,11 @@ import { useToast } from "@/components/ui/use-toast";
 declare global {
   interface Window {
     marqeta?: {
-      initialize: (config: { applicationToken: string }) => void;
+      initialize: (config: { 
+        applicationToken: string;
+        baseUrl?: string;
+        adminAccessToken?: string;
+      }) => void;
     };
   }
 }
@@ -17,6 +21,11 @@ const LoadMarqetaJS = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
+
+  // Marqeta API credentials
+  const applicationToken = '979bb5ae-d4bf-4265-a63c-1d036c81fab2';
+  const adminAccessToken = 'b9fc74d2-1518-415c-934e-f0579ad1c628';
+  const baseUrl = 'https://sandbox-api.marqeta.com/v3/';
 
   useEffect(() => {
     // Only proceed if geo-restriction check is complete and allowed
@@ -48,8 +57,8 @@ const LoadMarqetaJS = () => {
           initializeMarqeta();
         };
         
-        script.onerror = () => {
-          console.error("Failed to load Marqeta.js");
+        script.onerror = (error) => {
+          console.error("Failed to load Marqeta.js", error);
           setIsError(true);
           toast({
             title: "Error",
@@ -67,11 +76,27 @@ const LoadMarqetaJS = () => {
       const initializeMarqeta = () => {
         try {
           if (window.marqeta) {
-            window.marqeta.initialize({
-              applicationToken: '979bb5ae-d4bf-4265-a63c-1d036c81fab2'
+            console.log("Initializing Marqeta with:", { 
+              applicationToken, 
+              adminAccessToken: adminAccessToken ? "[HIDDEN]" : undefined,
+              baseUrl: baseUrl || undefined
             });
+            
+            window.marqeta.initialize({
+              applicationToken: applicationToken,
+              adminAccessToken: adminAccessToken,
+              baseUrl: baseUrl
+            });
+            
             setIsLoaded(true);
-            console.log("Marqeta initialized with application token");
+            console.log("Marqeta initialized successfully");
+            
+            // Show success toast
+            toast({
+              title: "Success",
+              description: "Marqeta API initialized successfully",
+              variant: "default"
+            });
           } else {
             throw new Error("Marqeta object not found in window");
           }
@@ -80,20 +105,20 @@ const LoadMarqetaJS = () => {
           setIsError(true);
           toast({
             title: "Error",
-            description: "Failed to initialize Marqeta API",
+            description: "Failed to initialize Marqeta API: " + (error instanceof Error ? error.message : String(error)),
             variant: "destructive"
           });
         }
       };
 
-      // Add a small delay before loading to ensure the DOM is ready
+      // Reduce delay before loading to ensure quicker initialization
       const timeoutId = setTimeout(() => {
         loadMarqeta();
-      }, 500);
+      }, 300);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [isAllowed, geoLoading, isLoaded, isError, toast]);
+  }, [isAllowed, geoLoading, isLoaded, isError, toast, applicationToken, adminAccessToken, baseUrl]);
 
   // If error occurred, provide a retry button
   if (isError) {
