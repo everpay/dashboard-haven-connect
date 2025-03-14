@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,13 +10,15 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProductListProps {
   products: Product[];
   onProductUpdated: () => void;
+  isLoading?: boolean;
 }
 
-export function ProductList({ products, onProductUpdated }: ProductListProps) {
+export function ProductList({ products, onProductUpdated, isLoading = false }: ProductListProps) {
   const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,10 +57,34 @@ export function ProductList({ products, onProductUpdated }: ProductListProps) {
     onProductUpdated();
   };
 
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((index) => (
+          <Card key={index} className="flex flex-col h-full">
+            <CardHeader className="pb-2">
+              <Skeleton className="h-8 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-full" />
+            </CardHeader>
+            <CardContent className="py-2 flex-grow">
+              <Skeleton className="h-40 w-full mb-4" />
+              <Skeleton className="h-6 w-1/4" />
+            </CardContent>
+            <CardFooter className="pt-2">
+              <Skeleton className="h-9 w-20 mr-2" />
+              <Skeleton className="h-9 w-20" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   if (products.length === 0) {
     return (
-      <div className="text-center p-8">
+      <div className="text-center p-8 border rounded-lg shadow-sm bg-background">
         <p className="text-muted-foreground mb-4">No products found</p>
+        <p className="text-sm text-muted-foreground">Add products or import them from another platform</p>
       </div>
     );
   }
@@ -90,8 +117,13 @@ export function ProductList({ products, onProductUpdated }: ProductListProps) {
                 />
               </div>
             )}
-            <div className="pt-2">
+            <div className="pt-2 flex justify-between items-center">
               <p className="font-bold text-lg">${product.price.toFixed(2)}</p>
+              {product.product_type && (
+                <Badge variant="outline" className="capitalize">
+                  {product.product_type}
+                </Badge>
+              )}
             </div>
           </CardContent>
           
@@ -137,7 +169,8 @@ export function ProductList({ products, onProductUpdated }: ProductListProps) {
                 name: editingProduct.name,
                 description: editingProduct.description,
                 price: editingProduct.price,
-                inventory: editingProduct.inventory,
+                stock: editingProduct.stock,
+                product_type: editingProduct.product_type || 'physical',
                 image_url: editingProduct.image_url || '',
               }}
               id={editingProduct.id}
