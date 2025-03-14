@@ -7,5 +7,8 @@ interface Window {
       baseUrl?: string;
       adminAccessToken?: string;
     }) => void;
+    cards?: {
+      create: (cardData: any) => Promise<any>;
+    };
   };
 }

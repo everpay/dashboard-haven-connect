@@ -22,6 +22,7 @@ const LoadMarqetaJS = () => {
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
   const initAttempted = useRef(false);
+  const initSuccessful = useRef(false);
 
   // Marqeta API credentials
   const applicationToken = '979bb5ae-d4bf-4265-a63c-1d036c81fab2';
@@ -29,11 +30,25 @@ const LoadMarqetaJS = () => {
   const baseUrl = 'https://sandbox-api.marqeta.com/v3/';
 
   useEffect(() => {
-    // Early load - don't wait for geo-restriction check to begin loading
+    // Load immediately without waiting
     if (!isLoaded && !isError && !initAttempted.current) {
       initAttempted.current = true;
       loadMarqeta();
     }
+
+    // Set up a retry mechanism
+    const retryInterval = setInterval(() => {
+      if (!isLoaded && !initSuccessful.current) {
+        console.log("Retrying Marqeta initialization...");
+        loadMarqeta();
+      } else {
+        clearInterval(retryInterval);
+      }
+    }, 5000); // Retry every 5 seconds
+
+    return () => {
+      clearInterval(retryInterval);
+    };
     
     function loadMarqeta() {
       // Check if Marqeta is already loaded
@@ -69,12 +84,28 @@ const LoadMarqetaJS = () => {
         
         fallbackScript.onerror = (fallbackError) => {
           console.error("Failed to load Marqeta.js from fallback URL", fallbackError);
-          setIsError(true);
-          toast({
-            title: "Error",
-            description: "Failed to load Marqeta API",
-            variant: "destructive"
-          });
+          
+          // Try one more fallback URL
+          const lastFallbackScript = document.createElement("script");
+          lastFallbackScript.src = "https://sandbox-assets.marqeta.com/js/marqeta.js";
+          lastFallbackScript.async = true;
+          
+          lastFallbackScript.onload = () => {
+            console.log("Marqeta.js Loaded Successfully from last fallback URL");
+            initializeMarqeta();
+          };
+          
+          lastFallbackScript.onerror = (lastFallbackError) => {
+            console.error("Failed to load Marqeta.js from all URLs", lastFallbackError);
+            setIsError(true);
+            toast({
+              title: "Error",
+              description: "Failed to load Marqeta API",
+              variant: "destructive"
+            });
+          };
+          
+          document.body.appendChild(lastFallbackScript);
         };
         
         document.body.appendChild(fallbackScript);
@@ -102,6 +133,7 @@ const LoadMarqetaJS = () => {
           });
           
           setIsLoaded(true);
+          initSuccessful.current = true;
           console.log("Marqeta initialized successfully");
           
           // Show success toast
@@ -136,6 +168,7 @@ const LoadMarqetaJS = () => {
             setIsError(false);
             setIsLoaded(false);
             initAttempted.current = false;
+            initSuccessful.current = false;
           }}
           className="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
         >
