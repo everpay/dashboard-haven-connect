@@ -6,31 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Check, Clock, XCircle, Building, CreditCard, Download, ArrowUpDown, Trash2, ExternalLink, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import PlaidLinkButton from '@/components/bank/PlaidLinkButton';
 import { supabase } from '@/lib/supabase';
 
-// Load Plaid script
-const loadPlaidScript = () => {
-  if (!document.getElementById('plaid-script')) {
-    const script = document.createElement('script');
-    script.id = 'plaid-script';
-    script.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
-    script.async = true;
-    script.onload = () => {
-      console.log("Plaid script loaded successfully");
-    };
-    script.onerror = () => {
-      console.error("Failed to load Plaid script");
-    };
-    document.body.appendChild(script);
-  }
-};
-
-// Sample bank account data
+// Sample bank account data - Using more realistic test data
 const sampleBankAccounts = [
   {
     id: 'acct_123456',
@@ -43,7 +23,10 @@ const sampleBankAccounts = [
     bank: {
       name: 'JPMorgan Chase',
       logo: 'https://logo.clearbit.com/chase.com'
-    }
+    },
+    balance: 2750.45,
+    currency: 'USD',
+    lastUpdated: '2025-03-14T10:32:45Z'
   },
   {
     id: 'acct_789012',
@@ -56,7 +39,10 @@ const sampleBankAccounts = [
     bank: {
       name: 'Bank of America',
       logo: 'https://logo.clearbit.com/bankofamerica.com'
-    }
+    },
+    balance: 11325.78,
+    currency: 'USD',
+    lastUpdated: '2025-03-14T09:12:33Z'
   },
   {
     id: 'acct_345678',
@@ -69,20 +55,81 @@ const sampleBankAccounts = [
     bank: {
       name: 'Wells Fargo',
       logo: 'https://logo.clearbit.com/wellsfargo.com'
-    }
+    },
+    balance: 5420.19,
+    currency: 'USD',
+    lastUpdated: '2025-03-14T08:45:21Z'
+  }
+];
+
+// Sample bank transactions data
+const sampleTransactions = [
+  { 
+    id: 'txn_12345', 
+    date: '2025-03-14T08:32:15Z',
+    description: 'ACH Payment - ABC Company',
+    amount: -1250.00,
+    currency: 'USD',
+    status: 'completed',
+    accountId: 'acct_123456',
+    accountName: 'Chase Checking',
+    category: 'Business Services'
+  },
+  { 
+    id: 'txn_23456', 
+    date: '2025-03-13T15:42:22Z',
+    description: 'Deposit - Customer Payment',
+    amount: 3450.75,
+    currency: 'USD',
+    status: 'completed',
+    accountId: 'acct_789012',
+    accountName: 'Bank of America Savings',
+    category: 'Income'
+  },
+  { 
+    id: 'txn_34567', 
+    date: '2025-03-13T11:15:06Z',
+    description: 'Wire Transfer - XYZ Corp',
+    amount: -2200.50,
+    currency: 'USD',
+    status: 'pending',
+    accountId: 'acct_345678',
+    accountName: 'Wells Fargo Business',
+    category: 'Transfer'
+  },
+  { 
+    id: 'txn_45678', 
+    date: '2025-03-12T14:27:33Z',
+    description: 'Vendor Payment - Office Supplies',
+    amount: -345.95,
+    currency: 'USD',
+    status: 'completed',
+    accountId: 'acct_123456',
+    accountName: 'Chase Checking',
+    category: 'Office Expenses'
+  },
+  { 
+    id: 'txn_56789', 
+    date: '2025-03-12T09:05:16Z',
+    description: 'Customer Deposit - Invoice #4592',
+    amount: 1875.00,
+    currency: 'USD',
+    status: 'completed',
+    accountId: 'acct_789012',
+    accountName: 'Bank of America Savings',
+    category: 'Income'
   }
 ];
 
 const BankAccounts = () => {
   const [bankAccounts, setBankAccounts] = useState(sampleBankAccounts);
+  const [transactions, setTransactions] = useState(sampleTransactions);
   const [plaidLoaded, setPlaidLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   // Load Plaid script when component mounts
   useEffect(() => {
-    loadPlaidScript();
-    
     // Check if Plaid is loaded
     const checkPlaid = setInterval(() => {
       if (window.Plaid) {
@@ -94,27 +141,48 @@ const BankAccounts = () => {
     return () => clearInterval(checkPlaid);
   }, []);
 
+  // Handle successful Plaid connection
   const handlePlaidSuccess = (publicToken: string, metadata: any) => {
     // In a real application, you would send this token to your backend
     console.log('Plaid public token:', publicToken);
     console.log('Account metadata:', metadata);
     
-    // For demo purposes, we'll add a mock bank account
+    // For demo purposes, we'll add a mock bank account with realistic data
     const newAccount = {
       id: `acct_${Math.random().toString(36).substr(2, 6)}`,
-      name: metadata.accounts?.[0]?.name || `Account ${bankAccounts.length + 1}`,
+      name: metadata.accounts?.[0]?.name || `${metadata.institution?.name || 'New'} Account`,
       accountNumber: `••••${Math.floor(1000 + Math.random() * 9000)}`,
       routingNumber: '021000021',
       accountType: metadata.accounts?.[0]?.type || 'Checking',
       status: 'verified',
       isDefault: bankAccounts.length === 0,
       bank: {
-        name: metadata.institution?.name || 'Example Bank',
+        name: metadata.institution?.name || 'Demo Bank',
         logo: `https://logo.clearbit.com/${metadata.institution?.name?.toLowerCase().replace(/\s+/g, '') || 'bank'}.com`
-      }
+      },
+      balance: Math.floor(Math.random() * 10000) / 100 + 1000,
+      currency: 'USD',
+      lastUpdated: new Date().toISOString()
     };
     
     setBankAccounts([...bankAccounts, newAccount]);
+    
+    // Create a few transactions for the new account
+    const newTransactions = [
+      {
+        id: `txn_${Math.random().toString(36).substr(2, 6)}`,
+        date: new Date().toISOString(),
+        description: 'Initial Deposit',
+        amount: newAccount.balance,
+        currency: 'USD',
+        status: 'completed',
+        accountId: newAccount.id,
+        accountName: newAccount.name,
+        category: 'Income'
+      }
+    ];
+    
+    setTransactions([...newTransactions, ...transactions]);
     
     // Save to Supabase (this would normally be done through a secure API)
     saveBankAccountToSupabase(newAccount);
@@ -132,6 +200,8 @@ const BankAccounts = () => {
             bank_account_number: account.accountNumber,
             bank_routing_number: account.routingNumber,
             bank_name: account.bank.name,
+            balance: account.balance,
+            account_type: account.accountType
           }
         ]);
       
@@ -173,6 +243,25 @@ const BankAccounts = () => {
     toast({
       title: "Default Account Updated",
       description: "Your default bank account has been updated.",
+    });
+  };
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  };
+
+  // Helper function to format dates
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -251,7 +340,7 @@ const BankAccounts = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <p className="text-sm font-medium text-gray-500">Account Number</p>
                           <p>{account.accountNumber}</p>
@@ -259,6 +348,11 @@ const BankAccounts = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-500">Routing Number</p>
                           <p>{account.routingNumber}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Available Balance</p>
+                          <p className="font-semibold text-lg">{formatCurrency(account.balance, account.currency)}</p>
+                          <p className="text-xs text-gray-400">Updated {formatDate(account.lastUpdated)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -327,23 +421,60 @@ const BankAccounts = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  <Building className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                  <p className="mb-4">Bank transactions will appear here after you connect a bank account.</p>
-                  {!plaidLoaded ? (
-                    <div className="flex justify-center items-center">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      Loading Plaid integration...
-                    </div>
-                  ) : (
-                    <PlaidLinkButton 
-                      onSuccess={handlePlaidSuccess}
-                      className="mx-auto bg-[#1AA47B] text-white hover:bg-[#19363B]"
-                    >
-                      Connect Bank Account
-                    </PlaidLinkButton>
-                  )}
-                </div>
+                {transactions.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3">Date</th>
+                          <th className="px-6 py-3">Description</th>
+                          <th className="px-6 py-3">Account</th>
+                          <th className="px-6 py-3">Category</th>
+                          <th className="px-6 py-3 text-right">Amount</th>
+                          <th className="px-6 py-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map(transaction => (
+                          <tr key={transaction.id} className="bg-white border-b hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {formatDate(transaction.date)}
+                            </td>
+                            <td className="px-6 py-4">{transaction.description}</td>
+                            <td className="px-6 py-4">{transaction.accountName}</td>
+                            <td className="px-6 py-4">{transaction.category}</td>
+                            <td className={`px-6 py-4 font-medium text-right ${transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(transaction.amount, transaction.currency)}
+                            </td>
+                            <td className="px-6 py-4">
+                              <Badge variant={transaction.status === 'completed' ? 'success' : 'warning'}>
+                                {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Building className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                    <p className="mb-4">Bank transactions will appear here after you connect a bank account.</p>
+                    {!plaidLoaded ? (
+                      <div className="flex justify-center items-center">
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        Loading Plaid integration...
+                      </div>
+                    ) : (
+                      <PlaidLinkButton 
+                        onSuccess={handlePlaidSuccess}
+                        className="mx-auto bg-[#1AA47B] text-white hover:bg-[#19363B]"
+                      >
+                        Connect Bank Account
+                      </PlaidLinkButton>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

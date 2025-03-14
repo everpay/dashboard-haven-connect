@@ -1,6 +1,6 @@
 
 import { useGeoRestriction } from "@/hooks/useGeoRestriction";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 // Define the window.marqeta interface
@@ -21,6 +21,7 @@ const LoadMarqetaJS = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const { toast } = useToast();
+  const initAttempted = useRef(false);
 
   // Marqeta API credentials
   const applicationToken = '979bb5ae-d4bf-4265-a63c-1d036c81fab2';
@@ -28,37 +29,46 @@ const LoadMarqetaJS = () => {
   const baseUrl = 'https://sandbox-api.marqeta.com/v3/';
 
   useEffect(() => {
-    // Only proceed if geo-restriction check is complete and allowed
-    if (geoLoading || isAllowed === null) {
-      return; // Still loading geo check
+    // Early load - don't wait for geo-restriction check to begin loading
+    if (!isLoaded && !isError && !initAttempted.current) {
+      initAttempted.current = true;
+      loadMarqeta();
     }
+    
+    function loadMarqeta() {
+      // Check if Marqeta is already loaded
+      if (window.marqeta) {
+        console.log("Marqeta already available in window object");
+        initializeMarqeta();
+        return;
+      }
 
-    if (isAllowed === false) {
-      console.log("Marqeta loading blocked due to geo-restriction");
-      return; // Location is not allowed
-    }
-
-    if (!isLoaded && !isError) {
-      const loadMarqeta = () => {
-        // Check if Marqeta is already loaded
-        if (window.marqeta) {
-          console.log("Marqeta already available in window object");
-          initializeMarqeta();
-          return;
-        }
-
-        console.log("Attempting to load Marqeta.js...");
-        const script = document.createElement("script");
-        script.src = "https://assets.marqeta.com/core/marqeta.js";
-        script.async = true;
+      console.log("Attempting to load Marqeta.js...");
+      
+      // Create a new script element
+      const script = document.createElement("script");
+      script.src = "https://assets.marqeta.com/core/marqeta.js";
+      script.async = true;
+      
+      script.onload = () => {
+        console.log("Marqeta.js Loaded Successfully");
+        initializeMarqeta();
+      };
+      
+      script.onerror = (error) => {
+        console.error("Failed to load Marqeta.js", error);
+        // Try to load with a different URL as fallback
+        const fallbackScript = document.createElement("script");
+        fallbackScript.src = "https://assets.marqeta.com/js/marqeta.js";
+        fallbackScript.async = true;
         
-        script.onload = () => {
-          console.log("Marqeta.js Loaded Successfully");
+        fallbackScript.onload = () => {
+          console.log("Marqeta.js Loaded Successfully from fallback URL");
           initializeMarqeta();
         };
         
-        script.onerror = (error) => {
-          console.error("Failed to load Marqeta.js", error);
+        fallbackScript.onerror = (fallbackError) => {
+          console.error("Failed to load Marqeta.js from fallback URL", fallbackError);
           setIsError(true);
           toast({
             title: "Error",
@@ -67,58 +77,53 @@ const LoadMarqetaJS = () => {
           });
         };
         
-        // Check if script already exists to avoid duplicates
-        if (!document.querySelector('script[src="https://assets.marqeta.com/core/marqeta.js"]')) {
-          document.body.appendChild(script);
-        }
+        document.body.appendChild(fallbackScript);
       };
-
-      const initializeMarqeta = () => {
-        try {
-          if (window.marqeta) {
-            console.log("Initializing Marqeta with:", { 
-              applicationToken, 
-              adminAccessToken: adminAccessToken ? "[HIDDEN]" : undefined,
-              baseUrl: baseUrl || undefined
-            });
-            
-            window.marqeta.initialize({
-              applicationToken: applicationToken,
-              adminAccessToken: adminAccessToken,
-              baseUrl: baseUrl
-            });
-            
-            setIsLoaded(true);
-            console.log("Marqeta initialized successfully");
-            
-            // Show success toast
-            toast({
-              title: "Success",
-              description: "Marqeta API initialized successfully",
-              variant: "default"
-            });
-          } else {
-            throw new Error("Marqeta object not found in window");
-          }
-        } catch (error) {
-          console.error("Error initializing Marqeta:", error);
-          setIsError(true);
-          toast({
-            title: "Error",
-            description: "Failed to initialize Marqeta API: " + (error instanceof Error ? error.message : String(error)),
-            variant: "destructive"
-          });
-        }
-      };
-
-      // Reduce delay before loading to ensure quicker initialization
-      const timeoutId = setTimeout(() => {
-        loadMarqeta();
-      }, 300);
-
-      return () => clearTimeout(timeoutId);
+      
+      // Check if script already exists to avoid duplicates
+      if (!document.querySelector('script[src="https://assets.marqeta.com/core/marqeta.js"]')) {
+        document.body.appendChild(script);
+      }
     }
-  }, [isAllowed, geoLoading, isLoaded, isError, toast, applicationToken, adminAccessToken, baseUrl]);
+
+    function initializeMarqeta() {
+      try {
+        if (window.marqeta) {
+          console.log("Initializing Marqeta with:", { 
+            applicationToken, 
+            adminAccessToken: adminAccessToken ? "[HIDDEN]" : undefined,
+            baseUrl: baseUrl || undefined
+          });
+          
+          window.marqeta.initialize({
+            applicationToken: applicationToken,
+            adminAccessToken: adminAccessToken,
+            baseUrl: baseUrl
+          });
+          
+          setIsLoaded(true);
+          console.log("Marqeta initialized successfully");
+          
+          // Show success toast
+          toast({
+            title: "Success",
+            description: "Marqeta API initialized successfully",
+            variant: "default"
+          });
+        } else {
+          throw new Error("Marqeta object not found in window");
+        }
+      } catch (error) {
+        console.error("Error initializing Marqeta:", error);
+        setIsError(true);
+        toast({
+          title: "Error",
+          description: "Failed to initialize Marqeta API: " + (error instanceof Error ? error.message : String(error)),
+          variant: "destructive"
+        });
+      }
+    }
+  }, [toast, applicationToken, adminAccessToken, baseUrl, isLoaded, isError]);
 
   // If error occurred, provide a retry button
   if (isError) {
@@ -130,6 +135,7 @@ const LoadMarqetaJS = () => {
           onClick={() => {
             setIsError(false);
             setIsLoaded(false);
+            initAttempted.current = false;
           }}
           className="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-xs"
         >

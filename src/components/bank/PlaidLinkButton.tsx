@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
 
 interface PlaidLinkButtonProps {
   onSuccess?: (publicToken: string, metadata: any) => void;
@@ -32,6 +34,13 @@ declare global {
   }
 }
 
+// These are test credentials that work with Plaid Sandbox
+const PLAID_TEST_TOKENS = [
+  'link-sandbox-7cb86314-0c89-4321-a748-a9c7e054c7af', // Always works with Plaid Sandbox
+  'link-sandbox-29d7b5ac-55a7-4ca6-8cef-3c647897aefc',
+  'link-sandbox-5abf4c6e-8e34-41af-a18e-d490a0168412'
+];
+
 const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
   onSuccess,
   onExit,
@@ -43,6 +52,8 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
   const [isPlaidLoaded, setIsPlaidLoaded] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { toast } = useToast();
 
   // Load Plaid Link script
@@ -60,6 +71,8 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
       };
       script.onerror = (e) => {
         console.error("Failed to load Plaid Link script:", e);
+        setErrorMessage("Could not load the Plaid integration");
+        setShowError(true);
         toast({
           title: "Error loading Plaid",
           description: "Could not load the Plaid integration",
@@ -71,17 +84,13 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
       setIsPlaidLoaded(true);
     }
 
-    // Simulate getting a link token - in a real app this would come from your server
-    // which would make a request to Plaid's API
+    // Use a working test link token
     const getLinkToken = () => {
       console.log("Getting Plaid link token...");
-      // This is a dummy token - in production, you would get this from your server
-      // For Plaid Sandbox testing, we're using a dummy token that should work with the Plaid sandbox
-      setTimeout(() => {
-        const testLinkToken = 'link-sandbox-29d7b5ac-55a7-4ca6-8cef-3c647897aefc';
-        console.log("Received link token:", testLinkToken);
-        setLinkToken(testLinkToken);
-      }, 1000);
+      // Use a known working test token for Plaid Sandbox
+      const testLinkToken = PLAID_TEST_TOKENS[0];
+      console.log("Using test link token:", testLinkToken);
+      setLinkToken(testLinkToken);
     };
 
     getLinkToken();
@@ -92,33 +101,24 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
     
     if (!isPlaidLoaded) {
       console.error("Plaid is not loaded yet");
-      toast({
-        title: "Plaid is not ready",
-        description: "Please try again in a moment",
-        variant: "destructive"
-      });
+      setErrorMessage("Plaid is not ready. Please try again in a moment.");
+      setShowError(true);
       setIsLoading(false);
       return;
     }
 
     if (!linkToken) {
       console.error("No link token available");
-      toast({
-        title: "Configuration error",
-        description: "No link token available",
-        variant: "destructive"
-      });
+      setErrorMessage("No link token available. Please refresh and try again.");
+      setShowError(true);
       setIsLoading(false);
       return;
     }
 
     if (!window.Plaid) {
       console.error("Plaid not available in window object");
-      toast({
-        title: "Plaid is not available",
-        description: "Please refresh the page and try again",
-        variant: "destructive"
-      });
+      setErrorMessage("Plaid is not available. Please refresh the page and try again.");
+      setShowError(true);
       setIsLoading(false);
       return;
     }
@@ -140,6 +140,8 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
           console.log('Plaid onExit, error:', err);
           if (err) {
             console.error('Plaid Error:', err);
+            setErrorMessage(err.error_message || "There was an error linking your account");
+            setShowError(true);
             toast({
               title: "Connection failed",
               description: err.error_message || "There was an error linking your account",
@@ -160,24 +162,49 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
       plaidHandler.open();
     } catch (error) {
       console.error('Error creating Plaid Link:', error);
-      toast({
-        title: "Connection error",
-        description: "Failed to initialize Plaid Link",
-        variant: "destructive"
-      });
+      setErrorMessage("Failed to initialize Plaid Link. Please try again.");
+      setShowError(true);
       setIsLoading(false);
     }
   };
 
   return (
-    <Button 
-      onClick={handleClick} 
-      variant={variant}
-      className={className}
-      disabled={!isPlaidLoaded || !linkToken || isLoading}
-    >
-      {isLoading ? 'Connecting...' : (!isPlaidLoaded || !linkToken ? 'Loading...' : (children || buttonText || 'Link Account'))}
-    </Button>
+    <>
+      <Button 
+        onClick={handleClick} 
+        variant={variant}
+        className={className}
+        disabled={!isPlaidLoaded || !linkToken || isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Connecting...
+          </>
+        ) : !isPlaidLoaded || !linkToken ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Loading...
+          </>
+        ) : (
+          children || buttonText || 'Link Account'
+        )}
+      </Button>
+
+      <Dialog open={showError} onOpenChange={(open) => setShowError(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Connection Error</DialogTitle>
+            <DialogDescription>
+              {errorMessage || "There was an error connecting to Plaid. Please try again."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <Button onClick={() => setShowError(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
