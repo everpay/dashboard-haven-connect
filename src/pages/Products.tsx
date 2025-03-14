@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 export interface Product {
   id: string;
@@ -29,6 +30,7 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const { session } = useAuth();
+  const { toast } = useToast();
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -41,10 +43,25 @@ export default function Products() {
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
+      if (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          title: "Error fetching products",
+          description: error.message,
+          variant: "destructive",
+        });
+        setProducts([]);
+      } else {
+        setProducts(data || []);
+      }
+    } catch (error: any) {
+      console.error('Error in fetchProducts:', error);
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred while fetching products",
+        variant: "destructive",
+      });
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -53,6 +70,8 @@ export default function Products() {
   useEffect(() => {
     if (session?.user?.id) {
       fetchProducts();
+    } else {
+      setLoading(false);
     }
   }, [session?.user?.id]);
 

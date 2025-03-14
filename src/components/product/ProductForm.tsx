@@ -72,11 +72,10 @@ export function ProductForm({ defaultValues, id, onSuccess }: ProductFormProps) 
         });
       } else {
         // Create new product with a UUID and user_id
-        const productId = uuidv4();
         const { error } = await supabase
           .from('products')
           .insert({
-            id: productId,
+            id: uuidv4(),
             ...data,
             user_id: session.user.id,
           });

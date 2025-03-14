@@ -59,9 +59,6 @@ export function ProductList({ products, onProductUpdated }: ProductListProps) {
     return (
       <div className="text-center p-8">
         <p className="text-muted-foreground mb-4">No products found</p>
-        <DialogTrigger asChild>
-          <Button>Add Your First Product</Button>
-        </DialogTrigger>
       </div>
     );
   }
