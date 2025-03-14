@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -151,83 +150,51 @@ export default function Products() {
           </div>
 
           <TabsContent value="all">
-            {loading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : filteredProducts.length > 0 ? (
-              <ProductList products={filteredProducts} onProductUpdated={fetchProducts} />
-            ) : (
-              <div className="text-center p-8">
-                <p className="text-muted-foreground mb-4">No products found</p>
-                <Button onClick={() => setOpenDialog(true)}>Add Your First Product</Button>
-              </div>
-            )}
+            <ProductList 
+              products={filteredProducts} 
+              onProductUpdated={fetchProducts} 
+              isLoading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="physical">
-            {loading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <ProductList 
-                products={filteredProducts.filter(p => p.product_type === 'physical')} 
-                onProductUpdated={fetchProducts} 
-              />
-            )}
+            <ProductList 
+              products={filteredProducts.filter(p => p.product_type === 'physical')} 
+              onProductUpdated={fetchProducts} 
+              isLoading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="digital">
-            {loading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <ProductList 
-                products={filteredProducts.filter(p => p.product_type === 'digital')} 
-                onProductUpdated={fetchProducts} 
-              />
-            )}
+            <ProductList 
+              products={filteredProducts.filter(p => p.product_type === 'digital')} 
+              onProductUpdated={fetchProducts} 
+              isLoading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="subscription">
-            {loading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <ProductList 
-                products={filteredProducts.filter(p => p.product_type === 'subscription')} 
-                onProductUpdated={fetchProducts} 
-              />
-            )}
+            <ProductList 
+              products={filteredProducts.filter(p => p.product_type === 'subscription')} 
+              onProductUpdated={fetchProducts} 
+              isLoading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="in-stock">
-            {loading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <ProductList 
-                products={filteredProducts.filter(p => p.inventory > 0)} 
-                onProductUpdated={fetchProducts} 
-              />
-            )}
+            <ProductList 
+              products={filteredProducts.filter(p => p.stock > 0)} 
+              onProductUpdated={fetchProducts} 
+              isLoading={loading}
+            />
           </TabsContent>
 
           <TabsContent value="out-of-stock">
-            {loading ? (
-              <div className="flex justify-center items-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <ProductList 
-                products={filteredProducts.filter(p => p.inventory <= 0)} 
-                onProductUpdated={fetchProducts} 
-              />
-            )}
+            <ProductList 
+              products={filteredProducts.filter(p => p.stock <= 0)} 
+              onProductUpdated={fetchProducts} 
+              isLoading={loading}
+            />
           </TabsContent>
         </Tabs>
 
