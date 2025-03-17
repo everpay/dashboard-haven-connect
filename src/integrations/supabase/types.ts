@@ -46,6 +46,9 @@ export type Database = {
       }
       bank_accounts: {
         Row: {
+          account_name: string | null
+          account_number: string | null
+          balance: number | null
           bank_account_id: number
           bank_account_number: string
           bank_city: string | null
@@ -59,6 +62,9 @@ export type Database = {
           recipient_id: number | null
         }
         Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          balance?: number | null
           bank_account_id?: number
           bank_account_number: string
           bank_city?: string | null
@@ -72,6 +78,9 @@ export type Database = {
           recipient_id?: number | null
         }
         Update: {
+          account_name?: string | null
+          account_number?: string | null
+          balance?: number | null
           bank_account_id?: number
           bank_account_number?: string
           bank_city?: string | null
@@ -91,6 +100,54 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "recipients"
             referencedColumns: ["recipient_id"]
+          },
+        ]
+      }
+      banking_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          recipient_email: string | null
+          recipient_id: string | null
+          sender_id: string
+          status: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          recipient_email?: string | null
+          recipient_id?: string | null
+          sender_id: string
+          status?: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          recipient_email?: string | null
+          recipient_id?: string | null
+          sender_id?: string
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banking_transactions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "banking_transactions_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "reseller_users"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -485,30 +542,42 @@ export type Database = {
       }
       cards: {
         Row: {
+          card_holder: string | null
           card_token: string
           card_type: string | null
           created_at: string | null
+          cvv: string | null
           expiration: string
+          expiry_date: string | null
           id: string
           status: string | null
+          type: string | null
           user_id: string | null
         }
         Insert: {
+          card_holder?: string | null
           card_token: string
           card_type?: string | null
           created_at?: string | null
+          cvv?: string | null
           expiration: string
+          expiry_date?: string | null
           id?: string
           status?: string | null
+          type?: string | null
           user_id?: string | null
         }
         Update: {
+          card_holder?: string | null
           card_token?: string
           card_type?: string | null
           created_at?: string | null
+          cvv?: string | null
           expiration?: string
+          expiry_date?: string | null
           id?: string
           status?: string | null
+          type?: string | null
           user_id?: string | null
         }
         Relationships: [
