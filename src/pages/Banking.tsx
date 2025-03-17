@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,11 +103,9 @@ const Banking = () => {
         description: `$${data.amount.toFixed(2)} has been sent to ${data.recipientEmail}.`,
       });
       
-      // Refresh account and transactions data
       fetchBankAccount();
       fetchTransactions();
       
-      // Reset form
       form.reset();
     } catch (error: any) {
       console.error('Error transferring money:', error);
@@ -398,7 +395,7 @@ const Banking = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirm Transfer</AlertDialogTitle>
                             <AlertDialogDescription>
-                              You are about to send {form.watch('amount') ? `$${parseFloat(form.watch('amount')).toFixed(2)}` : '$0.00'} to {form.watch('recipientEmail')}. This action cannot be undone.
+                              You are about to send {form.watch('amount') ? `$${parseFloat(form.watch('amount').toString()).toFixed(2)}` : '$0.00'} to {form.watch('recipientEmail')}. This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
