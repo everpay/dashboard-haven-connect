@@ -31,6 +31,7 @@ import WidgetDemo from "./pages/WidgetDemo"
 import ReportsOverview from "./pages/reports/Overview"
 import ReportsAnalytics from "./pages/reports/Analytics"
 import LoadMarqetaJS from "./components/LoadMarqetaJS"
+import Banking from "./pages/Banking"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/widget-demo" element={<WidgetDemo />} />
               <Route path="/reports/overview" element={<ReportsOverview />} />
               <Route path="/reports/analytics" element={<ReportsAnalytics />} />
+              <Route path="/banking" element={<Banking />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </RBACProvider>

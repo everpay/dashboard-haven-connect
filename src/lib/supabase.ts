@@ -1,36 +1,85 @@
+import { createClient } from '@supabase/supabase-js';
 
-import { createClient } from '@supabase/supabase-js'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-const supabaseUrl = "https://kunmckljzbnqjaswihou.supabase.co"
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1bm1ja2xqemJucWphc3dpaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAyMzE1ODIsImV4cCI6MjA0NTgwNzU4Mn0.TqmKi2HK9Ngzo0FHAwG9fsKpM1x1r26x2zWaI0rluoo"
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Create a single supabase client for the entire app
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const getProfile = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(`
+      username,
+      full_name,
+      avatar_url,
+      billing_address,
+      payment_method
+    `)
+    .eq('id', userId)
+    .single();
 
-// Banking-specific helper functions
+  if (error) {
+    console.warn(`Error fetching profile: ${error.message}`);
+  }
+  return data;
+};
+
+export const updateProfile = async (userId: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId);
+
+  if (error) {
+    console.warn(`Error updating profile: ${error.message}`);
+  }
+  return data;
+};
+
+// Banking functions
 export const getBankAccount = async (userId: string) => {
   const { data, error } = await supabase
     .from('bank_accounts')
     .select('*')
     .eq('user_id', userId)
     .single();
-  
-  if (error) throw error;
+
+  if (error) {
+    throw error;
+  }
+
   return data;
 };
 
+export const getTransactions = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('banking_transactions')
+    .select('*, sender:profiles!sender_id(email)')
+    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+};
+
 export const transferMoney = async (senderId: string, recipientEmail: string, amount: number) => {
+  // First, look up recipient by email
   const { data: recipientData, error: recipientError } = await supabase
     .from('profiles')
     .select('id')
     .eq('email', recipientEmail)
     .single();
-  
-  if (recipientError) throw recipientError;
-  
-  const recipientId = recipientData.id;
-  
-  // Create transaction record
+
+  if (recipientError && recipientError.code !== 'PGRST116') {
+    throw new Error(`Recipient lookup failed: ${recipientError.message}`);
+  }
+
+  const recipientId = recipientData?.id;
+
+  // Create the transaction record
   const { error: transactionError } = await supabase
     .from('banking_transactions')
     .insert({
@@ -38,41 +87,35 @@ export const transferMoney = async (senderId: string, recipientEmail: string, am
       recipient_id: recipientId,
       recipient_email: recipientEmail,
       amount: amount,
-      type: 'transfer'
+      type: 'transfer',
+      status: 'completed'
     });
-  
-  if (transactionError) throw transactionError;
-  
-  // Update sender's balance
+
+  if (transactionError) {
+    throw new Error(`Failed to create transaction: ${transactionError.message}`);
+  }
+
+  // Update sender's balance (subtract amount)
   const { error: senderError } = await supabase.rpc('update_balance', {
     user_id_input: senderId,
     amount_input: -amount
   });
-  
-  if (senderError) throw senderError;
-  
-  // Update recipient's balance
-  const { error: recipientBalanceError } = await supabase.rpc('update_balance', {
-    user_id_input: recipientId,
-    amount_input: amount
-  });
-  
-  if (recipientBalanceError) throw recipientBalanceError;
-  
-  return true;
-};
 
-export const getTransactions = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('banking_transactions')
-    .select(`
-      *,
-      sender:sender_id(email),
-      recipient:recipient_id(email)
-    `)
-    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
-    .order('created_at', { ascending: false });
-  
-  if (error) throw error;
-  return data;
+  if (senderError) {
+    throw new Error(`Failed to update sender balance: ${senderError.message}`);
+  }
+
+  // If recipient is in the system, update their balance too
+  if (recipientId) {
+    const { error: recipientBalanceError } = await supabase.rpc('update_balance', {
+      user_id_input: recipientId,
+      amount_input: amount
+    });
+
+    if (recipientBalanceError) {
+      throw new Error(`Failed to update recipient balance: ${recipientBalanceError.message}`);
+    }
+  }
+
+  return true;
 };

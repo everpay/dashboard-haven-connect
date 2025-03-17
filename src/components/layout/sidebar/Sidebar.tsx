@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -18,7 +17,8 @@ import {
   BoxIcon,
   Wallet,
   Plug2,
-  Building
+  Building,
+  BanknoteIcon
 } from 'lucide-react';
 import { SidebarLink, SubLink } from './SidebarLink';
 import { SidebarMenuGroup } from './SidebarMenuGroup';
@@ -40,7 +40,6 @@ export const Sidebar = () => {
     settings: false,
   });
   
-  // Toggle menu group open/closed state
   const toggleMenuGroup = (group: keyof typeof menuGroups) => {
     setMenuGroups(prev => ({
       ...prev,
@@ -48,7 +47,6 @@ export const Sidebar = () => {
     }));
   };
   
-  // Automatically open menu groups based on active path
   useEffect(() => {
     if (activePath.includes('/reports')) {
       setMenuGroups(prev => ({ ...prev, reports: true }));
@@ -59,7 +57,6 @@ export const Sidebar = () => {
     }
   }, [activePath]);
   
-  // Navigation helper
   const navigateTo = (path: string) => {
     navigate(path);
     if (isMobile) {
@@ -110,6 +107,15 @@ export const Sidebar = () => {
             isActive={activePath === '/'}
             expanded={expanded}
             onClick={() => navigateTo('/')}
+          />
+          
+          <SidebarLink
+            to="/banking"
+            icon={<BanknoteIcon className="h-5 w-5" />}
+            label="Banking"
+            isActive={activePath === '/banking'}
+            expanded={expanded}
+            onClick={() => navigateTo('/banking')}
           />
           
           <SidebarLink
