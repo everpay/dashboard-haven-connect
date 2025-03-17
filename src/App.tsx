@@ -45,68 +45,70 @@ const queryClient = new QueryClient({
   },
 })
 
-try {
-  console.log('Creating App component');
+// Creating the main App component
+const App = () => {
+  console.log('Rendering App component');
   
-  const App = () => {
-    console.log('Rendering App component');
-    
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="min-h-screen bg-background">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<SignIn />} />
-                <Route path="/account" element={<Account />} />
-                <Route path="/billing" element={<Billing />} />
-                <Route path="/team" element={<Team />} />
-                <Route path="/transactions" element={<Transactions />} />
-                <Route path="/payment-link" element={<PaymentLink />} />
-                <Route path="/payment/:paymentId" element={<Payment />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/cards" element={<Cards />} />
-                <Route path="/bank-accounts" element={<BankAccounts />} />
-                <Route path="/invoicing" element={<Invoicing />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/integrations" element={<Integrations />} />
-                <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />
-                <Route path="/payins" element={<Payins />} />
-                <Route path="/payouts" element={<Payouts />} />
-                <Route path="/recipients" element={<Recipients />} />
-                <Route path="/hosted-payment-page" element={<HostedPaymentPage />} />
-                <Route path="/payment-widget" element={<PaymentWidget />} />
-                <Route path="/widget-demo" element={<WidgetDemo />} />
-                <Route path="/reports/overview" element={<ReportsOverview />} />
-                <Route path="/reports/analytics" element={<ReportsAnalytics />} />
-                <Route path="/banking" element={<Banking />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    )
-  }
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="min-h-screen bg-background">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<SignIn />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/payment-link" element={<PaymentLink />} />
+              <Route path="/payment/:paymentId" element={<Payment />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/cards" element={<Cards />} />
+              <Route path="/bank-accounts" element={<BankAccounts />} />
+              <Route path="/invoicing" element={<Invoicing />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/integrations" element={<Integrations />} />
+              <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />
+              <Route path="/payins" element={<Payins />} />
+              <Route path="/payouts" element={<Payouts />} />
+              <Route path="/recipients" element={<Recipients />} />
+              <Route path="/hosted-payment-page" element={<HostedPaymentPage />} />
+              <Route path="/payment-widget" element={<PaymentWidget />} />
+              <Route path="/widget-demo" element={<WidgetDemo />} />
+              <Route path="/reports/overview" element={<ReportsOverview />} />
+              <Route path="/reports/analytics" element={<ReportsAnalytics />} />
+              <Route path="/banking" element={<Banking />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  )
+}
 
+// Create a fallback component in case of errors, but DON'T export it as default
+const FallbackApp = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+      <h1 className="text-2xl font-bold mb-4">App Initialization Error</h1>
+      <p className="mb-4">There was a problem initializing the application.</p>
+      <p className="text-sm text-gray-500">Check the console for more details.</p>
+    </div>
+  </div>
+);
+
+// Handle errors but maintain a single default export
+try {
   console.log('App component created successfully');
-  export default App;
+  // Not exporting here, just ensuring no errors in creation
 } catch (error) {
   console.error('Error in App component:', error);
-  
-  // Fallback App component in case of errors
-  const FallbackApp = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">App Initialization Error</h1>
-        <p className="mb-4">There was a problem initializing the application.</p>
-        <p className="text-sm text-gray-500">Check the console for more details.</p>
-      </div>
-    </div>
-  );
-  
-  export default FallbackApp;
+  // Instead of exporting FallbackApp here, we'll use it conditionally below
 }
+
+// Single default export at the top level
+export default App;
