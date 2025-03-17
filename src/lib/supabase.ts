@@ -5,6 +5,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Log when this file is imported to help with debugging
+console.log('Initializing Supabase client with URL:', supabaseUrl ? 'URL exists' : 'URL missing');
+console.log('Anon key available:', !!supabaseAnonKey);
+
+// Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const getProfile = async (userId: string) => {
