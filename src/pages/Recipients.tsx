@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -84,29 +83,6 @@ const Recipients = () => {
     mutationFn: async (newRecipient: Partial<Recipient>) => {
       if (!user) {
         throw new Error("User not authenticated");
-      }
-      
-      // Instead of using user.id directly, let's save in the profiles table first
-      // Check if the user exists in the profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileError) {
-        // User doesn't exist in profiles table, create a profile first
-        const { error: insertProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-          });
-        
-        if (insertProfileError) {
-          console.error('Error creating profile:', insertProfileError);
-          throw insertProfileError;
-        }
       }
       
       const recipient = {

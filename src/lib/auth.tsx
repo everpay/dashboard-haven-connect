@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Session, User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
+import { toast } from "sonner"
 
 type AuthContextType = {
   session: Session | null
@@ -17,10 +18,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
 
+  // Function to ensure user profile exists
+  const ensureUserProfile = async (currentUser: User) => {
+    try {
+      // Check if profile exists
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', currentUser.id)
+        .single();
+      
+      // If no profile exists, create one
+      if (error && error.code === 'PGRST116') {
+        console.log('Profile not found, creating new profile for user:', currentUser.id);
+        
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: currentUser.id,
+            email: currentUser.email,
+            full_name: currentUser.user_metadata?.full_name || '',
+            first_name: currentUser.user_metadata?.first_name || '',
+            last_name: currentUser.user_metadata?.last_name || ''
+          });
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          toast.error("Failed to create user profile");
+        } else {
+          console.log('Profile created successfully');
+        }
+      } else if (error) {
+        console.error('Error checking for profile:', error);
+      } else {
+        console.log('User profile exists:', profile.id);
+      }
+    } catch (error) {
+      console.error('Error in ensureUserProfile:', error);
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user || null)
+      if (session?.user) {
+        ensureUserProfile(session.user);
+      }
       if (!session) navigate("/auth")
     })
 
@@ -29,6 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user || null)
+      if (session?.user) {
+        ensureUserProfile(session.user);
+      }
       if (!session) navigate("/auth")
     })
 
