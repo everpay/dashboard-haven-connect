@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 import { AddCardModal } from '@/components/payment/AddCardModal';
-import LoadMarqetaJS from '@/components/LoadMarqetaJS';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CardTransactions from '@/components/payment/CardTransactions';
 
@@ -23,11 +22,6 @@ const Cards = () => {
   const [activeTab, setActiveTab] = useState("cards");
   const limit = 6; // Items per page
   const offset = (currentPage - 1) * limit;
-
-  // Load Marqeta.js early
-  useEffect(() => {
-    // This component is rendered first, LoadMarqetaJS will handle the initialization
-  }, []);
 
   // Fetch cards from Supabase
   const { data: cards, isLoading, error, refetch } = useQuery({
@@ -77,14 +71,9 @@ const Cards = () => {
   const createVirtualCard = async () => {
     try {
       setIsCreatingCard(true);
-      console.log("Creating virtual card via Marqeta API...");
+      console.log("Creating virtual card via ItsPaid API...");
       
-      // Check if Marqeta is loaded and properly initialized
-      if (!window.marqeta) {
-        throw new Error("Marqeta SDK not initialized");
-      }
-      
-      // Generate mock data since we're not actually hitting the Marqeta API
+      // Generate mock data for demo purposes
       const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
       const expiryMonth = String(new Date().getMonth() + 1).padStart(2, '0');
       const expiryYear = new Date().getFullYear() + 3;
@@ -99,7 +88,7 @@ const Cards = () => {
             card_type: 'virtual',
             expiration: expiration,
             status: 'active',
-            source: 'marqeta'
+            source: 'itspaid'
           }
         ])
         .select();
@@ -156,7 +145,6 @@ const Cards = () => {
 
   return (
     <DashboardLayout>
-      <LoadMarqetaJS />
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

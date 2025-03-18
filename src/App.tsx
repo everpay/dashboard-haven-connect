@@ -31,7 +31,6 @@ import PaymentWidget from "./pages/PaymentWidget"
 import WidgetDemo from "./pages/WidgetDemo"
 import ReportsOverview from "./pages/reports/Overview"
 import ReportsAnalytics from "./pages/reports/Analytics"
-import LoadMarqetaJS from "./components/LoadMarqetaJS"
 import Banking from "./pages/Banking"
 
 // Debug log to see if App component is loading
@@ -90,7 +89,6 @@ const App = () => {
                     <TooltipProvider>
                       <Toaster />
                       <Sonner />
-                      <LoadMarqetaJS />
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/auth" element={<SignIn />} />
