@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import { toast } from 'sonner';
 
 interface Recipient {
   recipient_id: number;
@@ -48,8 +50,8 @@ const Recipients = () => {
   });
   
   const queryClient = useQueryClient();
+  const { session, user } = useAuth();
   const { toast } = useToast();
-  const { user } = useAuth();
   
   const { data: recipients, isLoading } = useQuery({
     queryKey: ['recipients', user?.id],
@@ -64,6 +66,7 @@ const Recipients = () => {
       const { data, error } = await supabase
         .from('recipients')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) {
