@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { Search, Plus, Edit, Trash2, Download, Filter, User, UserPlus } from 'lu
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 
 interface Recipient {
   recipient_id: number;
@@ -49,11 +49,18 @@ const Recipients = () => {
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   
-  // Fetch recipients
   const { data: recipients, isLoading } = useQuery({
-    queryKey: ['recipients'],
+    queryKey: ['recipients', user?.id],
     queryFn: async () => {
+      console.log('Fetching recipients for user:', user?.id);
+      
+      if (!user) {
+        console.log('No authenticated user found');
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('recipients')
         .select('*')
@@ -65,24 +72,33 @@ const Recipients = () => {
       }
       
       return data || [];
-    }
+    },
+    enabled: !!user
   });
   
-  // Add recipient mutation
   const addRecipient = useMutation({
     mutationFn: async (newRecipient: Partial<Recipient>) => {
-      // Calculate full_name from first and last name
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
       const recipient = {
         ...newRecipient,
-        full_name: `${newRecipient.first_names} ${newRecipient.last_names}`
+        full_name: `${newRecipient.first_names} ${newRecipient.last_names}`,
+        user_id: user.id
       };
+      
+      console.log('Adding recipient:', recipient);
       
       const { data, error } = await supabase
         .from('recipients')
         .insert([recipient])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error details:', error);
+        throw error;
+      }
       return data[0];
     },
     onSuccess: () => {
@@ -101,15 +117,15 @@ const Recipients = () => {
     }
   });
   
-  // Update recipient mutation
   const updateRecipient = useMutation({
     mutationFn: async (updatedRecipient: Partial<Recipient>) => {
       if (!currentRecipient?.recipient_id) throw new Error("No recipient selected");
+      if (!user) throw new Error("User not authenticated");
       
-      // Calculate full_name from first and last name
       const recipient = {
         ...updatedRecipient,
-        full_name: `${updatedRecipient.first_names} ${updatedRecipient.last_names}`
+        full_name: `${updatedRecipient.first_names} ${updatedRecipient.last_names}`,
+        user_id: user.id
       };
       
       const { data, error } = await supabase
@@ -137,7 +153,6 @@ const Recipients = () => {
     }
   });
   
-  // Delete recipient mutation
   const deleteRecipient = useMutation({
     mutationFn: async (recipientId: number) => {
       const { error } = await supabase
@@ -225,6 +240,16 @@ const Recipients = () => {
     setIsAddDialogOpen(true);
   };
   
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to manage recipients",
+        variant: "destructive"
+      });
+    }
+  }, [user, toast]);
+  
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -233,7 +258,11 @@ const Recipients = () => {
             <h1 className="text-2xl font-bold">Recipients</h1>
             <p className="text-gray-500">Manage payout recipients for ACH, SWIFT, or card payments</p>
           </div>
-          <Button onClick={openAddDialog} className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]">
+          <Button 
+            onClick={openAddDialog} 
+            className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]"
+            disabled={!user}
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Add Recipient
           </Button>
@@ -273,7 +302,13 @@ const Recipients = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {isLoading ? (
+                {!user ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center">
+                      Please sign in to view your recipients
+                    </td>
+                  </tr>
+                ) : isLoading ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-4 text-center">Loading recipients...</td>
                   </tr>
@@ -334,7 +369,6 @@ const Recipients = () => {
         </Card>
       </div>
 
-      {/* Add Recipient Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -472,7 +506,6 @@ const Recipients = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Recipient Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
