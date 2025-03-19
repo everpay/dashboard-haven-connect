@@ -14,7 +14,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   ArrowUpRight,
-  User
+  User,
+  ArrowDown
 } from 'lucide-react';
 import { SidebarLink, SubLink } from './SidebarLink';
 import { SidebarMenuGroup } from './SidebarMenuGroup';
@@ -23,6 +24,7 @@ import { useSidebar } from '@/contexts/SidebarContext';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import { cn } from '@/lib/utils';
 
 export const Sidebar = () => {
   const { expanded, setExpanded, mobileOpen, toggleMobile, closeMobile } = useSidebar();
@@ -46,7 +48,7 @@ export const Sidebar = () => {
   };
   
   useEffect(() => {
-    if (activePath.includes('/transactions') || activePath.includes('/payment') || activePath.includes('/payins')) {
+    if (activePath.includes('/transactions') || activePath.includes('/payment') || activePath.includes('/payouts') || activePath.includes('/payins')) {
       setMenuGroups(prev => ({ ...prev, transactions: true }));
     } else if (activePath.includes('/customers') || activePath.includes('/recipients')) {
       setMenuGroups(prev => ({ ...prev, customers: true }));
@@ -68,19 +70,20 @@ export const Sidebar = () => {
 
   return (
     <div 
-      className={`h-screen flex flex-col transition-all duration-300 dark:bg-gray-900 dark:border-gray-800 bg-white border-r border-gray-100 ${
-        expanded ? 'min-w-64' : 'w-16'
-      }`}
+      className={cn(
+        "h-screen flex flex-col transition-all duration-300 border-r border-gray-100 bg-white dark:bg-[#19363B] dark:border-gray-800",
+        expanded ? "min-w-64" : "w-16"
+      )}
     >
-      <div className="p-4 flex justify-between items-center border-b dark:border-gray-800">
+      <div className="p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center">
           <img 
             src="/lovable-uploads/Everpay-icon.png" 
             alt="Everpay" 
-            className="h-8 w-8"
+            className="h-7 w-7"
           />
           {expanded && (
-            <span className="ml-3 font-bold text-3xl text-[#19363B] dark:text-white">everpay</span>
+            <span className="ml-3 font-bold text-2xl text-[#19363B] dark:text-white">everpay</span>
           )}
         </div>
         {!isMobile && (
@@ -90,7 +93,7 @@ export const Sidebar = () => {
             onClick={toggleExpanded}
             className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white hover:bg-transparent"
           >
-            {expanded ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+            {expanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
         )}
         {isMobile && <MobileToggle mobileOpen={mobileOpen} toggleMobile={toggleMobile} closeMobile={closeMobile} />}
@@ -100,7 +103,7 @@ export const Sidebar = () => {
         <div className="space-y-1">
           <SidebarLink
             to="/"
-            icon={<LayoutGrid className="h-5 w-5" />}
+            icon={<LayoutGrid className="h-4 w-4" />}
             label="Dashboard"
             isActive={activePath === '/'}
             expanded={expanded}
@@ -109,7 +112,7 @@ export const Sidebar = () => {
           
           <SidebarMenuGroup
             title="Transactions"
-            icon={<Receipt className="h-5 w-5" />}
+            icon={<Receipt className="h-4 w-4" />}
             expanded={expanded}
             isOpen={menuGroups.transactions}
             toggleOpen={() => toggleMenuGroup('transactions')}
@@ -138,6 +141,13 @@ export const Sidebar = () => {
               onClick={() => navigateTo('/payouts')}
             />
             <SubLink
+              to="/payins"
+              label="Pay-ins"
+              isActive={activePath === '/payins'}
+              expanded={expanded}
+              onClick={() => navigateTo('/payins')}
+            />
+            <SubLink
               to="/payment-widget"
               label="Payment Widget"
               isActive={activePath === '/payment-widget'}
@@ -153,18 +163,9 @@ export const Sidebar = () => {
             />
           </SidebarMenuGroup>
           
-          <SidebarLink
-            to="/payins"
-            icon={<ArrowUpRight className="h-5 w-5" />}
-            label="Pay-ins"
-            isActive={activePath === '/payins'}
-            expanded={expanded}
-            onClick={() => navigateTo('/payins')}
-          />
-          
           <SidebarMenuGroup
             title="Customers"
-            icon={<Users className="h-5 w-5" />}
+            icon={<Users className="h-4 w-4" />}
             expanded={expanded}
             isOpen={menuGroups.customers}
             toggleOpen={() => toggleMenuGroup('customers')}
@@ -189,7 +190,7 @@ export const Sidebar = () => {
           
           <SidebarLink
             to="/banking"
-            icon={<Wallet className="h-5 w-5" />}
+            icon={<Wallet className="h-4 w-4" />}
             label="Wallet"
             isActive={activePath === '/banking'}
             expanded={expanded}
@@ -198,7 +199,7 @@ export const Sidebar = () => {
           
           <SidebarLink
             to="/invoicing"
-            icon={<FileText className="h-5 w-5" />}
+            icon={<FileText className="h-4 w-4" />}
             label="Invoicing"
             isActive={activePath === '/invoicing'}
             expanded={expanded}
@@ -207,7 +208,7 @@ export const Sidebar = () => {
           
           <SidebarLink
             to="/products"
-            icon={<Package className="h-5 w-5" />}
+            icon={<Package className="h-4 w-4" />}
             label="Products"
             isActive={activePath === '/products'}
             expanded={expanded}
@@ -216,7 +217,7 @@ export const Sidebar = () => {
           
           <SidebarLink
             to="/reports/overview"
-            icon={<BarChart2 className="h-5 w-5" />}
+            icon={<BarChart2 className="h-4 w-4" />}
             label="Reports"
             isActive={activePath.includes('/reports')}
             expanded={expanded}
@@ -225,7 +226,7 @@ export const Sidebar = () => {
           
           <SidebarLink
             to="/integrations"
-            icon={<Plug2 className="h-5 w-5" />}
+            icon={<Plug2 className="h-4 w-4" />}
             label="Integrations"
             isActive={activePath === '/integrations'}
             expanded={expanded}
@@ -234,7 +235,7 @@ export const Sidebar = () => {
           
           <SidebarMenuGroup
             title="Settings"
-            icon={<Settings className="h-5 w-5" />}
+            icon={<Settings className="h-4 w-4" />}
             expanded={expanded}
             isOpen={menuGroups.settings}
             toggleOpen={() => toggleMenuGroup('settings')}
@@ -280,14 +281,14 @@ export const Sidebar = () => {
         </div>
       </div>
       
-      <div className="p-4 border-t dark:border-gray-800">
+      <div className="p-4 border-t border-gray-100 dark:border-gray-800">
         {expanded ? (
           <div className="w-full bg-gray-50 dark:bg-gray-800 rounded-md p-2">
             <div className="text-xs text-gray-500 dark:text-gray-400">Everpay</div>
           </div>
         ) : (
           <div className="flex justify-center">
-            <User className="h-5 w-5 text-gray-400 dark:text-gray-300" />
+            <User className="h-4 w-4 text-gray-400 dark:text-gray-300" />
           </div>
         )}
       </div>

@@ -23,7 +23,7 @@ export const MobileToggle: React.FC<MobileToggleProps> = ({
         className="md:hidden text-gray-600 dark:text-gray-300"
         onClick={toggleMobile}
       >
-        <Menu size={22} />
+        <Menu size={20} />
       </Button>
 
       <div

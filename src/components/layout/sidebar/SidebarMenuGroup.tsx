@@ -34,13 +34,13 @@ export const SidebarMenuGroup: React.FC<SidebarMenuGroupProps> = ({
           'flex items-center w-full p-2 rounded-md transition-colors',
           expanded ? 'px-4 justify-between' : 'px-3 justify-center',
           isActive
-            ? 'text-[#19363B] dark:text-white'
+            ? 'text-[#19363B] dark:text-white bg-gray-100 dark:bg-gray-800'
             : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
         )}
       >
         <div className="flex items-center">
-          {icon}
-          {expanded && <span className="ml-3 text-sm">{title}</span>}
+          <span className="flex-shrink-0">{icon}</span>
+          {expanded && <span className="ml-3 text-sm whitespace-nowrap">{title}</span>}
         </div>
         {expanded && (
           isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />

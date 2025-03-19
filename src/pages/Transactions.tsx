@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import TransactionMap from '@/components/transactions/TransactionMap';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check, X, AlertCircle, CreditCard } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Sample transaction data (would normally come from an API)
 const sampleTransactions = [
@@ -16,6 +19,9 @@ const sampleTransactions = [
     status: 'completed',
     merchant_name: 'Amazon',
     customer_email: 'customer1@example.com',
+    description: 'Online shopping',
+    payment_method: 'Credit Card',
+    transaction_type: 'purchase',
     location: 'POINT(-77.0364 38.8951)' // Washington DC
   },
   {
@@ -25,24 +31,33 @@ const sampleTransactions = [
     status: 'completed',
     merchant_name: 'Apple Store',
     customer_email: 'customer2@example.com',
+    description: 'iPhone accessories',
+    payment_method: 'Debit Card',
+    transaction_type: 'purchase',
     location: 'POINT(-74.0060 40.7128)' // New York
   },
   {
     id: 'txn_3',
     amount: 250.00,
     currency: 'USD',
-    status: 'completed',
+    status: 'pending',
     merchant_name: 'Best Buy',
     customer_email: 'customer3@example.com',
+    description: 'Electronics',
+    payment_method: 'Bank Transfer',
+    transaction_type: 'purchase',
     location: 'POINT(-118.2437 34.0522)' // Los Angeles
   },
   {
     id: 'txn_4',
     amount: 50.25,
     currency: 'USD',
-    status: 'completed',
+    status: 'failed',
     merchant_name: 'Netflix',
     customer_email: 'customer4@example.com',
+    description: 'Monthly subscription',
+    payment_method: 'Credit Card',
+    transaction_type: 'subscription',
     location: 'POINT(-87.6298 41.8781)' // Chicago
   },
   {
@@ -52,13 +67,36 @@ const sampleTransactions = [
     status: 'completed',
     merchant_name: 'Tesco',
     customer_email: 'customer5@example.com',
+    description: 'Groceries',
+    payment_method: 'Digital Wallet',
+    transaction_type: 'purchase',
     location: 'POINT(-0.1278 51.5074)' // London
+  },
+  {
+    id: 'txn_6',
+    amount: 35.99,
+    currency: 'USD',
+    status: 'disputed',
+    merchant_name: 'Target',
+    customer_email: 'customer6@example.com',
+    description: 'Home goods',
+    payment_method: 'Debit Card',
+    transaction_type: 'purchase',
+    location: 'POINT(-93.2650 44.9778)' // Minneapolis
   }
 ];
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState(sampleTransactions);
   const [loading, setLoading] = useState(true);
+  const [transactionStats, setTransactionStats] = useState({
+    all: 6,
+    succeeded: 1,
+    refunded: 0,
+    disputed: 1,
+    failed: 1,
+    uncaptured: 0
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,9 +113,32 @@ const Transactions = () => {
 
         if (data && data.length > 0) {
           setTransactions(data);
+          
+          // Calculate transaction stats
+          const stats = {
+            all: data.length,
+            succeeded: data.filter(t => t.status === 'completed').length,
+            refunded: data.filter(t => t.status === 'refunded').length,
+            disputed: data.filter(t => t.status === 'disputed').length,
+            failed: data.filter(t => t.status === 'failed').length,
+            uncaptured: data.filter(t => t.status === 'uncaptured').length
+          };
+          
+          setTransactionStats(stats);
         } else {
-          // If no data, use sample data
+          // If no data, use sample data and calculate stats
           setTransactions(sampleTransactions);
+          
+          const stats = {
+            all: sampleTransactions.length,
+            succeeded: sampleTransactions.filter(t => t.status === 'completed').length,
+            refunded: sampleTransactions.filter(t => t.status === 'refunded').length,
+            disputed: sampleTransactions.filter(t => t.status === 'disputed').length,
+            failed: sampleTransactions.filter(t => t.status === 'failed').length,
+            uncaptured: sampleTransactions.filter(t => t.status === 'uncaptured').length
+          };
+          
+          setTransactionStats(stats);
         }
       } catch (error) {
         console.error('Error fetching transactions:', error);
@@ -88,6 +149,18 @@ const Transactions = () => {
         });
         // Use sample data on error
         setTransactions(sampleTransactions);
+        
+        // Set stats based on sample data
+        const stats = {
+          all: sampleTransactions.length,
+          succeeded: sampleTransactions.filter(t => t.status === 'completed').length,
+          refunded: sampleTransactions.filter(t => t.status === 'refunded').length,
+          disputed: sampleTransactions.filter(t => t.status === 'disputed').length,
+          failed: sampleTransactions.filter(t => t.status === 'failed').length,
+          uncaptured: sampleTransactions.filter(t => t.status === 'uncaptured').length
+        };
+        
+        setTransactionStats(stats);
       } finally {
         setLoading(false);
       }
@@ -96,12 +169,73 @@ const Transactions = () => {
     fetchTransactions();
   }, [toast]);
 
+  const formatCurrency = (amount: number, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  };
+  
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return (
+          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 flex items-center gap-1">
+            <Check className="h-3 w-3" />
+            <span>Succeeded</span>
+          </Badge>
+        );
+      case 'failed':
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1">
+            <X className="h-3 w-3" />
+            <span>Failed</span>
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 text-yellow-800 border-yellow-300 bg-yellow-100">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Pending</span>
+          </Badge>
+        );
+      case 'disputed':
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 text-orange-800 border-orange-300 bg-orange-100">
+            <AlertCircle className="h-3 w-3" />
+            <span>Disputed</span>
+          </Badge>
+        );
+      case 'refunded':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <span>Refunded</span>
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline">{status}</Badge>
+        );
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#1AA47B]" />
-          <span className="ml-2">Loading transactions...</span>
+          <Loader2 className="h-6 w-6 animate-spin text-[#1AA47B]" />
+          <span className="ml-2 text-sm">Loading transactions...</span>
         </div>
       </DashboardLayout>
     );
@@ -109,47 +243,100 @@ const Transactions = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          <p className="text-gray-500">View and analyze your transaction data</p>
+          <h1 className="text-xl font-bold">Transactions</h1>
+          <p className="text-gray-500 text-sm">View and analyze your transaction data</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+        {/* Transaction Stats */}
+        <div className="grid grid-cols-6 gap-2">
+          <Card className={`p-3 ${transactionStats.all > 0 ? 'border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-900' : ''}`}>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">All</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{transactionStats.all}</p>
+            </div>
+          </Card>
+          <Card className={`p-3 ${transactionStats.succeeded > 0 ? 'border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-900' : ''}`}>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Succeeded</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">{transactionStats.succeeded}</p>
+            </div>
+          </Card>
+          <Card className={`p-3 ${transactionStats.refunded > 0 ? 'border-purple-200 bg-purple-50 dark:bg-purple-950 dark:border-purple-900' : ''}`}>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Refunded</p>
+              <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{transactionStats.refunded}</p>
+            </div>
+          </Card>
+          <Card className={`p-3 ${transactionStats.disputed > 0 ? 'border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-900' : ''}`}>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Disputed</p>
+              <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{transactionStats.disputed}</p>
+            </div>
+          </Card>
+          <Card className={`p-3 ${transactionStats.failed > 0 ? 'border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-900' : ''}`}>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Failed</p>
+              <p className="text-xl font-bold text-red-600 dark:text-red-400">{transactionStats.failed}</p>
+            </div>
+          </Card>
+          <Card className={`p-3 ${transactionStats.uncaptured > 0 ? 'border-gray-200 bg-gray-50 dark:bg-gray-950 dark:border-gray-800' : ''}`}>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Uncaptured</p>
+              <p className="text-xl font-bold text-gray-600 dark:text-gray-400">{transactionStats.uncaptured}</p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Recent Transactions */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Recent Transactions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Payment method</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {transactions.map((transaction) => (
-                    <div key={transaction.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-gray-50">
-                      <div>
-                        <p className="font-medium">{transaction.merchant_name || 'Unknown Merchant'}</p>
-                        <p className="text-sm text-gray-500">{transaction.customer_email}</p>
-                        <p className="text-xs text-gray-400">{new Date().toLocaleString()}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{transaction.currency || '$'}{transaction.amount.toFixed(2)}</p>
-                        <p className={`text-xs ${
-                          transaction.status === 'completed' ? 'text-green-500' : 
-                          transaction.status === 'pending' ? 'text-yellow-500' : 'text-red-500'
-                        }`}>
-                          {transaction.status || 'Unknown Status'}
-                        </p>
-                      </div>
-                    </div>
+                    <TableRow key={transaction.id} className="text-xs">
+                      <TableCell className="font-medium">
+                        {formatCurrency(transaction.amount, transaction.currency)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <CreditCard className="h-3.5 w-3.5 mr-2 text-gray-500" />
+                          {transaction.payment_method || 'Credit Card'}
+                        </div>
+                      </TableCell>
+                      <TableCell>{transaction.description || transaction.transaction_type || 'Payment'}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{transaction.customer_email}</TableCell>
+                      <TableCell>{formatDate(transaction.created_at || new Date().toISOString())}</TableCell>
+                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" className="h-7 text-xs">View</Button>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
 
-          <div>
-            <TransactionMap transactions={transactions} />
-          </div>
-        </div>
+        {/* Map Section */}
+        <TransactionMap transactions={transactions} />
       </div>
     </DashboardLayout>
   );
