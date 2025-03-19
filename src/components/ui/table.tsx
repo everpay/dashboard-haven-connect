@@ -43,17 +43,18 @@ const TableRow: React.FC<TableRowProps> = ({ className, children, ...props }) =>
 );
 
 interface TableCellProps extends React.HTMLAttributes<HTMLTableCellElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  colSpan?: number;
 }
 
-const TableCell: React.FC<TableCellProps> = ({ className, children, ...props }) => (
-  <td className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)} {...props}>
+const TableCell: React.FC<TableCellProps> = ({ className, children, colSpan, ...props }) => (
+  <td className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)} colSpan={colSpan} {...props}>
     {children}
   </td>
 );
 
 interface TableHeaderProps extends React.HTMLAttributes<HTMLTableCellElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({ className, children, ...props }) => (

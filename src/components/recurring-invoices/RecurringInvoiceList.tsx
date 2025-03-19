@@ -36,13 +36,27 @@ export const RecurringInvoiceList = ({
       <Table>
         <TableHead>
           <TableRow className="bg-slate-50 dark:bg-slate-800">
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Name</TableHeader>
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Customer</TableHeader>
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Amount</TableHeader>
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Frequency</TableHeader>
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Next Invoice</TableHeader>
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Status</TableHeader>
-            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300 text-right">Actions</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
+              Name
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
+              Customer
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
+              Amount
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
+              Frequency
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
+              Next Invoice
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
+              Status
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300 text-right">
+              Actions
+            </TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>
