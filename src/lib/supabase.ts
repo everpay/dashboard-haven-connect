@@ -42,39 +42,7 @@ export const updateProfile = async (userId: string, updates: any) => {
   return data;
 };
 
-// Helper function to ensure user profile exists
-export const ensureProfile = async (userId: string, email: string) => {
-  try {
-    // Check if profile exists
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    // If no profile, create one
-    if (error && error.code === 'PGRST116') {
-      const { error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: email
-        });
-      
-      if (insertError) {
-        console.error('Error creating profile:', insertError);
-        return false;
-      }
-      console.log('Profile created successfully');
-      return true;
-    }
-    
-    return !!data;
-  } catch (err) {
-    console.error('Error in ensureProfile:', err);
-    return false;
-  }
-};
+// Helper function for ensuring profile exists is now handled by a database function
 
 // Banking functions
 export const getBankAccount = async (userId: string) => {
