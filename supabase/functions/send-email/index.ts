@@ -1,15 +1,13 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { renderToString } from "https://esm.sh/react-dom@18.2.0/server";
-import { createElement } from "https://esm.sh/react@18.2.0";
-import { Resend } from "https://esm.sh/resend@1.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
-// Import email templates from relative paths
-import { AuthMagicLinkEmail } from "../../../src/emails/auth-magic-link.tsx";
-import { AuthConfirmationEmail } from "../../../src/emails/auth-confirmation.tsx";
-import { AuthResetPasswordEmail } from "../../../src/emails/auth-reset-password.tsx";
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+if (!resendApiKey) {
+  throw new Error("RESEND_API_KEY is not set");
+}
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,13 +15,9 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  type: "magiclink" | "confirmation" | "resetpassword";
+  type: string;
   email: string;
-  metadata: {
-    username?: string;
-    url: string;
-    token?: string;
-  };
+  metadata?: any;
 }
 
 serve(async (req) => {
@@ -33,90 +27,112 @@ serve(async (req) => {
   }
 
   try {
-    const { type, email, metadata } = await req.json() as EmailRequest;
-    
-    console.log(`Processing email request of type: ${type} for: ${email}`);
+    const { type, email, metadata = {} }: EmailRequest = await req.json();
+    console.log(`Processing ${type} email for ${email}`);
 
+    let emailResponse;
     let subject = "";
-    let emailHtml = "";
+    let html = "";
 
-    // Render the appropriate email template based on the type
+    const baseUrl = "https://everpayinc.com"; // Replace with your actual domain
+    const username = metadata.username || email.split("@")[0];
+
     switch (type) {
-      case "magiclink":
-        subject = "Your Magic Link for Everpay";
-        emailHtml = renderToString(
-          createElement(AuthMagicLinkEmail, {
-            loginUrl: metadata.url,
-            username: metadata.username,
-            token: metadata.token,
-          })
-        );
-        break;
-        
       case "confirmation":
-        subject = "Confirm Your Everpay Account";
-        emailHtml = renderToString(
-          createElement(AuthConfirmationEmail, {
-            confirmationUrl: metadata.url,
-            username: metadata.username,
-          })
-        );
+        subject = "Welcome to Everpay - Please confirm your email";
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1AA47B;">Welcome to Everpay!</h1>
+            <p>Hello ${username},</p>
+            <p>Thank you for signing up for Everpay! We're excited to have you on board.</p>
+            <p>Click the link below to confirm your email address:</p>
+            <a href="${metadata.url || `${baseUrl}/confirm-email`}" style="display: inline-block; background-color: #1AA47B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">Confirm your email</a>
+            <p>If you didn't sign up for an Everpay account, you can safely ignore this email.</p>
+            <p>Best regards,<br>The Everpay Team</p>
+          </div>
+        `;
         break;
-        
-      case "resetpassword":
-        subject = "Reset Your Everpay Password";
-        emailHtml = renderToString(
-          createElement(AuthResetPasswordEmail, {
-            resetUrl: metadata.url,
-            username: metadata.username,
-          })
-        );
+
+      case "magic_link":
+        subject = "Your magic link to sign in to Everpay";
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1AA47B;">Sign in to Everpay</h1>
+            <p>Hello ${username},</p>
+            <p>Click the link below to sign in to your Everpay account:</p>
+            <a href="${metadata.url || `${baseUrl}/magic-link?token=${metadata.token}`}" style="display: inline-block; background-color: #1AA47B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">Sign in to Everpay</a>
+            <p>If you didn't request this email, you can safely ignore it.</p>
+            <p>Best regards,<br>The Everpay Team</p>
+          </div>
+        `;
         break;
-        
+
+      case "reset_password":
+        subject = "Reset your Everpay password";
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1AA47B;">Reset your password</h1>
+            <p>Hello ${username},</p>
+            <p>We received a request to reset your Everpay account password. Click the link below to set a new password:</p>
+            <a href="${metadata.url || `${baseUrl}/reset-password?token=${metadata.token}`}" style="display: inline-block; background-color: #1AA47B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">Reset password</a>
+            <p>If you didn't request a password reset, you can safely ignore this email.</p>
+            <p>Best regards,<br>The Everpay Team</p>
+          </div>
+        `;
+        break;
+
+      case "transaction_receipt":
+        subject = "Your Everpay Transaction Receipt";
+        html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #1AA47B;">Transaction Receipt</h1>
+            <p>Hello ${username},</p>
+            <p>Your transaction has been completed successfully.</p>
+            <div style="border: 1px solid #ddd; padding: 15px; margin: 20px 0; border-radius: 5px;">
+              <p><strong>Transaction ID:</strong> ${metadata.transactionId || 'N/A'}</p>
+              <p><strong>Amount:</strong> ${metadata.amount ? `$${metadata.amount.toFixed(2)}` : 'N/A'}</p>
+              <p><strong>Date:</strong> ${metadata.date || new Date().toLocaleDateString()}</p>
+              <p><strong>Description:</strong> ${metadata.description || 'Payment'}</p>
+            </div>
+            <p>Thank you for using Everpay!</p>
+            <p>Best regards,<br>The Everpay Team</p>
+          </div>
+        `;
+        break;
+
       default:
-        throw new Error(`Unsupported email type: ${type}`);
+        return new Response(
+          JSON.stringify({ error: `Email type '${type}' not supported` }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
     }
 
-    // Send the email via Resend
-    const { data, error } = await resend.emails.send({
-      from: "Everpay <no-reply@everpayinc.com>",
+    emailResponse = await resend.emails.send({
+      from: "Everpay <notifications@everpayinc.com>",
       to: [email],
       subject: subject,
-      html: emailHtml,
+      html: html,
     });
 
-    if (error) {
-      console.error("Error sending email:", error);
-      throw error;
-    }
+    console.log("Email sent successfully:", emailResponse);
 
-    console.log("Email sent successfully:", data);
-    
     return new Response(
-      JSON.stringify({
-        success: true,
-        data,
-      }),
+      JSON.stringify({ success: true, data: emailResponse }),
       {
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   } catch (error) {
-    console.error("Error in send-email function:", error);
+    console.error("Error sending email:", error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
+      JSON.stringify({ success: false, error: error.message }),
       {
         status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
