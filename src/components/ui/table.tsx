@@ -55,10 +55,11 @@ const TableCell: React.FC<TableCellProps> = ({ className, children, colSpan, ...
 
 interface TableHeaderProps extends React.HTMLAttributes<HTMLTableCellElement> {
   children?: React.ReactNode;
+  colSpan?: number;
 }
 
-const TableHeader: React.FC<TableHeaderProps> = ({ className, children, ...props }) => (
-  <th className={cn("h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0", className)} {...props}>
+const TableHeader: React.FC<TableHeaderProps> = ({ className, children, colSpan, ...props }) => (
+  <th className={cn("h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0", className)} colSpan={colSpan} {...props}>
     {children}
   </th>
 );

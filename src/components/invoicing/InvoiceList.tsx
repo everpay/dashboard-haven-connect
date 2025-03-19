@@ -89,8 +89,10 @@ export const InvoiceList = ({ invoices, isLoading, onPayInvoice }: InvoiceListPr
                   </div>
                 </TableCell>
                 <TableCell className="px-3 py-3 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{invoice.customer_name}</div>
-                  <div className="text-xs text-gray-500">{invoice.customer_email}</div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">{invoice.customer_name}</span>
+                    <span className="text-xs text-gray-500">{invoice.customer_email}</span>
+                  </div>
                 </TableCell>
                 <TableCell className="px-3 py-3 whitespace-nowrap text-sm">
                   <div className="font-medium">

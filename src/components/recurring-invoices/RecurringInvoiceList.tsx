@@ -64,8 +64,10 @@ export const RecurringInvoiceList = ({
             <TableRow key={invoice.id}>
               <TableCell className="font-medium">{invoice.name}</TableCell>
               <TableCell>
-                <div>{invoice.customer.name}</div>
-                <div className="text-xs text-gray-500">{invoice.customer.email}</div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-sm">{invoice.customer.name}</span>
+                  <span className="text-xs text-gray-500">{invoice.customer.email}</span>
+                </div>
               </TableCell>
               <TableCell>
                 ${invoice.amount.toFixed(2)}

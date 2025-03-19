@@ -52,8 +52,10 @@ export const RecurringPaymentList = ({
             <TableRow key={payment.id}>
               <TableCell className="font-medium">{payment.name}</TableCell>
               <TableCell>
-                <div>{payment.customer.name}</div>
-                <div className="text-xs text-gray-500">{payment.customer.email}</div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-sm">{payment.customer.name}</span>
+                  <span className="text-xs text-gray-500">{payment.customer.email}</span>
+                </div>
               </TableCell>
               <TableCell>
                 ${payment.amount.toFixed(2)}
