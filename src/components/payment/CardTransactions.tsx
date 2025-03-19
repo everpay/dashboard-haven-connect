@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { FinupService } from '@/services/FinupService';
 import { format } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Transaction {
   id: string;
@@ -109,47 +109,47 @@ const CardTransactions = () => {
         </div>
       </div>
       
-      <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Merchant</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Card</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHead>
+            <TableRow className="bg-slate-50 dark:bg-slate-800">
+              <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Date</TableHeader>
+              <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Merchant</TableHeader>
+              <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Card</TableHeader>
+              <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Amount</TableHeader>
+              <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Status</TableHeader>
+              <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300 text-right">Type</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {isLoading ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center">
+              <TableRow>
+                <TableCell colSpan={6} className="px-6 py-4 text-center">
                   <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#1AA47B]" />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : error ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-red-500">
+              <TableRow>
+                <TableCell colSpan={6} className="px-6 py-4 text-center text-red-500">
                   Failed to load transactions
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : paginatedTransactions.length > 0 ? (
               paginatedTransactions.map((txn) => (
-                <tr key={txn.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <TableRow key={txn.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(txn.date)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-gray-100">{txn.merchant_name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <CreditCard className="h-4 w-4 text-gray-400 mr-2" />
                       <span className="text-sm text-gray-900 dark:text-gray-100">Virtual Card</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {txn.type === 'refund' ? (
                         <ArrowDownLeft className="h-4 w-4 text-green-500 mr-1" />
@@ -160,31 +160,31 @@ const CardTransactions = () => {
                         ${txn.amount.toFixed(2)}
                       </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <Badge variant={
                       txn.status === 'completed' ? 'success' :
                       txn.status === 'pending' ? 'default' : 'destructive'
                     }>
                       {txn.status.charAt(0).toUpperCase() + txn.status.slice(1)}
                     </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="text-sm text-gray-900 dark:text-gray-100">
                       {txn.type.charAt(0).toUpperCase() + txn.type.slice(1)}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+              <TableRow>
+                <TableCell colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   No transactions found
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       
       {filteredTransactions.length > 0 && (

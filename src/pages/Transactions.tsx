@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -310,19 +309,19 @@ const Transactions = () => {
             <CardTitle className="text-base">Recent Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-md border">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Payment method</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                <TableHead>
+                  <TableRow className="bg-slate-50 dark:bg-slate-800">
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Amount</TableHeader>
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Payment method</TableHeader>
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Description</TableHeader>
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Customer</TableHeader>
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Date</TableHeader>
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Status</TableHeader>
+                    <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300 text-right">Action</TableHeader>
                   </TableRow>
-                </TableHeader>
+                </TableHead>
                 <TableBody>
                   {transactions.map((transaction) => (
                     <TableRow key={transaction.id} className="text-xs">

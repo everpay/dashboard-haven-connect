@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from './StatusBadge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Invoice {
   id: number;
@@ -30,54 +31,54 @@ export const InvoiceList = ({ invoices, isLoading, onPayInvoice }: InvoiceListPr
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="w-10 py-3 pl-4">
+    <div className="overflow-x-auto rounded-md border">
+      <Table>
+        <TableHead>
+          <TableRow className="bg-slate-50 dark:bg-slate-800">
+            <TableHeader className="w-10 pl-4 pr-0">
               <input type="checkbox" className="rounded border-gray-300" />
-            </th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
               Invoice #
-            </th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
               Customer
-            </th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
               Amount
-            </th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
               Issue Date
-            </th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
               Due Date
-            </th>
-            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            </TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">
               Status
-            </th>
-            <th className="w-10"></th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+            </TableHeader>
+            <TableHeader className="w-10"></TableHeader>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {isLoading ? (
-            <tr>
-              <td colSpan={8} className="px-4 py-4 text-center text-sm text-gray-500">
+            <TableRow>
+              <TableCell colSpan={8} className="px-4 py-4 text-center text-sm text-gray-500">
                 Loading invoices...
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ) : invoices?.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="px-4 py-4 text-center text-sm text-gray-500">
+            <TableRow>
+              <TableCell colSpan={8} className="px-4 py-4 text-center text-sm text-gray-500">
                 No invoices found
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ) : (
             invoices?.map((invoice: any) => (
-              <tr key={invoice.id} className="hover:bg-gray-50">
-                <td className="pl-4 py-3">
+              <TableRow key={invoice.id} className="hover:bg-gray-50">
+                <TableCell className="pl-4 py-3">
                   <input type="checkbox" className="rounded border-gray-300" />
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap">
+                </TableCell>
+                <TableCell className="px-3 py-3 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-6 w-6 bg-emerald-100 rounded flex items-center justify-center text-emerald-600">
                       <FileText className="h-4 w-4" />
@@ -86,26 +87,26 @@ export const InvoiceList = ({ invoices, isLoading, onPayInvoice }: InvoiceListPr
                       <div className="text-sm font-medium text-gray-900">INV-{String(invoice.id).padStart(5, '0')}</div>
                     </div>
                   </div>
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap">
+                </TableCell>
+                <TableCell className="px-3 py-3 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{invoice.customer_name}</div>
                   <div className="text-xs text-gray-500">{invoice.customer_email}</div>
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap text-sm">
+                </TableCell>
+                <TableCell className="px-3 py-3 whitespace-nowrap text-sm">
                   <div className="font-medium">
                     {formatCurrency(invoice.total_amount)}
                   </div>
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
+                </TableCell>
+                <TableCell className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
                   {format(new Date(invoice.issue_date), 'd MMM, yyyy')}
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
+                </TableCell>
+                <TableCell className="px-3 py-3 whitespace-nowrap text-sm text-gray-700">
                   {format(new Date(invoice.due_date), 'd MMM, yyyy')}
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap">
+                </TableCell>
+                <TableCell className="px-3 py-3 whitespace-nowrap">
                   <StatusBadge status={invoice.status} />
-                </td>
-                <td className="pr-3 py-3 whitespace-nowrap text-right">
+                </TableCell>
+                <TableCell className="pr-3 py-3 whitespace-nowrap text-right">
                   {invoice.status === 'Pending' && (
                     <Button 
                       variant="ghost" 
@@ -116,12 +117,12 @@ export const InvoiceList = ({ invoices, isLoading, onPayInvoice }: InvoiceListPr
                       Pay
                     </Button>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 };

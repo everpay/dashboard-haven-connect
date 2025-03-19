@@ -32,19 +32,19 @@ export const RecurringInvoiceList = ({
   onDelete 
 }: RecurringInvoiceListProps) => {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-md border">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Frequency</TableHead>
-            <TableHead>Next Invoice</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+        <TableHead>
+          <TableRow className="bg-slate-50 dark:bg-slate-800">
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Name</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Customer</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Amount</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Frequency</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Next Invoice</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300">Status</TableHeader>
+            <TableHeader className="font-semibold text-xs uppercase text-slate-600 dark:text-slate-300 text-right">Actions</TableHeader>
           </TableRow>
-        </TableHeader>
+        </TableHead>
         <TableBody>
           {invoices.map((invoice) => (
             <TableRow key={invoice.id}>
