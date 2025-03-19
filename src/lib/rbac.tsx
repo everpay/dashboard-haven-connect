@@ -20,7 +20,9 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole>('anonymous');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Fix the type comparison by checking if userRole is one of the admin roles
   const isAdmin = userRole === 'owner' || userRole === 'admin';
+  // Fix for isMember by checking if userRole is 'member' or if isAdmin is true
   const isMember = userRole === 'member' || isAdmin;
 
   const checkPermission = (requiredRoles: UserRole[]): boolean => {

@@ -13,19 +13,33 @@ type Role = z.infer<typeof roleSchema>;
 
 interface RoleSelectorProps {
   userId?: string; // Added userId prop as optional
-  currentRole: string;
-  onRoleChange: (role: string) => void;
+  value?: string; // Add value prop to match usage in Team.tsx
+  currentRole?: string; // Make currentRole optional
+  onRoleChange?: (role: string) => void; // Make onRoleChange optional
+  onChange?: (role: string) => void; // Add onChange prop to match usage in Team.tsx
   disabled?: boolean;
 }
 
-export function RoleSelector({ userId, currentRole, onRoleChange, disabled = false }: RoleSelectorProps) {
-  const handleRoleChange = (value: string) => {
+export function RoleSelector({ 
+  userId, 
+  value, 
+  currentRole, 
+  onRoleChange, 
+  onChange,
+  disabled = false 
+}: RoleSelectorProps) {
+  // Use either value or currentRole, with value taking precedence
+  const roleValue = value || currentRole || 'member';
+  
+  const handleRoleChange = (selectedRole: string) => {
     withValidation(
       roleSchema,
       (validatedData) => {
-        onRoleChange(validatedData.role);
+        // Call either onChange or onRoleChange based on which was provided
+        if (onChange) onChange(validatedData.role);
+        if (onRoleChange) onRoleChange(validatedData.role);
       }
-    )({ role: value as Role['role'] });
+    )({ role: selectedRole as Role['role'] });
   };
 
   const getBadgeVariant = (role: string) => {
@@ -43,13 +57,13 @@ export function RoleSelector({ userId, currentRole, onRoleChange, disabled = fal
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant={getBadgeVariant(currentRole)} className="capitalize">
-        {currentRole}
+      <Badge variant={getBadgeVariant(roleValue)} className="capitalize">
+        {roleValue}
       </Badge>
       
       {!disabled && (
         <Select
-          value={currentRole}
+          value={roleValue}
           onValueChange={handleRoleChange}
           disabled={disabled}
         >

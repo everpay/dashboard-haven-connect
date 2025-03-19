@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -394,7 +393,6 @@ const Settings = () => {
   );
 };
 
-// Add missing import for the Table components
 const Table = ({ children }: { children: React.ReactNode }) => (
   <table className="w-full">{children}</table>
 );

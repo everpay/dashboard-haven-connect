@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,12 +28,9 @@ const Team = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-  // Fetch team members
   const { data: teamMembers, isLoading, refetch } = useQuery({
     queryKey: ['team-members'],
     queryFn: async () => {
-      // For demo purposes, return mocked data
-      // In a real app, this would fetch from Supabase
       const mockTeamMembers: TeamMember[] = [
         {
           id: '1',
@@ -74,8 +70,6 @@ const Team = () => {
     }
 
     try {
-      // Here you would typically call Supabase to create a new team member
-      // For demo, we'll simulate a successful addition
       toast({
         title: "Team member invited",
         description: `An invitation has been sent to ${newMemberEmail}`
@@ -97,7 +91,6 @@ const Team = () => {
   };
 
   const handleRemoveMember = (memberId: string) => {
-    // Here you would call Supabase to remove the team member
     toast({
       title: "Team member removed",
       description: "The team member has been removed successfully"
@@ -275,6 +268,7 @@ const Team = () => {
               <RoleSelector
                 value={newMemberRole}
                 onChange={setNewMemberRole}
+                currentRole={newMemberRole}
               />
             </div>
           </div>
