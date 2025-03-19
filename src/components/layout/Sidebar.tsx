@@ -1,11 +1,11 @@
 
-import { Sidebar as SidebarComponent } from './sidebar/Sidebar';
+import { SidebarNew } from './sidebar/SidebarNew';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 
 export const Sidebar = () => {
   return (
     <SidebarProvider>
-      <SidebarComponent />
+      <SidebarNew />
     </SidebarProvider>
   );
 };

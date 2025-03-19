@@ -10,22 +10,34 @@ export type SidebarLinkProps = {
   isActive: boolean;
   expanded: boolean;
   onClick?: () => void;
+  className?: string;
+  showIcon?: boolean;
 };
 
-export const SidebarLink = ({ to, icon, label, isActive, expanded, onClick }: SidebarLinkProps) => (
+export const SidebarLink = ({ 
+  to, 
+  icon, 
+  label, 
+  isActive, 
+  expanded, 
+  onClick, 
+  className, 
+  showIcon = true 
+}: SidebarLinkProps) => (
   <Link
     to={to}
     onClick={onClick}
     className={cn(
-      'flex items-center p-2 rounded-md my-1 transition-colors',
-      expanded ? 'px-4' : 'px-3 justify-center',
+      'flex items-center p-2 rounded-md my-1 transition-colors text-sm',
+      expanded ? 'px-3' : 'px-3 justify-center',
       isActive
-        ? 'bg-[#E3FFCC] text-[#19363B] dark:bg-emerald-900/30 dark:text-emerald-100'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
+        ? 'bg-primary/10 text-primary font-medium'
+        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+      className
     )}
   >
-    <span className="flex-shrink-0">{icon}</span>
-    {expanded && <span className="ml-3 text-sm whitespace-nowrap">{label}</span>}
+    {showIcon && <span className="flex-shrink-0 mr-3">{icon}</span>}
+    {expanded && <span className="whitespace-nowrap">{label}</span>}
   </Link>
 );
 
@@ -35,18 +47,20 @@ export type SubLinkProps = {
   isActive: boolean;
   expanded: boolean;
   onClick?: () => void;
+  className?: string;
 };
 
-export const SubLink = ({ to, label, isActive, expanded, onClick }: SubLinkProps) => (
+export const SubLink = ({ to, label, isActive, expanded, onClick, className }: SubLinkProps) => (
   <Link
     to={to}
     onClick={onClick}
     className={cn(
-      'flex items-center p-2 rounded-md my-0.5 transition-colors text-xs',
-      expanded ? 'px-4 ml-6' : 'px-3 justify-center',
+      'flex items-center p-2 rounded-md my-0.5 transition-colors text-xs pl-9',
+      expanded ? 'px-3' : 'px-3 justify-center',
       isActive
-        ? 'bg-[#E3FFCC] text-[#19363B] dark:bg-emerald-900/30 dark:text-emerald-100'
-        : 'text-gray-500 hover:bg-gray-100 hover:text-[#19363B] dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
+        ? 'bg-primary/10 text-primary font-medium'
+        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+      className
     )}
   >
     {expanded && <span className="whitespace-nowrap">{label}</span>}
