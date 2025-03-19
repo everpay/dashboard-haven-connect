@@ -18,7 +18,8 @@ import {
   ArrowDown,
   DollarSign,
   ArrowDownLeft,
-  ArrowUpLeft
+  ArrowUpLeft,
+  RefreshCw
 } from 'lucide-react';
 import { SidebarLink, SubLink } from './SidebarLink';
 import { SidebarMenuGroup } from './SidebarMenuGroup';
@@ -52,7 +53,7 @@ export const Sidebar = () => {
   };
   
   useEffect(() => {
-    if (activePath.includes('/transactions') || activePath.includes('/payment')) {
+    if (activePath.includes('/transactions') || activePath.includes('/payment') || activePath.includes('/recurring-payments')) {
       setMenuGroups(prev => ({ ...prev, transactions: true }));
     } else if (activePath.includes('/customers') || activePath.includes('/recipients')) {
       setMenuGroups(prev => ({ ...prev, customers: true }));
@@ -131,6 +132,13 @@ export const Sidebar = () => {
               isActive={activePath === '/transactions'}
               expanded={expanded}
               onClick={() => navigateTo('/transactions')}
+            />
+            <SubLink
+              to="/recurring-payments"
+              label="Recurring Payments"
+              isActive={activePath === '/recurring-payments'}
+              expanded={expanded}
+              onClick={() => navigateTo('/recurring-payments')}
             />
             <SubLink
               to="/payment-link"

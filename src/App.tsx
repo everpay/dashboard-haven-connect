@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -34,6 +33,7 @@ import WidgetDemo from "./pages/WidgetDemo"
 import ReportsOverview from "./pages/reports/Overview"
 import ReportsAnalytics from "./pages/reports/Analytics"
 import Banking from "./pages/Banking"
+import RecurringPayments from "./pages/RecurringPayments"
 
 // Debug log to see if App component is loading
 console.log('App component initializing');
@@ -107,6 +107,7 @@ const App = () => {
                           <Route path="/invoices" element={<Invoices />} />
                           <Route path="/invoicing" element={<Invoices />} />
                           <Route path="/recurring-invoices" element={<RecurringInvoices />} />
+                          <Route path="/recurring-payments" element={<RecurringPayments />} />
                           <Route path="/products" element={<Products />} />
                           <Route path="/integrations" element={<Integrations />} />
                           <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />
