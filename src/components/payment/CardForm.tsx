@@ -112,8 +112,8 @@ export const CardForm: React.FC<CardFormProps> = ({
       if (VGSCollect) {
         console.log('Initializing VGS Collect with form ID:', formId);
         
-        // Initialize VGS Collect with the Vault ID
-        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox');
+        // Initialize VGS Collect with the Vault ID - fixed initialization to not require callback
+        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox', {});
         
         // Configure field for card number
         collectRef.current.field(`#${formId}-card-number`, {
@@ -246,81 +246,106 @@ export const CardForm: React.FC<CardFormProps> = ({
     setIsSubmitting(true);
     console.log('Submitting card form data...');
     
-    // Instead of relying on VGS submission which might fail in the sandbox environment,
-    // let's simulate a successful card creation for demo purposes
-    setTimeout(async () => {
-      try {
-        // Generate a unique card token
-        const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
+    // Using VGS submission to vault the card data without processing a payment
+    collectRef.current.submit(
+      '/vault-cards',  // Endpoint would be defined on your VGS dashboard
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        data: {
+          cardholder_name: cardholderName
+        }
+      },
+      (status: number, response: any) => {
+        console.log('VGS Submit Response:', status, response);
         
-        // Get the expiry date in MM/YY format
-        const now = new Date();
-        const expiryMonth = String(now.getMonth() + 1).padStart(2, '0');
-        const expiryYear = now.getFullYear() + 2;
-        const expiration = `${expiryMonth}/${expiryYear % 100}`;
-        
-        // Store card in the database
-        const { data, error } = await supabase
-          .from('cards')
-          .insert([
-            {
-              card_token: cardToken,
-              card_type: 'virtual',
-              expiration: expiration,
-              status: 'active'
-            }
-          ]);
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Success",
-          description: "Card added successfully",
-        });
-        
-        if (onSuccess) onSuccess(cardToken);
-      } catch (error) {
-        console.error('Error saving card to database:', error);
+        // Here we're just simulating a successful vault since this is a demo
+        setTimeout(async () => {
+          try {
+            // Generate a unique card token
+            const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
+            
+            // Get the expiry date in MM/YY format
+            const now = new Date();
+            const expiryMonth = String(now.getMonth() + 1).padStart(2, '0');
+            const expiryYear = now.getFullYear() + 2;
+            const expiration = `${expiryMonth}/${expiryYear % 100}`;
+            
+            // Store card in the database
+            const { data, error } = await supabase
+              .from('cards')
+              .insert([
+                {
+                  card_token: cardToken,
+                  card_type: 'virtual',
+                  expiration: expiration,
+                  status: 'active'
+                }
+              ]);
+            
+            if (error) throw error;
+            
+            toast({
+              title: "Success",
+              description: "Card added successfully",
+            });
+            
+            if (onSuccess) onSuccess(cardToken);
+          } catch (error) {
+            console.error('Error saving card to database:', error);
+            toast({
+              title: "Error",
+              description: "Failed to save card",
+              variant: "destructive"
+            });
+            if (onError) onError(error);
+          } finally {
+            setIsSubmitting(false);
+          }
+        }, 1500);
+      },
+      (error: any) => {
+        console.error('VGS Submit Error:', error);
+        setIsSubmitting(false);
         toast({
           title: "Error",
-          description: "Failed to save card",
+          description: "Failed to securely vault card information",
           variant: "destructive"
         });
         if (onError) onError(error);
-      } finally {
-        setIsSubmitting(false);
       }
-    }, 1500);
+    );
   };
   
   return (
-    <Card className={`p-6 ${className}`}>
+    <Card className={`p-6 ${className}`} style={{ background: '#0f172a', color: 'white' }}>
       <div className="space-y-4">
         <div>
-          <Label htmlFor="cardholderName" className="mb-1 block">Cardholder Name</Label>
+          <Label htmlFor="cardholderName" className="mb-1 block text-white">Cardholder Name</Label>
           <Input 
             id="cardholderName" 
             value={cardholderName}
             onChange={(e) => setCardholderName(e.target.value)}
             placeholder="John Doe"
-            className="w-full"
+            className="w-full bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
           />
         </div>
         
         <div>
-          <Label htmlFor={`${formId}-card-number`} className="mb-1 block">Card Number</Label>
-          <div id={`${formId}-card-number`} className="mt-1" style={{ height: '40px' }} />
+          <Label htmlFor={`${formId}-card-number`} className="mb-1 block text-white">Card Number</Label>
+          <div id={`${formId}-card-number`} className="mt-1" style={{ height: '40px', background: '#1e293b', borderRadius: '4px' }} />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor={`${formId}-card-expiry`} className="mb-1 block">Expiration Date</Label>
-            <div id={`${formId}-card-expiry`} className="mt-1" style={{ height: '40px' }} />
+            <Label htmlFor={`${formId}-card-expiry`} className="mb-1 block text-white">Expiration Date</Label>
+            <div id={`${formId}-card-expiry`} className="mt-1" style={{ height: '40px', background: '#1e293b', borderRadius: '4px' }} />
           </div>
           
           <div>
-            <Label htmlFor={`${formId}-card-cvc`} className="mb-1 block">CVC</Label>
-            <div id={`${formId}-card-cvc`} className="mt-1" style={{ height: '40px' }} />
+            <Label htmlFor={`${formId}-card-cvc`} className="mb-1 block text-white">CVC</Label>
+            <div id={`${formId}-card-cvc`} className="mt-1" style={{ height: '40px', background: '#1e293b', borderRadius: '4px' }} />
           </div>
         </div>
         
@@ -339,7 +364,7 @@ export const CardForm: React.FC<CardFormProps> = ({
         </Button>
         
         {loadAttempts >= 3 && (
-          <div className="text-center mt-2 text-sm text-gray-500">
+          <div className="text-center mt-2 text-sm text-gray-400">
             <p>Card form not loading? Click the button above to proceed anyway.</p>
           </div>
         )}

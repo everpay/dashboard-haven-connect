@@ -33,9 +33,9 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
+      <DialogContent className="sm:max-w-[450px] bg-[#0f172a] border-gray-700 text-white">
         <DialogHeader>
-          <DialogTitle>Add New Card</DialogTitle>
+          <DialogTitle className="text-white">Add New Card</DialogTitle>
         </DialogHeader>
         <CardForm
           formId="add-card-form"
