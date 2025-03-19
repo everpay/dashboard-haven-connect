@@ -55,7 +55,7 @@ interface TableCellProps extends React.HTMLAttributes<HTMLTableCellElement> {
 
 const TableCell: React.FC<TableCellProps> = ({ className, children, colSpan, ...props }) => (
   <td 
-    className={cn("p-4 align-middle text-foreground [&:has([role=checkbox])]:pr-0", className)} 
+    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)} 
     colSpan={colSpan} 
     {...props}
   >

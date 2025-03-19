@@ -126,7 +126,7 @@ const Payouts = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Payouts</h1>
+            <h1 className="text-2xl font-bold">Payouts</h1>
             <p className="text-muted-foreground">Send money to bank accounts and cards</p>
           </div>
           <Button 
@@ -139,9 +139,9 @@ const Payouts = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 bg-card text-card-foreground">
+          <Card className="p-4">
             <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
-            <p className="text-2xl font-bold mt-1 text-foreground">
+            <p className="text-2xl font-bold mt-1">
               {accountBalance ? 
                 <>
                   $<CountUp 
@@ -156,9 +156,9 @@ const Payouts = () => {
             </p>
           </Card>
           
-          <Card className="p-4 bg-card text-card-foreground">
+          <Card className="p-4">
             <h3 className="text-sm font-medium text-muted-foreground">Net Balance</h3>
-            <p className="text-2xl font-bold mt-1 text-foreground">
+            <p className="text-2xl font-bold mt-1">
               {accountBalance ? 
                 <>
                   $<CountUp 
@@ -173,9 +173,9 @@ const Payouts = () => {
             </p>
           </Card>
           
-          <Card className="p-4 bg-card text-card-foreground">
+          <Card className="p-4">
             <h3 className="text-sm font-medium text-muted-foreground">Reserve Balance</h3>
-            <p className="text-2xl font-bold mt-1 text-foreground">
+            <p className="text-2xl font-bold mt-1">
               {accountBalance ? 
                 <>
                   $<CountUp 
@@ -191,13 +191,13 @@ const Payouts = () => {
           </Card>
         </div>
         
-        <Card className="p-6 bg-card">
+        <Card className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search payouts"
-                className="pl-10 bg-background text-foreground"
+                className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -248,20 +248,20 @@ const Payouts = () => {
                   payouts?.map((payout: any) => (
                     <TableRow key={payout.id}>
                       <TableCell>
-                        <div className="text-sm text-foreground">{formatDate(payout.created_at)}</div>
+                        <div className="text-sm">{formatDate(payout.created_at)}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium text-foreground">
+                        <div className="text-sm font-medium">
                           {payout.metadata?.RECIPIENT_FULL_NAME || "Unknown Recipient"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium text-foreground">
+                        <div className="text-sm font-medium">
                           {formatPaymentMethod(payout.metadata?.SEND_METHOD || payout.payment_method)}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-foreground">{payout.description}</div>
+                        <div className="text-sm">{payout.description}</div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusColor(payout.status || 'pending')}>
@@ -269,7 +269,7 @@ const Payouts = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="text-sm font-medium text-foreground">
+                        <div className="text-sm font-medium">
                           ${payout.amount ? parseFloat(payout.amount).toFixed(2) : '0.00'}
                         </div>
                       </TableCell>

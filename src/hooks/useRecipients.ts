@@ -56,48 +56,59 @@ export const useRecipients = () => {
       throw new Error("User not authenticated");
     }
     
-    const recipient = {
-      ...newRecipient,
-      full_name: newRecipient.full_name || `${newRecipient.first_names} ${newRecipient.last_names}`,
-      user_id: user.id
-    };
-    
-    console.log('Adding recipient:', recipient);
-    
     try {
-      // Check if we need to add bank account columns if they don't exist
-      const { data: columns, error: columnsError } = await supabase
-        .rpc('get_table_columns', { table_name: 'recipients' });
-        
-      if (columnsError) {
-        console.error('Error checking table columns:', columnsError);
-      } else {
-        console.log('Current recipient table columns:', columns);
-        // Check existing columns - this is just for logging, we'll handle missing columns in the error catch
+      // Make sure we have a full_name field from first and last names
+      let fullName = newRecipient.full_name;
+      if (!fullName && newRecipient.first_names && newRecipient.last_names) {
+        fullName = `${newRecipient.first_names} ${newRecipient.last_names}`;
+      } else if (!fullName) {
+        // If no full name or first/last names, use a default
+        fullName = "Unnamed Recipient";
       }
       
-      // Check if recipient already exists by various criteria
+      // Clean up the input
+      const cleanedRecipient = {
+        first_names: newRecipient.first_names || (fullName ? fullName.split(' ')[0] : 'Unknown'),
+        last_names: newRecipient.last_names || (fullName && fullName.split(' ').length > 1 ? fullName.split(' ').slice(1).join(' ') : 'Recipient'),
+        full_name: fullName,
+        email_address: newRecipient.email_address || null,
+        telephone_number: newRecipient.telephone_number || null,
+        street_1: newRecipient.street_1 || null,
+        street_2: newRecipient.street_2 || null,
+        city: newRecipient.city || null,
+        region: newRecipient.region || null,
+        postal_code: newRecipient.postal_code || null,
+        country_iso3: newRecipient.country_iso3 || null,
+        bank_account_number: newRecipient.bank_account_number || null,
+        bank_routing_number: newRecipient.bank_routing_number || null,
+        bank_name: newRecipient.bank_name || null,
+        user_id: user.id
+      };
+      
+      console.log('Adding recipient:', cleanedRecipient);
+      
+      // Check if recipient already exists by name, email, or phone
       let existingRecipient = null;
-      let checkFields = [];
+      let queryFilters = [];
       
-      if (recipient.email_address) {
-        checkFields.push(`email_address.eq.${recipient.email_address}`);
-      } 
-      
-      if (recipient.telephone_number) {
-        checkFields.push(`telephone_number.eq.${recipient.telephone_number}`);
+      if (cleanedRecipient.full_name) {
+        queryFilters.push(`full_name.eq.${cleanedRecipient.full_name}`);
       }
       
-      if (recipient.full_name) {
-        checkFields.push(`full_name.eq.${recipient.full_name}`);
+      if (cleanedRecipient.email_address) {
+        queryFilters.push(`email_address.eq.${cleanedRecipient.email_address}`);
       }
       
-      if (checkFields.length > 0) {
+      if (cleanedRecipient.telephone_number) {
+        queryFilters.push(`telephone_number.eq.${cleanedRecipient.telephone_number}`);
+      }
+      
+      if (queryFilters.length > 0) {
         const { data } = await supabase
           .from('recipients')
           .select('*')
           .eq('user_id', user.id)
-          .or(checkFields.join(','))
+          .or(queryFilters.join(','))
           .maybeSingle();
         
         existingRecipient = data;
@@ -105,27 +116,9 @@ export const useRecipients = () => {
       
       console.log('Existing recipient check result:', existingRecipient);
       
-      // Clean up the recipient object to remove any fields that don't exist in the table
-      // This prevents errors when trying to insert non-existent columns
-      const safeRecipient = {
-        first_names: recipient.first_names,
-        last_names: recipient.last_names,
-        full_name: recipient.full_name,
-        email_address: recipient.email_address,
-        telephone_number: recipient.telephone_number,
-        street_1: recipient.street_1,
-        street_2: recipient.street_2,
-        city: recipient.city,
-        region: recipient.region,
-        postal_code: recipient.postal_code,
-        country_iso3: recipient.country_iso3,
-        user_id: recipient.user_id
-      };
-      
       if (existingRecipient) {
         // Update existing recipient with any new information
-        const updatedRecipient = { ...existingRecipient, ...safeRecipient };
-        console.log('Updating existing recipient:', updatedRecipient);
+        const updatedRecipient = { ...existingRecipient, ...cleanedRecipient };
         
         const { data, error } = await supabase
           .from('recipients')
@@ -137,57 +130,50 @@ export const useRecipients = () => {
           console.error('Error updating recipient:', error);
           throw error;
         }
+        
         console.log('Updated recipient:', data[0]);
         return data[0];
       }
       
       // Insert new recipient
-      console.log('Inserting new recipient:', safeRecipient);
+      console.log('Inserting new recipient:', cleanedRecipient);
       const { data, error } = await supabase
         .from('recipients')
-        .insert([safeRecipient])
+        .insert([cleanedRecipient])
         .select();
       
       if (error) {
         console.error('Error adding recipient:', error);
+        // Check if the error is related to FK constraint
+        if (error.message && error.message.includes('violates foreign key constraint')) {
+          throw new Error("Database error: User ID is not valid in recipients table. Please check your user authentication.");
+        }
         throw error;
       }
+      
       console.log('Added new recipient:', data[0]);
       return data[0];
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error in recipient processing:', err);
       
-      // If error mentions bank_account_number or other columns don't exist,
-      // inform the user but don't block the process
-      const errorMessage = (err as any)?.message || '';
-      if (errorMessage.includes('column') && 
-          (errorMessage.includes('bank_account_number') || 
-           errorMessage.includes('bank_routing_number') || 
-           errorMessage.includes('bank_name'))) {
-        
-        console.log('Bank account columns not found in recipients table - adding only basic info');
-        
-        // Try again with only the basic fields
-        const basicRecipient = {
-          first_names: recipient.first_names,
-          last_names: recipient.last_names,
-          full_name: recipient.full_name,
-          email_address: recipient.email_address,
-          telephone_number: recipient.telephone_number,
-          user_id: recipient.user_id
-        };
-        
+      // If error is a foreign key constraint error, try to create the user
+      if (err.message && err.message.includes('foreign key constraint')) {
+        // Try to make sure user exists in profiles table first
         try {
-          const { data, error } = await supabase
-            .from('recipients')
-            .insert([basicRecipient])
-            .select();
-          
-          if (error) throw error;
-          return data[0];
-        } catch (basicErr) {
-          console.error('Error adding basic recipient info:', basicErr);
-          throw basicErr;
+          const { data: userData } = await supabase.auth.getUser();
+          if (userData && userData.user) {
+            // Ensure profile exists
+            await supabase.rpc('ensure_profile_exists', {
+              user_id: userData.user.id,
+              user_email: userData.user.email || '',
+              user_full_name: userData.user.user_metadata?.full_name || ''
+            });
+            
+            // Try adding the recipient again
+            return addRecipient(newRecipient);
+          }
+        } catch (profileErr) {
+          console.error('Error ensuring profile exists:', profileErr);
         }
       }
       
@@ -238,7 +224,9 @@ export const useRecipients = () => {
     },
     onError: (error) => {
       console.error('Error adding recipient:', error);
-      toast.error("Failed to add recipient");
+      toast.error("Failed to add recipient", {
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
     }
   });
 

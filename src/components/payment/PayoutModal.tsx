@@ -51,7 +51,8 @@ export const PayoutModal = ({
       // Add recipient information to transaction metadata
       const transactionMetadata = {
         ...response,
-        SEND_METHOD: response.SEND_METHOD || response.TRANSACTION_SEND_METHOD
+        SEND_METHOD: response.SEND_METHOD || response.TRANSACTION_SEND_METHOD,
+        RECIPIENT_FULL_NAME: response.RECIPIENT_FULL_NAME
       };
       
       const { error } = await supabase
@@ -99,9 +100,9 @@ export const PayoutModal = ({
       onOpenChange(isOpen);
       if (!isOpen) handleReset();
     }}>
-      <DialogContent className="sm:max-w-md bg-background">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-foreground">{showPaymentMethods ? "Select Payment Method" : "Initialize Payout"}</DialogTitle>
+          <DialogTitle>{showPaymentMethods ? "Select Payment Method" : "Initialize Payout"}</DialogTitle>
           <DialogDescription>
             {showPaymentMethods 
               ? "Choose how you want to send your money" 
@@ -139,7 +140,7 @@ export const PayoutModal = ({
               <div className="mb-4">
                 <div className="flex justify-between items-center">
                   <Label>Amount:</Label>
-                  <span className="text-xl font-bold text-foreground">${parseFloat(amount).toFixed(2)}</span>
+                  <span className="text-xl font-bold">${parseFloat(amount).toFixed(2)}</span>
                 </div>
               </div>
               
