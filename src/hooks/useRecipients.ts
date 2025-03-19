@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -63,49 +64,40 @@ export const useRecipients = () => {
     
     console.log('Adding recipient:', recipient);
     
-    // Check if recipient already exists by email, phone, or name
-    let existingRecipient = null;
-    
     try {
-      if (recipient.email_address) {
-        const { data } = await supabase
-          .from('recipients')
-          .select('*')
-          .eq('email_address', recipient.email_address)
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // Check if we need to add bank account columns if they don't exist
+      const { data: columns, error: columnsError } = await supabase
+        .rpc('get_table_columns', { table_name: 'recipients' });
         
-        existingRecipient = data;
-      } 
-      
-      if (!existingRecipient && recipient.telephone_number) {
-        const { data } = await supabase
-          .from('recipients')
-          .select('*')
-          .eq('telephone_number', recipient.telephone_number)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        existingRecipient = data;
-      } 
-      
-      if (!existingRecipient && recipient.bank_account_number) {
-        const { data } = await supabase
-          .from('recipients')
-          .select('*')
-          .eq('bank_account_number', recipient.bank_account_number)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        existingRecipient = data;
+      if (columnsError) {
+        console.error('Error checking table columns:', columnsError);
+      } else {
+        console.log('Current recipient table columns:', columns);
+        // Check existing columns - this is just for logging, we'll handle missing columns in the error catch
       }
       
-      if (!existingRecipient && recipient.full_name) {
+      // Check if recipient already exists by various criteria
+      let existingRecipient = null;
+      let checkFields = [];
+      
+      if (recipient.email_address) {
+        checkFields.push(`email_address.eq.${recipient.email_address}`);
+      } 
+      
+      if (recipient.telephone_number) {
+        checkFields.push(`telephone_number.eq.${recipient.telephone_number}`);
+      }
+      
+      if (recipient.full_name) {
+        checkFields.push(`full_name.eq.${recipient.full_name}`);
+      }
+      
+      if (checkFields.length > 0) {
         const { data } = await supabase
           .from('recipients')
           .select('*')
-          .eq('full_name', recipient.full_name)
           .eq('user_id', user.id)
+          .or(checkFields.join(','))
           .maybeSingle();
         
         existingRecipient = data;
@@ -113,9 +105,26 @@ export const useRecipients = () => {
       
       console.log('Existing recipient check result:', existingRecipient);
       
+      // Clean up the recipient object to remove any fields that don't exist in the table
+      // This prevents errors when trying to insert non-existent columns
+      const safeRecipient = {
+        first_names: recipient.first_names,
+        last_names: recipient.last_names,
+        full_name: recipient.full_name,
+        email_address: recipient.email_address,
+        telephone_number: recipient.telephone_number,
+        street_1: recipient.street_1,
+        street_2: recipient.street_2,
+        city: recipient.city,
+        region: recipient.region,
+        postal_code: recipient.postal_code,
+        country_iso3: recipient.country_iso3,
+        user_id: recipient.user_id
+      };
+      
       if (existingRecipient) {
         // Update existing recipient with any new information
-        const updatedRecipient = { ...existingRecipient, ...recipient };
+        const updatedRecipient = { ...existingRecipient, ...safeRecipient };
         console.log('Updating existing recipient:', updatedRecipient);
         
         const { data, error } = await supabase
@@ -133,10 +142,10 @@ export const useRecipients = () => {
       }
       
       // Insert new recipient
-      console.log('Inserting new recipient:', recipient);
+      console.log('Inserting new recipient:', safeRecipient);
       const { data, error } = await supabase
         .from('recipients')
-        .insert([recipient])
+        .insert([safeRecipient])
         .select();
       
       if (error) {
@@ -147,11 +156,46 @@ export const useRecipients = () => {
       return data[0];
     } catch (err) {
       console.error('Error in recipient processing:', err);
+      
+      // If error mentions bank_account_number or other columns don't exist,
+      // inform the user but don't block the process
+      const errorMessage = (err as any)?.message || '';
+      if (errorMessage.includes('column') && 
+          (errorMessage.includes('bank_account_number') || 
+           errorMessage.includes('bank_routing_number') || 
+           errorMessage.includes('bank_name'))) {
+        
+        console.log('Bank account columns not found in recipients table - adding only basic info');
+        
+        // Try again with only the basic fields
+        const basicRecipient = {
+          first_names: recipient.first_names,
+          last_names: recipient.last_names,
+          full_name: recipient.full_name,
+          email_address: recipient.email_address,
+          telephone_number: recipient.telephone_number,
+          user_id: recipient.user_id
+        };
+        
+        try {
+          const { data, error } = await supabase
+            .from('recipients')
+            .insert([basicRecipient])
+            .select();
+          
+          if (error) throw error;
+          return data[0];
+        } catch (basicErr) {
+          console.error('Error adding basic recipient info:', basicErr);
+          throw basicErr;
+        }
+      }
+      
       throw err;
     }
   };
 
-  const updateRecipient = async (recipientId: number, updatedRecipient: Partial<Recipient>) => {
+  const updateRecipient = async ({ recipientId, updatedRecipient }: { recipientId: number, updatedRecipient: Partial<Recipient> }) => {
     if (!user) throw new Error("User not authenticated");
     
     const recipient = {
@@ -199,8 +243,7 @@ export const useRecipients = () => {
   });
 
   const updateRecipientMutation = useMutation({
-    mutationFn: ({ recipientId, updatedRecipient }: { recipientId: number, updatedRecipient: Partial<Recipient> }) => 
-      updateRecipient(recipientId, updatedRecipient),
+    mutationFn: updateRecipient,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipients'] });
       toast.success("Recipient updated successfully");

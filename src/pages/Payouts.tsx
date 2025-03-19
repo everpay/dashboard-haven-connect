@@ -104,6 +104,23 @@ const Payouts = () => {
     }
   };
 
+  const formatPaymentMethod = (method: string) => {
+    if (!method) return 'Unknown';
+    
+    // Capitalize the first letter and format special cases
+    const methodMap: Record<string, string> = {
+      'ach': 'ACH',
+      'bank_transfer': 'Bank Transfer',
+      'swift': 'SWIFT',
+      'fedwire': 'FEDWIRE',
+      'zelle': 'Zelle',
+      'card_push': 'Card Push',
+      'wire': 'Wire Transfer'
+    };
+    
+    return methodMap[method.toLowerCase()] || method;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -128,7 +145,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(String(accountBalance.PAYOUT_BALANCE) || '0')} 
+                    end={parseFloat(String(accountBalance.PAYOUT_BALANCE || '0'))} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -145,7 +162,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(String(accountBalance.FLOAT_BALANCE) || '0')} 
+                    end={parseFloat(String(accountBalance.FLOAT_BALANCE || '0'))} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -162,7 +179,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(String(accountBalance.RESERVE_BALANCE) || '0')} 
+                    end={parseFloat(String(accountBalance.RESERVE_BALANCE || '0'))} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -207,6 +224,7 @@ const Payouts = () => {
               <TableHead>
                 <TableRow>
                   <TableHeader>Date</TableHeader>
+                  <TableHeader>Recipient</TableHeader>
                   <TableHeader>Method</TableHeader>
                   <TableHeader>Description</TableHeader>
                   <TableHeader>Status</TableHeader>
@@ -216,15 +234,15 @@ const Payouts = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">Loading payouts...</TableCell>
+                    <TableCell colSpan={6} className="text-center">Loading payouts...</TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-red-500">Failed to load payouts</TableCell>
+                    <TableCell colSpan={6} className="text-center text-red-500">Failed to load payouts</TableCell>
                   </TableRow>
                 ) : payouts && payouts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">No payouts found</TableCell>
+                    <TableCell colSpan={6} className="text-center">No payouts found</TableCell>
                   </TableRow>
                 ) : (
                   payouts?.map((payout: any) => (
@@ -233,7 +251,14 @@ const Payouts = () => {
                         <div className="text-sm text-foreground">{formatDate(payout.created_at)}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium text-foreground">{payout.payment_method}</div>
+                        <div className="text-sm font-medium text-foreground">
+                          {payout.metadata?.RECIPIENT_FULL_NAME || "Unknown Recipient"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium text-foreground">
+                          {formatPaymentMethod(payout.metadata?.SEND_METHOD || payout.payment_method)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm text-foreground">{payout.description}</div>
@@ -245,15 +270,7 @@ const Payouts = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="text-sm font-medium text-foreground">
-                          ${payout.amount ? (
-                            <CountUp 
-                              end={payout.amount} 
-                              separator="," 
-                              decimals={2}
-                              duration={1}
-                              preserveValue
-                            />
-                          ) : '0.00'}
+                          ${payout.amount ? parseFloat(payout.amount).toFixed(2) : '0.00'}
                         </div>
                       </TableCell>
                     </TableRow>

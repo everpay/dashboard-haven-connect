@@ -21,53 +21,53 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
   user
 }) => {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <div className="overflow-x-auto rounded-lg border border-border bg-card">
       <Table>
         <TableHead>
           <TableRow>
-            <TableHeader>Name</TableHeader>
-            <TableHeader>Email</TableHeader>
-            <TableHeader>Phone</TableHeader>
-            <TableHeader>Location</TableHeader>
-            <TableHeader className="text-right">Actions</TableHeader>
+            <TableHeader className="text-muted-foreground">Name</TableHeader>
+            <TableHeader className="text-muted-foreground">Email</TableHeader>
+            <TableHeader className="text-muted-foreground">Phone</TableHeader>
+            <TableHeader className="text-muted-foreground">Location</TableHeader>
+            <TableHeader className="text-right text-muted-foreground">Actions</TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>
           {!user ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">
+              <TableCell colSpan={5} className="text-center text-foreground">
                 Please sign in to view your recipients
               </TableCell>
             </TableRow>
           ) : isLoading ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">Loading recipients...</TableCell>
+              <TableCell colSpan={5} className="text-center text-foreground">Loading recipients...</TableCell>
             </TableRow>
           ) : recipients && recipients.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">No recipients found</TableCell>
+              <TableCell colSpan={5} className="text-center text-foreground">No recipients found</TableCell>
             </TableRow>
           ) : (
             recipients?.map((recipient: Recipient) => (
-              <TableRow key={recipient.recipient_id}>
+              <TableRow key={recipient.recipient_id} className="hover:bg-muted/50">
                 <TableCell>
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 bg-muted rounded-full flex items-center justify-center">
                       <User className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium">{recipient.full_name}</div>
+                      <div className="text-sm font-medium text-foreground">{recipient.full_name}</div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">{recipient.email_address || "—"}</div>
+                  <div className="text-sm text-foreground">{recipient.email_address || "—"}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">{recipient.telephone_number || "—"}</div>
+                  <div className="text-sm text-foreground">{recipient.telephone_number || "—"}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">
+                  <div className="text-sm text-foreground">
                     {recipient.city && recipient.region ? `${recipient.city}, ${recipient.region}` : 
                       recipient.city || recipient.region || "—"}
                   </div>
@@ -78,6 +78,7 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
                       variant="ghost" 
                       size="sm" 
                       onClick={() => onEditRecipient(recipient)}
+                      className="text-foreground hover:text-foreground/80 hover:bg-background/80"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>

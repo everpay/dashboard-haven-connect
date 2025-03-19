@@ -48,6 +48,12 @@ export const PayoutModal = ({
       // Record the transaction in the database
       const { data: userData } = await supabase.auth.getUser();
       
+      // Add recipient information to transaction metadata
+      const transactionMetadata = {
+        ...response,
+        SEND_METHOD: response.SEND_METHOD || response.TRANSACTION_SEND_METHOD
+      };
+      
       const { error } = await supabase
         .from('marqeta_transactions')
         .insert([{
@@ -57,13 +63,17 @@ export const PayoutModal = ({
           status: 'pending',
           merchant_name: 'Payout',
           transaction_type: 'payout',
-          description: 'Fund transfer',
-          payment_method: response.TRANSACTION_SEND_METHOD || 'bank_transfer',
-          metadata: response
+          description: response.PUBLIC_TRANSACTION_DESCRIPTION || 'Fund transfer',
+          payment_method: response.SEND_METHOD || response.TRANSACTION_SEND_METHOD || 'bank_transfer',
+          metadata: transactionMetadata
         }]);
 
       if (error) {
         console.error('Error recording transaction:', error);
+        toast.error("Transaction Error", {
+          description: "Could not record the transaction"
+        });
+        return;
       }
 
       toast.success("Payout Initiated", {
@@ -89,9 +99,9 @@ export const PayoutModal = ({
       onOpenChange(isOpen);
       if (!isOpen) handleReset();
     }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-background">
         <DialogHeader>
-          <DialogTitle>{showPaymentMethods ? "Select Payment Method" : "Initialize Payout"}</DialogTitle>
+          <DialogTitle className="text-foreground">{showPaymentMethods ? "Select Payment Method" : "Initialize Payout"}</DialogTitle>
           <DialogDescription>
             {showPaymentMethods 
               ? "Choose how you want to send your money" 
@@ -119,7 +129,7 @@ export const PayoutModal = ({
               
               <Button 
                 onClick={handleContinue} 
-                className="w-full bg-[#1AA47B] hover:bg-[#19363B]"
+                className="w-full bg-[#1AA47B] hover:bg-[#19363B] text-white"
               >
                 Continue
               </Button>
@@ -129,7 +139,7 @@ export const PayoutModal = ({
               <div className="mb-4">
                 <div className="flex justify-between items-center">
                   <Label>Amount:</Label>
-                  <span className="text-xl font-bold">${parseFloat(amount).toFixed(2)}</span>
+                  <span className="text-xl font-bold text-foreground">${parseFloat(amount).toFixed(2)}</span>
                 </div>
               </div>
               

@@ -25,18 +25,19 @@ export const PayoutMethodSelector = ({
       case 'swift': return 'SWIFT';
       case 'fedwire': return 'FEDWIRE';
       case 'zelle': return 'ZELLE';
+      case 'card': return 'CARD_PUSH';
       default: return 'ACH';
     }
   };
 
   return (
     <Tabs defaultValue="ach" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-      <TabsList className="grid grid-cols-5 mb-4 w-full">
-        <TabsTrigger value="ach">ACH</TabsTrigger>
-        <TabsTrigger value="swift">SWIFT</TabsTrigger>
-        <TabsTrigger value="fedwire">FEDWIRE</TabsTrigger>
-        <TabsTrigger value="zelle">ZELLE</TabsTrigger>
-        <TabsTrigger value="card">Card Push</TabsTrigger>
+      <TabsList className="grid grid-cols-5 mb-4 w-full bg-muted">
+        <TabsTrigger value="ach" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">ACH</TabsTrigger>
+        <TabsTrigger value="swift" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">SWIFT</TabsTrigger>
+        <TabsTrigger value="fedwire" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">FEDWIRE</TabsTrigger>
+        <TabsTrigger value="zelle" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">ZELLE</TabsTrigger>
+        <TabsTrigger value="card" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">Card Push</TabsTrigger>
       </TabsList>
       
       <TabsContent value="ach">
