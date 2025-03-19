@@ -10,6 +10,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+// Update the Transaction interface to include created_at property
+interface Transaction {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  merchant_name: string;
+  customer_email: string;
+  description: string;
+  payment_method: string;
+  transaction_type: string;
+  location: string;
+  created_at?: string; // Make it optional with '?'
+}
+
 // Sample transaction data (would normally come from an API)
 const sampleTransactions = [
   {
@@ -87,7 +102,7 @@ const sampleTransactions = [
 ];
 
 const Transactions = () => {
-  const [transactions, setTransactions] = useState(sampleTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
   const [loading, setLoading] = useState(true);
   const [transactionStats, setTransactionStats] = useState({
     all: 6,
@@ -176,7 +191,7 @@ const Transactions = () => {
     }).format(amount);
   };
   
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
