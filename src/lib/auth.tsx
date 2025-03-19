@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileError && profileError.code === 'PGRST116') {
         console.log("Profile doesn't exist, creating a new one...");
         
-        // Try the RPC method first
+        // Call the ensure_profile_exists function directly with proper parameters
         const { data: rpcResult, error: rpcError } = await supabase.rpc('ensure_profile_exists', {
           user_id: currentUser.id,
           user_email: currentUser.email || '',
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (rpcError) {
-          console.error('RPC method failed, trying direct insert:', rpcError);
+          console.error('RPC method failed:', rpcError);
           
           // Fall back to direct insert with service role client if available
           const { error: insertError } = await supabase
@@ -68,6 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         console.log('Profile created successfully');
+        // After profile is created, ensure bank account exists
+        await supabase.rpc('update_balance', {
+          user_id_input: currentUser.id,
+          amount_input: 0
+        });
+        
         return true;
       } else if (profileError) {
         console.error('Error checking profile:', profileError);
