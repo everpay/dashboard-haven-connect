@@ -32,90 +32,88 @@ export const CardForm: React.FC<CardFormProps> = ({
   const { toast } = useToast();
   
   useEffect(() => {
-    // Load VGS Collect script
-    if (!scriptLoaded && loadAttempts < 3) {
-      const script = document.createElement('script');
-      script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
-      script.async = true;
-      script.onload = () => {
-        setScriptLoaded(true);
-        console.log('VGS Collect script loaded successfully');
-      };
-      script.onerror = () => {
-        console.error('Failed to load VGS Collect script, attempt:', loadAttempts + 1);
-        setLoadAttempts(prev => prev + 1);
-        
-        // Try alternative URL on first failure
-        if (loadAttempts === 0) {
-          const altScript = document.createElement('script');
-          altScript.src = 'https://js.verygoodvault.com/vgs-collect/vgs-collect-latest.min.js';
-          altScript.async = true;
+    // Create a function to initialize VGS Collect
+    const loadVGSScript = () => {
+      if (!scriptLoaded && loadAttempts < 3) {
+        console.log('Attempting to load VGS script, attempt:', loadAttempts + 1);
+        const script = document.createElement('script');
+        script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
+        script.async = true;
+        script.onload = () => {
+          console.log('VGS Collect script loaded successfully');
+          setScriptLoaded(true);
+        };
+        script.onerror = () => {
+          console.error('Failed to load VGS Collect script, attempt:', loadAttempts + 1);
+          // Increment attempts counter
+          setLoadAttempts(prev => prev + 1);
           
-          altScript.onload = () => {
-            setScriptLoaded(true);
-            console.log('VGS Collect script loaded successfully from alternative URL');
-          };
-          
-          altScript.onerror = () => {
-            console.error('Failed to load VGS Collect script from alternative URL');
-            toast({
-              title: "Error",
-              description: "Failed to load card form components",
-              variant: "destructive"
-            });
-            setLoadAttempts(prev => prev + 1);
-          };
-          
-          document.body.appendChild(altScript);
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to load card form components",
-            variant: "destructive"
-          });
-        }
-      };
-      
-      // Check if script is already loaded
-      if (!document.querySelector('script[src="https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js"]') &&
-          !document.querySelector('script[src="https://js.verygoodvault.com/vgs-collect/vgs-collect-latest.min.js"]')) {
-        document.body.appendChild(script);
-      } else {
-        // If the script tag exists but VGSCollect isn't available, it might be loading
-        // Let's set a timeout to check again
-        setTimeout(() => {
-          if ((window as any).VGSCollect) {
-            setScriptLoaded(true);
-          } else {
-            // If still not available after timeout, increment attempts
-            setLoadAttempts(prev => prev + 1);
+          // Try alternative URL on failure
+          if (loadAttempts === 0) {
+            const altScript = document.createElement('script');
+            altScript.src = 'https://js.verygoodvault.com/vgs-collect/vgs-collect-latest.min.js';
+            altScript.async = true;
+            
+            altScript.onload = () => {
+              console.log('VGS Collect script loaded from alternative URL');
+              setScriptLoaded(true);
+            };
+            
+            altScript.onerror = () => {
+              console.error('Failed to load VGS script from alternative URL');
+              setLoadAttempts(prev => prev + 1);
+            };
+            
+            document.body.appendChild(altScript);
           }
-        }, 1000);
+        };
+        
+        // Check if script is already loaded
+        if (!document.querySelector('script[src*="vgs-collect"]')) {
+          document.body.appendChild(script);
+        } else {
+          // If the script tag exists but VGSCollect isn't available yet
+          setTimeout(() => {
+            if ((window as any).VGSCollect) {
+              setScriptLoaded(true);
+            } else {
+              setLoadAttempts(prev => prev + 1);
+            }
+          }, 1000);
+        }
       }
-    } else if (scriptLoaded) {
+    };
+    
+    loadVGSScript();
+  }, [loadAttempts, scriptLoaded]);
+  
+  useEffect(() => {
+    if (scriptLoaded) {
       initializeVGSCollect();
     }
     
     return () => {
       // Cleanup
       if (collectRef.current) {
-        collectRef.current.destroy();
+        try {
+          collectRef.current.destroy();
+        } catch (e) {
+          console.error('Error destroying VGS form:', e);
+        }
       }
     };
-  }, [formId, scriptLoaded, loadAttempts, toast]);
+  }, [scriptLoaded]);
   
   const initializeVGSCollect = () => {
     try {
-      // Type assertion for VGSCollect
+      console.log('Initializing VGS Collect...');
       const VGSCollect = (window as any).VGSCollect;
       
       if (VGSCollect) {
-        console.log('Initializing VGS Collect with form ID:', formId);
+        // Initialize VGS Collect with vault ID
+        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox');
         
-        // Initialize VGS Collect with the Vault ID - fixed initialization to not require callback
-        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox', {});
-        
-        // Configure field for card number
+        // Configure fields with proper CSS for dark theme
         collectRef.current.field(`#${formId}-card-number`, {
           type: 'cardNumber',
           name: 'card_number',
@@ -123,19 +121,19 @@ export const CardForm: React.FC<CardFormProps> = ({
           validations: ['required', 'validCardNumber'],
           css: {
             'font-size': '16px',
-            'color': '#333',
+            'color': 'white',
             'padding': '10px',
             'font-family': 'system-ui, sans-serif',
-            'border': '1px solid #ccc',
+            'border': '1px solid #384152',
             'border-radius': '4px',
             'line-height': '1.5',
             'height': '40px',
-            'background-color': 'white',
+            'background-color': '#1e293b',
             '&::placeholder': {
-              'color': '#999'
+              'color': '#64748b'
             },
             '&:focus': {
-              'border': '1px solid #0070f3',
+              'border': '1px solid #60a5fa',
               'outline': 'none'
             }
           }
@@ -149,19 +147,19 @@ export const CardForm: React.FC<CardFormProps> = ({
           validations: ['required', 'validCardExpiryDate'],
           css: {
             'font-size': '16px',
-            'color': '#333',
+            'color': 'white',
             'padding': '10px',
             'font-family': 'system-ui, sans-serif',
-            'border': '1px solid #ccc',
+            'border': '1px solid #384152',
             'border-radius': '4px',
             'line-height': '1.5',
             'height': '40px',
-            'background-color': 'white',
+            'background-color': '#1e293b',
             '&::placeholder': {
-              'color': '#999'
+              'color': '#64748b'
             },
             '&:focus': {
-              'border': '1px solid #0070f3',
+              'border': '1px solid #60a5fa',
               'outline': 'none'
             }
           }
@@ -175,19 +173,19 @@ export const CardForm: React.FC<CardFormProps> = ({
           validations: ['required', 'validCardCVC'],
           css: {
             'font-size': '16px',
-            'color': '#333',
+            'color': 'white',
             'padding': '10px',
             'font-family': 'system-ui, sans-serif',
-            'border': '1px solid #ccc',
+            'border': '1px solid #384152',
             'border-radius': '4px',
             'line-height': '1.5',
             'height': '40px',
-            'background-color': 'white',
+            'background-color': '#1e293b',
             '&::placeholder': {
-              'color': '#999'
+              'color': '#64748b'
             },
             '&:focus': {
-              'border': '1px solid #0070f3',
+              'border': '1px solid #60a5fa',
               'outline': 'none'
             }
           }
@@ -196,21 +194,13 @@ export const CardForm: React.FC<CardFormProps> = ({
         // Set up event listeners
         collectRef.current.on('enterPressed', () => handleSubmit());
         
-        collectRef.current.on('field:valid', () => {
-          console.log('Field is valid');
-        });
-        
-        collectRef.current.on('field:invalid', () => {
-          console.log('Field is invalid');
-        });
-        
         setIsLoaded(true);
         console.log('VGS Collect fields initialized successfully');
       } else {
         console.error('VGSCollect not found in window object');
         toast({
           title: "Error",
-          description: "Failed to initialize card form",
+          description: "Failed to initialize card form. Please try again.",
           variant: "destructive"
         });
       }
@@ -224,7 +214,7 @@ export const CardForm: React.FC<CardFormProps> = ({
     }
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!collectRef.current) {
       toast({
         title: "Error",
@@ -246,76 +236,48 @@ export const CardForm: React.FC<CardFormProps> = ({
     setIsSubmitting(true);
     console.log('Submitting card form data...');
     
-    // Using VGS submission to vault the card data without processing a payment
-    collectRef.current.submit(
-      '/vault-cards',  // Endpoint would be defined on your VGS dashboard
-      {
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        data: {
-          cardholder_name: cardholderName
-        }
-      },
-      (status: number, response: any) => {
-        console.log('VGS Submit Response:', status, response);
-        
-        // Here we're just simulating a successful vault since this is a demo
-        setTimeout(async () => {
-          try {
-            // Generate a unique card token
-            const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
-            
-            // Get the expiry date in MM/YY format
-            const now = new Date();
-            const expiryMonth = String(now.getMonth() + 1).padStart(2, '0');
-            const expiryYear = now.getFullYear() + 2;
-            const expiration = `${expiryMonth}/${expiryYear % 100}`;
-            
-            // Store card in the database
-            const { data, error } = await supabase
-              .from('cards')
-              .insert([
-                {
-                  card_token: cardToken,
-                  card_type: 'virtual',
-                  expiration: expiration,
-                  status: 'active'
-                }
-              ]);
-            
-            if (error) throw error;
-            
-            toast({
-              title: "Success",
-              description: "Card added successfully",
-            });
-            
-            if (onSuccess) onSuccess(cardToken);
-          } catch (error) {
-            console.error('Error saving card to database:', error);
-            toast({
-              title: "Error",
-              description: "Failed to save card",
-              variant: "destructive"
-            });
-            if (onError) onError(error);
-          } finally {
-            setIsSubmitting(false);
+    try {
+      // Generate a mock card token since we can't actually call the VGS API in this demo
+      const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
+      
+      // Get the expiry date in MM/YY format
+      const now = new Date();
+      const expiryMonth = String(now.getMonth() + 1).padStart(2, '0');
+      const expiryYear = now.getFullYear() + 3;
+      const expiration = `${expiryMonth}/${expiryYear % 100}`;
+      
+      // Store card in the database
+      const { data, error } = await supabase
+        .from('cards')
+        .insert([
+          {
+            card_token: cardToken,
+            card_type: 'virtual',
+            expiration: expiration,
+            status: 'active',
+            cardholder_name: cardholderName
           }
-        }, 1500);
-      },
-      (error: any) => {
-        console.error('VGS Submit Error:', error);
-        setIsSubmitting(false);
-        toast({
-          title: "Error",
-          description: "Failed to securely vault card information",
-          variant: "destructive"
-        });
-        if (onError) onError(error);
-      }
-    );
+        ]);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Card added successfully",
+      });
+      
+      if (onSuccess) onSuccess(cardToken);
+    } catch (error) {
+      console.error('Error saving card to database:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save card",
+        variant: "destructive"
+      });
+      if (onError) onError(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -352,7 +314,7 @@ export const CardForm: React.FC<CardFormProps> = ({
         <Button
           type="button"
           className="w-full mt-4 bg-[#1AA47B] hover:bg-[#19363B]"
-          disabled={!isLoaded && loadAttempts < 3 ? true : false || isSubmitting}
+          disabled={!isLoaded || isSubmitting}
           onClick={handleSubmit}
         >
           {isSubmitting ? (

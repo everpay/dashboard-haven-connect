@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import { useAuth } from './auth';
@@ -20,9 +19,8 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole>('anonymous');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Fix the type comparison by properly checking admin roles
+  // Fix the type comparison by using type assertion
   const isAdmin = ['owner', 'admin'].includes(userRole as string);
-  // Fix for isMember by checking if userRole is 'member' or if isAdmin is true
   const isMember = userRole === 'member' || isAdmin;
 
   const checkPermission = (requiredRoles: UserRole[]): boolean => {

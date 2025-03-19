@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { IntegrationConfigModal } from '@/components/integrations/IntegrationConfigModal';
 import { useToast } from '@/components/ui/use-toast';
 import { RequestIntegrationModal } from '@/components/integrations/RequestIntegrationModal';
+import { supabase } from '@/lib/supabase';
 
 // Payment processor types
 const processorTypes = [
@@ -21,7 +21,7 @@ const processorTypes = [
   { id: 'conversion', name: 'Conversion Tools', icon: <Target className="h-5 w-5" /> },
 ];
 
-// Integration data
+// Integration data with added new processors
 const integrations = [
   {
     id: 'stripe',
@@ -37,6 +37,24 @@ const integrations = [
     name: 'PayPal',
     description: 'Enable customers to pay with their PayPal account or credit card.',
     logo: 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/paypal.svg',
+    type: 'credit-card',
+    popular: true,
+    regions: ['Global'],
+  },
+  {
+    id: 'clisapay',
+    name: 'Clisapay',
+    description: 'Popular payment processor tailored for global merchant transactions.',
+    logo: '/lovable-uploads/e9695f43-3adc-4862-829d-ca77e914daf9.png',
+    type: 'credit-card',
+    popular: true,
+    regions: ['Global', 'Asia'],
+  },
+  {
+    id: 'mekapay',
+    name: 'MekaPay',
+    description: 'Process debit/credit card transactions with advanced security features.',
+    logo: '/lovable-uploads/e9695f43-3adc-4862-829d-ca77e914daf9.png',
     type: 'credit-card',
     popular: true,
     regions: ['Global'],
@@ -147,12 +165,32 @@ const IntegrationMarketplace = () => {
     setConfigModalOpen(true);
   };
 
-  const handleSaveConfig = (config: any) => {
-    // Here you would normally save the configuration to the database
-    toast({
-      title: "Integration Configured",
-      description: `${selectedIntegration?.name} has been successfully configured.`,
-    });
+  const handleSaveConfig = async (config: any) => {
+    try {
+      // Save the configuration to the database
+      const { data, error } = await supabase
+        .from('payment_processors')
+        .insert({
+          name: selectedIntegration.name,
+          type: selectedIntegration.type,
+          configuration: config,
+          status: 'active'
+        });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Integration Configured",
+        description: `${selectedIntegration?.name} has been successfully configured.`,
+      });
+    } catch (err) {
+      console.error('Error saving payment processor:', err);
+      toast({
+        title: "Configuration Error",
+        description: "Failed to save the integration. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleRequestIntegration = (data: any) => {
@@ -316,6 +354,8 @@ const IntegrationMarketplace = () => {
           onOpenChange={setConfigModalOpen}
           integrationTitle={selectedIntegration.name}
           onSave={handleSaveConfig}
+          integrationType={selectedIntegration.id === 'clisapay' ? 'clisapay' : 
+                         selectedIntegration.id === 'mekapay' ? 'mekapay' : 'standard'}
         />
       )}
 
