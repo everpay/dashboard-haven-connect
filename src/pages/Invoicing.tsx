@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Check, X, ChevronLeft, ChevronRight, FileText, Link, 
   Download, Plus, MoreHorizontal, Search, Calendar, 
@@ -24,7 +24,6 @@ import { exportAsCSV, exportAsXML, exportAsPDF } from '@/utils/exportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 
-// Invoice schema
 const invoiceSchema = z.object({
   customer_name: z.string().min(1, "Customer name is required"),
   customer_email: z.string().email("Valid email is required"),
@@ -35,7 +34,6 @@ const invoiceSchema = z.object({
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
-// Status mapping for UI display
 const statusColors = {
   paid: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -74,7 +72,7 @@ const FilterButton = ({ label, count, isActive = false, onClick, icon }: {
         "flex-1 p-4 text-center border rounded-md transition-colors",
         isActive 
           ? "bg-emerald-50 border-emerald-300 text-emerald-700" 
-          : "bg-white border-gray-200 hover:bg-gray-50"
+          : "bg-background border-border hover:bg-muted"
       )}
     >
       <div className="text-sm font-medium flex justify-center items-center gap-1">
@@ -83,7 +81,7 @@ const FilterButton = ({ label, count, isActive = false, onClick, icon }: {
       </div>
       <div className={cn(
         "text-xl font-semibold mt-1",
-        isActive ? "text-emerald-600" : "text-gray-900"
+        isActive ? "text-emerald-600" : "text-foreground"
       )}>
         {count}
       </div>
@@ -128,7 +126,6 @@ const Invoicing = () => {
         query = query.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
       }
       
-      // Apply additional filters based on activeFilterButton
       if (activeFilterButton === 'date') {
         query = query.order('issue_date', { ascending: false });
       } else if (activeFilterButton === 'amount') {
@@ -146,7 +143,6 @@ const Invoicing = () => {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Flag overdue invoices
       return (data || []).map(invoice => {
         if (invoice.status === 'Pending' && isAfter(new Date(), parseISO(invoice.due_date))) {
           return { ...invoice, status: 'Overdue' };
@@ -184,12 +180,40 @@ const Invoicing = () => {
     },
   });
 
-  // Insert test data if there are no invoices
   const insertTestData = useMutation({
     mutationFn: async () => {
+      console.log('Creating test invoices...');
+      
+      const { data: authUser } = await supabase.auth.getUser();
+      const userId = authUser.user?.id;
+      
+      const { data: profileExists, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .limit(1);
+        
+      if (!profileExists || profileExists.length === 0) {
+        const { error: insertProfileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: userId,
+              email: authUser.user?.email,
+              full_name: 'Test User',
+              role: 'merchant'
+            }
+          ]);
+          
+        if (insertProfileError) {
+          console.error('Error creating profile:', insertProfileError);
+          throw insertProfileError;
+        }
+      }
+      
       const testInvoices = [
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'John Smith',
           customer_email: 'john.smith@example.com',
           total_amount: 499.99,
@@ -198,7 +222,7 @@ const Invoicing = () => {
           status: 'Paid'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'Emily Johnson',
           customer_email: 'emily.johnson@example.com',
           total_amount: 299.50,
@@ -207,7 +231,7 @@ const Invoicing = () => {
           status: 'Pending'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'Michael Brown',
           customer_email: 'michael.brown@example.com',
           total_amount: 1250.00,
@@ -216,7 +240,7 @@ const Invoicing = () => {
           status: 'Overdue'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'Sarah Davis',
           customer_email: 'sarah.davis@example.com',
           total_amount: 750.25,
@@ -225,7 +249,7 @@ const Invoicing = () => {
           status: 'Draft'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'Robert Wilson',
           customer_email: 'robert.wilson@example.com',
           total_amount: 1899.99,
@@ -234,7 +258,7 @@ const Invoicing = () => {
           status: 'Cancelled'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'Jennifer Taylor',
           customer_email: 'jennifer.taylor@example.com',
           total_amount: 599.99,
@@ -243,7 +267,7 @@ const Invoicing = () => {
           status: 'Pending'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'David Martinez',
           customer_email: 'david.martinez@example.com',
           total_amount: 349.50,
@@ -252,7 +276,7 @@ const Invoicing = () => {
           status: 'Pending'
         },
         {
-          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          merchant_id: userId,
           customer_name: 'Lisa Anderson',
           customer_email: 'lisa.anderson@example.com',
           total_amount: 2500.00,
@@ -262,16 +286,21 @@ const Invoicing = () => {
         }
       ];
 
-      // Insert test invoices
+      let invoiceId = 1001;
       for (const invoice of testInvoices) {
         const { data, error } = await supabase
           .from('invoices')
-          .insert([invoice])
+          .insert([{
+            id: invoiceId,
+            ...invoice
+          }])
           .select();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating invoice:', error);
+          throw error;
+        }
         
-        // Add an invoice item for each invoice
         if (data && data.length > 0) {
           await supabase
             .from('invoice_items')
@@ -283,6 +312,8 @@ const Invoicing = () => {
               amount: invoice.total_amount
             }]);
         }
+        
+        invoiceId++;
       }
 
       return { success: true };
@@ -293,6 +324,7 @@ const Invoicing = () => {
       toast({ title: "Success", description: "Test invoices have been created" });
     },
     onError: (error) => {
+      console.error('Error creating test data:', error);
       toast({ 
         title: "Error", 
         description: error.message || "Failed to create test invoices", 
@@ -301,7 +333,6 @@ const Invoicing = () => {
     }
   });
 
-  // Check if we need to insert test data when the component mounts
   useEffect(() => {
     const checkAndInsertTestData = async () => {
       const { count, error } = await supabase
@@ -318,7 +349,6 @@ const Invoicing = () => {
 
   const createInvoice = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
-      // First, get the next ID 
       const { data: maxIdData, error: maxIdError } = await supabase
         .from('invoices')
         .select('id')
@@ -329,7 +359,6 @@ const Invoicing = () => {
       
       const nextId = maxIdData && maxIdData.length > 0 ? Number(maxIdData[0].id) + 1 : 1001;
       
-      // Insert the invoice with the next ID
       const { data, error } = await supabase
         .from('invoices')
         .insert([{
@@ -346,7 +375,6 @@ const Invoicing = () => {
       
       if (error) throw error;
       
-      // Now add the invoice item
       const { error: itemError } = await supabase
         .from('invoice_items')
         .insert([{
@@ -448,7 +476,7 @@ const Invoicing = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+            <h1 className="text-2xl font-bold text-foreground">Invoices</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -458,34 +486,36 @@ const Invoicing = () => {
               <Plus className="h-4 w-4 mr-2" />
               Create Invoice
             </Button>
-            <Button variant="outline" className="font-medium text-gray-700 border-gray-300">
+            <Button variant="outline" className="font-medium text-foreground">
               Reports
             </Button>
           </div>
         </div>
         
-        <div className="bg-emerald-50 border border-emerald-200 rounded-md p-4 flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1 bg-emerald-100 rounded-full">
-              <FileText className="h-4 w-4 text-emerald-600" />
+        <Alert variant="success" className="bg-[hsl(var(--alert-success-background))] border-[hsl(var(--alert-success-border))]">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-1 bg-emerald-100/20 rounded-full">
+                <FileText className="h-4 w-4 text-[hsl(var(--alert-success-foreground))]" />
+              </div>
+              <AlertDescription className="text-sm text-[hsl(var(--alert-success-foreground))]">
+                Set up recurring invoices to automate your billing process.
+              </AlertDescription>
             </div>
-            <span className="text-sm text-gray-700">
-              Set up recurring invoices to automate your billing process.
-            </span>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="link" 
+                className="text-[hsl(var(--alert-success-foreground))] px-2 py-1 h-auto"
+                onClick={navigateToRecurringInvoices}
+              >
+                Set Up Now
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-[hsl(var(--alert-success-foreground))]">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="link" 
-              className="text-emerald-600 px-2 py-1 h-auto"
-              onClick={navigateToRecurringInvoices}
-            >
-              Set Up Now
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        </Alert>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <FilterButton 

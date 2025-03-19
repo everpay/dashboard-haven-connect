@@ -41,6 +41,11 @@
     --sidebar-muted-foreground: 240 3.8% 46.1%;
     --sidebar-accent: 160 84% 39%;
     --sidebar-accent-foreground: 0 0% 100%;
+    
+    /* Darker green for alerts */
+    --alert-success-background: 160 70% 12%;
+    --alert-success-foreground: 160 84% 39%;
+    --alert-success-border: 160 84% 25%;
   }
 
   .dark {
@@ -78,6 +83,11 @@
     --sidebar-muted-foreground: 215 20.2% 65.1%;
     --sidebar-accent: 160 84% 39%;
     --sidebar-accent-foreground: 0 0% 100%;
+    
+    /* Darker green for alerts in dark mode */
+    --alert-success-background: 160 70% 12%;
+    --alert-success-foreground: 160 84% 39%;
+    --alert-success-border: 160 84% 25%;
   }
 }
 
@@ -154,4 +164,17 @@
   background-color: hsl(var(--input));
   border-color: hsl(var(--border));
   color: hsl(var(--foreground));
+}
+
+/* Darker green alert styling */
+.bg-emerald-50 {
+  background-color: hsl(var(--alert-success-background));
+}
+
+.border-emerald-200 {
+  border-color: hsl(var(--alert-success-border));
+}
+
+.text-emerald-600, .text-emerald-700 {
+  color: hsl(var(--alert-success-foreground));
 }

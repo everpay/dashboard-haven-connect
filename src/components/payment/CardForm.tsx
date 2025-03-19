@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 interface CardFormProps {
   formId: string;
@@ -30,6 +31,8 @@ export const CardForm: React.FC<CardFormProps> = ({
   const [loadAttempts, setLoadAttempts] = useState(0);
   const collectRef = useRef<any>(null);
   const { toast } = useToast();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   
   useEffect(() => {
     // Create a function to initialize VGS Collect
@@ -102,7 +105,7 @@ export const CardForm: React.FC<CardFormProps> = ({
         }
       }
     };
-  }, [scriptLoaded]);
+  }, [scriptLoaded, theme]);
   
   const initializeVGSCollect = () => {
     try {
@@ -113,7 +116,14 @@ export const CardForm: React.FC<CardFormProps> = ({
         // Initialize VGS Collect with vault ID
         collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox');
         
-        // Configure fields with proper CSS for dark theme
+        // Set text color based on theme
+        const textColor = isDarkMode ? 'white' : 'black';
+        const backgroundColor = isDarkMode ? '#1e293b' : 'white';
+        const borderColor = isDarkMode ? '#384152' : '#ccc';
+        const placeholderColor = isDarkMode ? '#64748b' : '#a0aec0';
+        const focusBorderColor = isDarkMode ? '#60a5fa' : '#3b82f6';
+        
+        // Configure fields with proper CSS for current theme
         collectRef.current.field(`#${formId}-card-number`, {
           type: 'cardNumber',
           name: 'card_number',
@@ -121,19 +131,19 @@ export const CardForm: React.FC<CardFormProps> = ({
           validations: ['required', 'validCardNumber'],
           css: {
             'font-size': '16px',
-            'color': 'white',
+            'color': textColor,
             'padding': '10px',
             'font-family': 'system-ui, sans-serif',
-            'border': '1px solid #384152',
+            'border': `1px solid ${borderColor}`,
             'border-radius': '4px',
             'line-height': '1.5',
             'height': '40px',
-            'background-color': '#1e293b',
+            'background-color': backgroundColor,
             '&::placeholder': {
-              'color': '#64748b'
+              'color': placeholderColor
             },
             '&:focus': {
-              'border': '1px solid #60a5fa',
+              'border': `1px solid ${focusBorderColor}`,
               'outline': 'none'
             }
           }
@@ -147,19 +157,19 @@ export const CardForm: React.FC<CardFormProps> = ({
           validations: ['required', 'validCardExpiryDate'],
           css: {
             'font-size': '16px',
-            'color': 'white',
+            'color': textColor,
             'padding': '10px',
             'font-family': 'system-ui, sans-serif',
-            'border': '1px solid #384152',
+            'border': `1px solid ${borderColor}`,
             'border-radius': '4px',
             'line-height': '1.5',
             'height': '40px',
-            'background-color': '#1e293b',
+            'background-color': backgroundColor,
             '&::placeholder': {
-              'color': '#64748b'
+              'color': placeholderColor
             },
             '&:focus': {
-              'border': '1px solid #60a5fa',
+              'border': `1px solid ${focusBorderColor}`,
               'outline': 'none'
             }
           }
@@ -173,19 +183,19 @@ export const CardForm: React.FC<CardFormProps> = ({
           validations: ['required', 'validCardCVC'],
           css: {
             'font-size': '16px',
-            'color': 'white',
+            'color': textColor,
             'padding': '10px',
             'font-family': 'system-ui, sans-serif',
-            'border': '1px solid #384152',
+            'border': `1px solid ${borderColor}`,
             'border-radius': '4px',
             'line-height': '1.5',
             'height': '40px',
-            'background-color': '#1e293b',
+            'background-color': backgroundColor,
             '&::placeholder': {
-              'color': '#64748b'
+              'color': placeholderColor
             },
             '&:focus': {
-              'border': '1px solid #60a5fa',
+              'border': `1px solid ${focusBorderColor}`,
               'outline': 'none'
             }
           }
@@ -280,34 +290,35 @@ export const CardForm: React.FC<CardFormProps> = ({
     }
   };
   
+  // Use theme-aware styling instead of hard-coded dark background
   return (
-    <Card className={`p-6 ${className}`} style={{ background: '#0f172a', color: 'white' }}>
+    <Card className={`p-6 ${className}`}>
       <div className="space-y-4">
         <div>
-          <Label htmlFor="cardholderName" className="mb-1 block text-white">Cardholder Name</Label>
+          <Label htmlFor="cardholderName" className="mb-1 block">Cardholder Name</Label>
           <Input 
             id="cardholderName" 
             value={cardholderName}
             onChange={(e) => setCardholderName(e.target.value)}
             placeholder="John Doe"
-            className="w-full bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+            className="w-full"
           />
         </div>
         
         <div>
-          <Label htmlFor={`${formId}-card-number`} className="mb-1 block text-white">Card Number</Label>
-          <div id={`${formId}-card-number`} className="mt-1" style={{ height: '40px', background: '#1e293b', borderRadius: '4px' }} />
+          <Label htmlFor={`${formId}-card-number`} className="mb-1 block">Card Number</Label>
+          <div id={`${formId}-card-number`} className="mt-1" style={{ height: '40px', borderRadius: '4px' }} />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor={`${formId}-card-expiry`} className="mb-1 block text-white">Expiration Date</Label>
-            <div id={`${formId}-card-expiry`} className="mt-1" style={{ height: '40px', background: '#1e293b', borderRadius: '4px' }} />
+            <Label htmlFor={`${formId}-card-expiry`} className="mb-1 block">Expiration Date</Label>
+            <div id={`${formId}-card-expiry`} className="mt-1" style={{ height: '40px', borderRadius: '4px' }} />
           </div>
           
           <div>
-            <Label htmlFor={`${formId}-card-cvc`} className="mb-1 block text-white">CVC</Label>
-            <div id={`${formId}-card-cvc`} className="mt-1" style={{ height: '40px', background: '#1e293b', borderRadius: '4px' }} />
+            <Label htmlFor={`${formId}-card-cvc`} className="mb-1 block">CVC</Label>
+            <div id={`${formId}-card-cvc`} className="mt-1" style={{ height: '40px', borderRadius: '4px' }} />
           </div>
         </div>
         
@@ -326,7 +337,7 @@ export const CardForm: React.FC<CardFormProps> = ({
         </Button>
         
         {loadAttempts >= 3 && (
-          <div className="text-center mt-2 text-sm text-gray-400">
+          <div className="text-center mt-2 text-sm text-muted-foreground">
             <p>Card form not loading? Click the button above to proceed anyway.</p>
           </div>
         )}
