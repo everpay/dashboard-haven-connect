@@ -21,24 +21,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to ensure user profile exists
   const ensureUserProfile = async (currentUser: User) => {
     try {
-      // Use the helper function from supabase.ts
-      const profileCreated = await supabase.rpc('ensure_profile_exists', {
-        user_id: currentUser.id,
-        user_email: currentUser.email,
-        user_full_name: currentUser.user_metadata?.full_name || '',
-        user_first_name: currentUser.user_metadata?.first_name || '',
-        user_last_name: currentUser.user_metadata?.last_name || ''
-      });
+      console.log("Trying to ensure profile exists for user:", currentUser.id);
       
-      if (!profileCreated.error) {
-        console.log('Profile ensured successfully');
-      } else {
-        console.error('Error ensuring profile:', profileCreated.error);
-        toast.error("Failed to create user profile");
+      // First, try directly checking if profile exists
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', currentUser.id)
+        .single();
+      
+      if (profileError && profileError.code === 'PGRST116') {
+        console.log("Profile doesn't exist, creating a new one...");
+        
+        // Try the RPC method first
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('ensure_profile_exists', {
+          user_id: currentUser.id,
+          user_email: currentUser.email || '',
+          user_full_name: currentUser.user_metadata?.full_name || '',
+          user_first_name: currentUser.user_metadata?.first_name || '',
+          user_last_name: currentUser.user_metadata?.last_name || ''
+        });
+        
+        if (rpcError) {
+          console.error('RPC method failed, trying direct insert:', rpcError);
+          
+          // Fall back to direct insert with service role client if available
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: currentUser.id,
+              email: currentUser.email,
+              full_name: currentUser.user_metadata?.full_name || '',
+              first_name: currentUser.user_metadata?.first_name || '',
+              last_name: currentUser.user_metadata?.last_name || ''
+            });
+          
+          if (insertError) {
+            console.error('Failed to create profile via direct insert:', insertError);
+            toast.error("Failed to create user profile");
+            return false;
+          }
+        } else if (!rpcResult) {
+          console.error('RPC returned no result');
+          toast.error("Failed to create user profile");
+          return false;
+        }
+        
+        console.log('Profile created successfully');
+        return true;
+      } else if (profileError) {
+        console.error('Error checking profile:', profileError);
+        return false;
       }
+      
+      console.log('Profile already exists:', profileCheck?.id);
+      return true;
     } catch (error) {
       console.error('Error in ensureUserProfile:', error);
       toast.error("Failed to create user profile");
+      return false;
     }
   };
 

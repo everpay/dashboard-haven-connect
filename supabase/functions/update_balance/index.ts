@@ -27,7 +27,23 @@ serve(async (req) => {
     const body = await req.json()
     const { user_id, amount } = body
 
-    // Get current balance
+    // Use the update_balance RPC function
+    const { data, error } = await supabaseClient.rpc('update_balance', {
+      user_id_input: user_id,
+      amount_input: parseFloat(amount)
+    });
+
+    if (error) {
+      return new Response(
+        JSON.stringify({ error: 'Error updating balance', details: error }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
+    }
+
+    // Get the updated balance
     const { data: accountData, error: accountError } = await supabaseClient
       .from('bank_accounts')
       .select('balance')
@@ -36,25 +52,7 @@ serve(async (req) => {
 
     if (accountError) {
       return new Response(
-        JSON.stringify({ error: 'Error retrieving bank account', details: accountError }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      )
-    }
-
-    const newBalance = parseFloat(accountData.balance) + parseFloat(amount)
-
-    // Update balance
-    const { error: updateError } = await supabaseClient
-      .from('bank_accounts')
-      .update({ balance: newBalance })
-      .eq('user_id', user_id)
-
-    if (updateError) {
-      return new Response(
-        JSON.stringify({ error: 'Error updating balance', details: updateError }),
+        JSON.stringify({ error: 'Error retrieving updated balance', details: accountError }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
@@ -63,7 +61,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, newBalance }),
+      JSON.stringify({ success: true, newBalance: accountData.balance }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

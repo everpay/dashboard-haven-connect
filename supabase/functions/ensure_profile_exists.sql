@@ -49,3 +49,4 @@ $$;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION public.ensure_profile_exists TO authenticated;
 GRANT EXECUTE ON FUNCTION public.ensure_profile_exists TO anon;
+GRANT EXECUTE ON FUNCTION public.ensure_profile_exists TO service_role;

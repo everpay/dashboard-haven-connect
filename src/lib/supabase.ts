@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // In Vite, environment variables need to be accessed using import.meta.env
@@ -46,84 +47,150 @@ export const updateProfile = async (userId: string, updates: any) => {
 
 // Banking functions
 export const getBankAccount = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('bank_accounts')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
+  try {
+    console.log('Fetching bank account for user:', userId);
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
 
-  if (error) {
+    if (error) {
+      console.error('Error fetching bank account:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Exception in getBankAccount:', error);
     throw error;
   }
-
-  return data;
 };
 
 export const getTransactions = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('banking_transactions')
-    .select('*, sender:profiles!sender_id(email)')
-    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
-    .order('created_at', { ascending: false });
+  try {
+    console.log('Fetching transactions for user:', userId);
+    // Join with profiles to get sender email
+    const { data, error } = await supabase
+      .from('banking_transactions')
+      .select(`
+        *,
+        sender:profiles!sender_id(email)
+      `)
+      .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+      .order('created_at', { ascending: false });
 
-  if (error) {
+    if (error) {
+      console.error('Error fetching transactions:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Exception in getTransactions:', error);
     throw error;
   }
-
-  return data || [];
 };
 
 export const transferMoney = async (senderId: string, recipientEmail: string, amount: number) => {
-  // First, look up recipient by email
-  const { data: recipientData, error: recipientError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', recipientEmail)
-    .single();
+  try {
+    console.log('Transferring money:', { senderId, recipientEmail, amount });
+    
+    // First, look up recipient by email
+    const { data: recipientData, error: recipientError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', recipientEmail)
+      .single();
 
-  if (recipientError && recipientError.code !== 'PGRST116') {
-    throw new Error(`Recipient lookup failed: ${recipientError.message}`);
-  }
-
-  const recipientId = recipientData?.id;
-
-  // Create the transaction record
-  const { error: transactionError } = await supabase
-    .from('banking_transactions')
-    .insert({
-      sender_id: senderId,
-      recipient_id: recipientId,
-      recipient_email: recipientEmail,
-      amount: amount,
-      type: 'transfer',
-      status: 'completed'
-    });
-
-  if (transactionError) {
-    throw new Error(`Failed to create transaction: ${transactionError.message}`);
-  }
-
-  // Update sender's balance (subtract amount)
-  const { error: senderError } = await supabase.rpc('update_balance', {
-    user_id_input: senderId,
-    amount_input: -amount
-  });
-
-  if (senderError) {
-    throw new Error(`Failed to update sender balance: ${senderError.message}`);
-  }
-
-  // If recipient is in the system, update their balance too
-  if (recipientId) {
-    const { error: recipientBalanceError } = await supabase.rpc('update_balance', {
-      user_id_input: recipientId,
-      amount_input: amount
-    });
-
-    if (recipientBalanceError) {
-      throw new Error(`Failed to update recipient balance: ${recipientBalanceError.message}`);
+    if (recipientError && recipientError.code !== 'PGRST116') {
+      throw new Error(`Recipient lookup failed: ${recipientError.message}`);
     }
-  }
 
-  return true;
+    const recipientId = recipientData?.id;
+    console.log('Recipient found:', recipientId);
+
+    // Create the transaction record
+    const { error: transactionError } = await supabase
+      .from('banking_transactions')
+      .insert({
+        sender_id: senderId,
+        recipient_id: recipientId,
+        recipient_email: recipientEmail,
+        amount: amount,
+        type: 'transfer',
+        status: 'completed'
+      });
+
+    if (transactionError) {
+      console.error('Failed to create transaction:', transactionError);
+      throw new Error(`Failed to create transaction: ${transactionError.message}`);
+    }
+
+    // Update sender's balance (subtract amount)
+    const { error: senderError } = await supabase.rpc('update_balance', {
+      user_id_input: senderId,
+      amount_input: -amount
+    });
+
+    if (senderError) {
+      console.error('Failed to update sender balance:', senderError);
+      throw new Error(`Failed to update sender balance: ${senderError.message}`);
+    }
+
+    // If recipient is in the system, update their balance too
+    if (recipientId) {
+      const { error: recipientBalanceError } = await supabase.rpc('update_balance', {
+        user_id_input: recipientId,
+        amount_input: amount
+      });
+
+      if (recipientBalanceError) {
+        console.error('Failed to update recipient balance:', recipientBalanceError);
+        throw new Error(`Failed to update recipient balance: ${recipientBalanceError.message}`);
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Exception in transferMoney:', error);
+    throw error;
+  }
+};
+
+// Helper function to check if bank account exists and create if not
+export const ensureBankAccount = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error && error.code === 'PGRST116') {
+      // No account found, create one
+      console.log('No bank account found, creating one for user:', userId);
+      const { error: insertError } = await supabase
+        .from('bank_accounts')
+        .insert({
+          user_id: userId,
+          account_name: 'Account Holder',
+          balance: 1000.00
+        });
+      
+      if (insertError) {
+        console.error('Error creating bank account:', insertError);
+        return false;
+      }
+      return true;
+    } else if (error) {
+      console.error('Error checking for bank account:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception in ensureBankAccount:', error);
+    return false;
+  }
 };
