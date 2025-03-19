@@ -34,8 +34,8 @@ export const SidebarMenuGroup: React.FC<SidebarMenuGroupProps> = ({
           'flex items-center w-full p-2 rounded-md transition-colors',
           expanded ? 'px-4 justify-between' : 'px-3 justify-center',
           isActive
-            ? 'text-[#19363B]'
-            : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B]'
+            ? 'text-[#19363B] dark:text-white'
+            : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
         )}
       >
         <div className="flex items-center">

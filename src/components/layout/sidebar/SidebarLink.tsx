@@ -20,8 +20,8 @@ export const SidebarLink = ({ to, icon, label, isActive, expanded, onClick }: Si
       'flex items-center p-2 rounded-md my-1 transition-colors',
       expanded ? 'px-4' : 'px-3 justify-center',
       isActive
-        ? 'bg-[#E3FFCC] text-[#19363B]'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B]'
+        ? 'bg-[#E3FFCC] text-[#19363B] dark:bg-emerald-900/20 dark:text-emerald-100'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-[#19363B] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
     )}
   >
     {icon}
@@ -45,8 +45,8 @@ export const SubLink = ({ to, label, isActive, expanded, onClick }: SubLinkProps
       'flex items-center p-2 rounded-md my-0.5 transition-colors text-xs',
       expanded ? 'px-4 ml-6' : 'px-3 justify-center',
       isActive
-        ? 'bg-[#E3FFCC] text-[#19363B]'
-        : 'text-gray-500 hover:bg-gray-100 hover:text-[#19363B]'
+        ? 'bg-[#E3FFCC] text-[#19363B] dark:bg-emerald-900/20 dark:text-emerald-100'
+        : 'text-gray-500 hover:bg-gray-100 hover:text-[#19363B] dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'
     )}
   >
     {expanded && <span>{label}</span>}
