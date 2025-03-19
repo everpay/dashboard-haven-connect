@@ -52,7 +52,7 @@ export const Sidebar = () => {
   };
   
   useEffect(() => {
-    if (activePath.includes('/transactions') || activePath.includes('/payment') || activePath.includes('/payouts') || activePath.includes('/payins')) {
+    if (activePath.includes('/transactions') || activePath.includes('/payment')) {
       setMenuGroups(prev => ({ ...prev, transactions: true }));
     } else if (activePath.includes('/customers') || activePath.includes('/recipients')) {
       setMenuGroups(prev => ({ ...prev, customers: true }));
@@ -138,20 +138,6 @@ export const Sidebar = () => {
               isActive={activePath === '/payment-link'}
               expanded={expanded}
               onClick={() => navigateTo('/payment-link')}
-            />
-            <SubLink
-              to="/payouts"
-              label="Payouts"
-              isActive={activePath === '/payouts'}
-              expanded={expanded}
-              onClick={() => navigateTo('/payouts')}
-            />
-            <SubLink
-              to="/payins"
-              label="Pay-ins"
-              isActive={activePath === '/payins'}
-              expanded={expanded}
-              onClick={() => navigateTo('/payins')}
             />
             <SubLink
               to="/payment-widget"
