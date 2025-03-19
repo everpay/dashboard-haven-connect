@@ -18,7 +18,12 @@ const TransactionMap: React.FC<{ transactions: Transaction[] }> = ({ transaction
   const [mapInitialized, setMapInitialized] = useState(false);
   
   useEffect(() => {
-    if (!mapRef.current || mapInitialized) return;
+    if (!mapRef.current) return;
+    
+    // Reset map initialization state when transactions change
+    if (mapInitialized) {
+      setMapInitialized(false);
+    }
     
     // Dynamically import Leaflet to avoid window.L errors
     const loadLeaflet = async () => {
@@ -32,6 +37,19 @@ const TransactionMap: React.FC<{ transactions: Transaction[] }> = ({ transaction
         link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
         document.head.appendChild(link);
         
+        // Fix marker icons issue by importing marker icon images
+        const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
+        const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
+        const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
+        
+        // Override default marker icon
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl,
+          iconUrl,
+          shadowUrl,
+        });
+        
         // Initialize map
         const map = L.map(mapRef.current).setView([40, -95], 4);
         
@@ -40,6 +58,7 @@ const TransactionMap: React.FC<{ transactions: Transaction[] }> = ({ transaction
         }).addTo(map);
         
         // Add markers for transactions with location data
+        const markers = [];
         transactions.forEach(transaction => {
           if (transaction.location) {
             try {
@@ -57,12 +76,19 @@ const TransactionMap: React.FC<{ transactions: Transaction[] }> = ({ transaction
                   Status: ${transaction.status || 'Unknown'}<br>
                   Email: ${transaction.customer_email || 'Not provided'}
                 `);
+                markers.push(marker);
               }
             } catch (err) {
               console.error("Error parsing location:", err);
             }
           }
         });
+        
+        // Adjust map view to fit all markers if there are any
+        if (markers.length > 0) {
+          const group = L.featureGroup(markers);
+          map.fitBounds(group.getBounds().pad(0.1));
+        }
         
         // Adjust map view after adding markers
         setTimeout(() => {
@@ -81,7 +107,7 @@ const TransactionMap: React.FC<{ transactions: Transaction[] }> = ({ transaction
     };
     
     loadLeaflet();
-  }, [transactions, mapInitialized]);
+  }, [transactions]);
   
   return (
     <Card>

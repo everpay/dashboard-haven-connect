@@ -10,6 +10,7 @@ import { PayoutModal } from '@/components/payment/PayoutModal';
 import { supabase } from "@/lib/supabase";
 import { useQuery } from '@tanstack/react-query';
 import { getItsPaidService } from '@/services/ItsPaidService';
+import CountUp from 'react-countup';
 
 const Payouts = () => {
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
@@ -119,21 +120,51 @@ const Payouts = () => {
           <Card className="p-4">
             <h3 className="text-sm font-medium text-gray-500">Available Balance</h3>
             <p className="text-2xl font-bold mt-1">
-              {accountBalance ? formatCurrency(accountBalance.PAYOUT_BALANCE) : 'Loading...'}
+              {accountBalance ? 
+                <>
+                  $<CountUp 
+                    end={accountBalance.PAYOUT_BALANCE} 
+                    separator="," 
+                    decimals={2}
+                    duration={1.5}
+                    preserveValue
+                  />
+                </> 
+                : 'Loading...'}
             </p>
           </Card>
           
           <Card className="p-4">
-            <h3 className="text-sm font-medium text-gray-500">Float Balance</h3>
+            <h3 className="text-sm font-medium text-gray-500">Net Balance</h3>
             <p className="text-2xl font-bold mt-1">
-              {accountBalance ? formatCurrency(accountBalance.FLOAT_BALANCE) : 'Loading...'}
+              {accountBalance ? 
+                <>
+                  $<CountUp 
+                    end={accountBalance.FLOAT_BALANCE} 
+                    separator="," 
+                    decimals={2}
+                    duration={1.5}
+                    preserveValue
+                  />
+                </> 
+                : 'Loading...'}
             </p>
           </Card>
           
           <Card className="p-4">
             <h3 className="text-sm font-medium text-gray-500">Reserve Balance</h3>
             <p className="text-2xl font-bold mt-1">
-              {accountBalance ? formatCurrency(accountBalance.RESERVE_BALANCE) : 'Loading...'}
+              {accountBalance ? 
+                <>
+                  $<CountUp 
+                    end={accountBalance.RESERVE_BALANCE} 
+                    separator="," 
+                    decimals={2}
+                    duration={1.5}
+                    preserveValue
+                  />
+                </> 
+                : 'Loading...'}
             </p>
           </Card>
         </div>
@@ -209,7 +240,15 @@ const Payouts = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm font-medium text-gray-900">
-                          {formatCurrency(payout.amount || 0)}
+                          ${payout.amount ? (
+                            <CountUp 
+                              end={payout.amount} 
+                              separator="," 
+                              decimals={2}
+                              duration={1}
+                              preserveValue
+                            />
+                          ) : '0.00'}
                         </div>
                       </td>
                     </tr>

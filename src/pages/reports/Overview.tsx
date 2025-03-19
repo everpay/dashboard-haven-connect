@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { logIpEvent } from "@/utils/logIpEvent";
+import CountUp from 'react-countup';
 
 type TransactionData = {
   date: string;
@@ -96,6 +97,11 @@ const Overview = () => {
     enabled: !!userId,
   });
 
+  // Calculate totals for CountUp components
+  const totalTransactions = transactionData?.reduce((sum, item) => sum + item.count, 0) || 0;
+  const totalRevenue = transactionData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+  const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -117,21 +123,39 @@ const Overview = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="p-6">
             <h3 className="font-medium text-lg mb-2">Total Transactions</h3>
-            <p className="text-3xl font-bold">{transactionData?.reduce((sum, item) => sum + item.count, 0) || 0}</p>
+            <p className="text-3xl font-bold">
+              <CountUp
+                end={totalTransactions}
+                separator=","
+                duration={1.5}
+                preserveValue
+              />
+            </p>
           </Card>
           
           <Card className="p-6">
             <h3 className="font-medium text-lg mb-2">Total Revenue</h3>
             <p className="text-3xl font-bold">
-              ${transactionData?.reduce((sum, item) => sum + item.amount, 0)?.toFixed(2) || '0.00'}
+              $<CountUp
+                end={totalRevenue}
+                separator=","
+                decimals={2}
+                duration={1.5}
+                preserveValue
+              />
             </p>
           </Card>
           
           <Card className="p-6">
             <h3 className="font-medium text-lg mb-2">Avg. Transaction Value</h3>
             <p className="text-3xl font-bold">
-              ${(transactionData?.reduce((sum, item) => sum + item.amount, 0) || 0) / 
-                 (transactionData?.reduce((sum, item) => sum + item.count, 0) || 1) || 0}
+              $<CountUp
+                end={avgTransactionValue}
+                separator=","
+                decimals={2}
+                duration={1.5}
+                preserveValue
+              />
             </p>
           </Card>
         </div>
