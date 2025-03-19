@@ -90,7 +90,9 @@ export const IntegrationConfigModal: React.FC<IntegrationConfigModalProps> = ({
       return;
     }
 
-    onSave({...config, integrationType: activeTab as any});
+    // Pass only the configuration, we'll handle the integration type in the parent component
+    onSave(config);
+    
     toast({
       title: "Configuration Saved",
       description: `${integrationTitle} has been configured successfully.`

@@ -63,6 +63,16 @@ serve(async (req) => {
               integrationType: 'mekapay'
             },
             status: 'active'
+          },
+          {
+            name: 'Finup',
+            type: 'virtual-cards',
+            configuration: {
+              apiKey: '0c89f93687869cbf3cc0df6bc00ba54d262eecbcd08bb517802d5de4e3a31bef',
+              endpoint: 'https://api.finup.io/v1',
+              integrationType: 'finup'
+            },
+            status: 'active'
           }
         ])
 

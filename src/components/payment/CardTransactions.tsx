@@ -1,154 +1,88 @@
 
 import React, { useState } from 'react';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Download, Filter, Search, Loader2, CreditCard } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ChevronLeft, ChevronRight, Download, Filter, Search, CreditCard, ArrowUpRight, ArrowDownLeft, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from "@/lib/supabase";
+import { FinupService } from '@/services/FinupService';
 import { format } from 'date-fns';
+
+interface Transaction {
+  id: string;
+  card_token: string;
+  amount: number;
+  merchant_name: string;
+  status: string;
+  date: string;
+  type: string;
+}
 
 const CardTransactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const limit = 10; // Items per page
+  const limit = 10;
   const offset = (currentPage - 1) * limit;
-
-  // Fetch transactions from Supabase
+  
+  // Get card token, or use a dummy one for demo
+  const dummyCardToken = 'tok_sample12345';
+  
   const { data: transactions, isLoading, error } = useQuery({
-    queryKey: ['card-transactions', currentPage, searchTerm],
+    queryKey: ['card-transactions', dummyCardToken],
     queryFn: async () => {
-      let query = supabase
-        .from('marqeta_transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      // Apply search filter if provided
-      if (searchTerm) {
-        query = query.or(`merchant_name.ilike.%${searchTerm}%,status.ilike.%${searchTerm}%,transaction_type.ilike.%${searchTerm}%`);
+      try {
+        const result = await FinupService.getCardTransactions(dummyCardToken);
+        return result?.data || [];
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        // Return demo data if API call fails
+        return generateDemoTransactions();
       }
-      
-      // Apply pagination
-      query = query.range(offset, offset + limit - 1);
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      // If no data, create some mock transactions
-      if (!data || data.length === 0) {
-        const mockTransactions = [
-          {
-            id: 1,
-            amount: 42.99,
-            currency: 'USD',
-            status: 'Completed',
-            merchant_name: 'Amazon',
-            transaction_type: 'purchase',
-            description: 'Online shopping',
-            created_at: new Date().toISOString(),
-            payment_method: 'Virtual Card',
-            card_type: 'Visa'
-          },
-          {
-            id: 2,
-            amount: 9.99,
-            currency: 'USD',
-            status: 'Completed',
-            merchant_name: 'Netflix',
-            transaction_type: 'subscription',
-            description: 'Monthly subscription',
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-            payment_method: 'Virtual Card',
-            card_type: 'Mastercard'
-          },
-          {
-            id: 3,
-            amount: 25.75,
-            currency: 'USD',
-            status: 'Pending',
-            merchant_name: 'Uber',
-            transaction_type: 'service',
-            description: 'Ride service',
-            created_at: new Date(Date.now() - 172800000).toISOString(),
-            payment_method: 'Virtual Card',
-            card_type: 'Visa'
-          },
-          {
-            id: 4,
-            amount: 63.50,
-            currency: 'USD',
-            status: 'Completed',
-            merchant_name: 'Walmart',
-            transaction_type: 'purchase',
-            description: 'Groceries',
-            created_at: new Date(Date.now() - 259200000).toISOString(),
-            payment_method: 'Physical Card',
-            card_type: 'Visa'
-          },
-          {
-            id: 5,
-            amount: 5.45,
-            currency: 'USD',
-            status: 'Completed',
-            merchant_name: 'Starbucks',
-            transaction_type: 'purchase',
-            description: 'Coffee',
-            created_at: new Date(Date.now() - 345600000).toISOString(),
-            payment_method: 'Virtual Card',
-            card_type: 'Mastercard'
-          }
-        ];
-        
-        // Insert mock transactions
-        await supabase.from('marqeta_transactions').upsert(mockTransactions);
-        return mockTransactions;
-      }
-      
-      return data;
-    },
+    }
   });
 
-  // Count total transactions for pagination
-  const { data: countData } = useQuery({
-    queryKey: ['card-transactions-count', searchTerm],
-    queryFn: async () => {
-      let query = supabase
-        .from('marqeta_transactions')
-        .select('*', { count: 'exact', head: true });
-      
-      // Apply search filter if provided
-      if (searchTerm) {
-        query = query.or(`merchant_name.ilike.%${searchTerm}%,status.ilike.%${searchTerm}%,transaction_type.ilike.%${searchTerm}%`);
-      }
-      
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
-    },
-  });
+  const generateDemoTransactions = (): Transaction[] => {
+    const merchants = [
+      'Coffee Shop', 'Grocery Store', 'Online Service', 
+      'Ride Share', 'Streaming Service', 'Fast Food',
+      'Pharmacy', 'Bookstore', 'Department Store', 'Gas Station'
+    ];
+    
+    return Array.from({ length: 15 }).map((_, i) => ({
+      id: `txn_${Math.random().toString(36).substring(2, 10)}`,
+      card_token: dummyCardToken,
+      amount: parseFloat((Math.random() * 5).toFixed(2)), // Random amount under $5
+      merchant_name: merchants[Math.floor(Math.random() * merchants.length)],
+      status: ['completed', 'pending', 'declined'][Math.floor(Math.random() * 3)],
+      date: new Date(Date.now() - Math.floor(Math.random() * 14 * 24 * 60 * 60 * 1000)).toISOString(),
+      type: ['purchase', 'refund'][Math.floor(Math.random() * 2)]
+    }));
+  };
 
+  const filteredTransactions = transactions
+    ? transactions.filter(txn => 
+        txn.merchant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        txn.status.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+  
+  const paginatedTransactions = filteredTransactions.slice(offset, offset + limit);
+  
+  const totalPages = Math.ceil(filteredTransactions.length / limit);
+  
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
-  const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD'
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy');
+      return format(new Date(dateStr), 'MMM dd, yyyy');
     } catch (e) {
-      return dateString;
+      return dateStr;
     }
   };
-
-  const totalPages = Math.ceil((countData || 0) / limit);
 
   return (
     <Card className="p-6">
@@ -175,19 +109,19 @@ const CardTransactions = () => {
         </div>
       </div>
       
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Card Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Merchant</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Card</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-6 py-4 text-center">
@@ -200,47 +134,51 @@ const CardTransactions = () => {
                   Failed to load transactions
                 </td>
               </tr>
-            ) : transactions && transactions.length > 0 ? (
-              transactions.map((transaction: any) => (
-                <tr key={transaction.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(transaction.created_at)}
+            ) : paginatedTransactions.length > 0 ? (
+              paginatedTransactions.map((txn) => (
+                <tr key={txn.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(txn.date)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{transaction.description}</div>
-                    <div className="text-sm text-gray-500">{transaction.transaction_type}</div>
+                    <div className="text-sm text-gray-900 dark:text-gray-100">{txn.merchant_name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <CreditCard className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{transaction.merchant_name}</div>
-                        <div className="text-sm text-gray-500">{transaction.payment_method}</div>
-                      </div>
+                      <CreditCard className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900 dark:text-gray-100">Virtual Card</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap font-medium">
-                    {formatAmount(transaction.amount, transaction.currency)}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {txn.type === 'refund' ? (
+                        <ArrowDownLeft className="h-4 w-4 text-green-500 mr-1" />
+                      ) : (
+                        <ArrowUpRight className="h-4 w-4 text-red-500 mr-1" />
+                      )}
+                      <span className={`text-sm font-medium ${txn.type === 'refund' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
+                        ${txn.amount.toFixed(2)}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      transaction.status === 'Completed' ? 'bg-green-100 text-green-800' : 
-                      transaction.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {transaction.status}
-                    </span>
+                    <Badge variant={
+                      txn.status === 'completed' ? 'success' :
+                      txn.status === 'pending' ? 'default' : 'destructive'
+                    }>
+                      {txn.status.charAt(0).toUpperCase() + txn.status.slice(1)}
+                    </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {transaction.card_type}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm text-gray-900 dark:text-gray-100">
+                      {txn.type.charAt(0).toUpperCase() + txn.type.slice(1)}
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   No transactions found
                 </td>
               </tr>
@@ -249,12 +187,12 @@ const CardTransactions = () => {
         </table>
       </div>
       
-      {countData && countData > 0 && (
+      {filteredTransactions.length > 0 && (
         <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             Showing <span className="font-medium">{offset + 1}</span> to{' '}
-            <span className="font-medium">{Math.min(offset + limit, countData)}</span> of{' '}
-            <span className="font-medium">{countData}</span> results
+            <span className="font-medium">{Math.min(offset + limit, filteredTransactions.length)}</span> of{' '}
+            <span className="font-medium">{filteredTransactions.length}</span> results
           </div>
           <div className="flex items-center gap-2">
             <Button

@@ -4,21 +4,26 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, CreditCard, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, CreditCard, Eye, EyeOff, Loader2, DollarSign } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 import { AddCardModal } from '@/components/payment/AddCardModal';
+import { FundCardModal } from '@/components/payment/FundCardModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CardTransactions from '@/components/payment/CardTransactions';
+import { FinupService } from '@/services/FinupService';
 
 const Cards = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [revealedCardIndexes, setRevealedCardIndexes] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
+  const [isFundCardModalOpen, setIsFundCardModalOpen] = useState(false);
+  const [selectedCardToken, setSelectedCardToken] = useState<string>('');
   const [activeTab, setActiveTab] = useState("cards");
   const limit = 6; // Items per page
   const offset = (currentPage - 1) * limit;
@@ -71,32 +76,9 @@ const Cards = () => {
   const createVirtualCard = async () => {
     try {
       setIsCreatingCard(true);
-      console.log("Creating virtual card via API...");
+      console.log("Creating virtual card via Finup API...");
       
-      // Generate mock data for demo purposes
-      const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
-      const expiryMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-      const expiryYear = new Date().getFullYear() + 3;
-      const expiration = `${expiryMonth}/${expiryYear % 100}`;
-      
-      // Insert a new card into the database
-      const { data, error } = await supabase
-        .from('cards')
-        .insert([
-          {
-            card_token: cardToken,
-            card_type: 'virtual',
-            expiration: expiration,
-            status: 'active',
-            source: 'itspaid'
-          }
-        ])
-        .select();
-      
-      if (error) {
-        console.error('Error creating virtual card:', error);
-        throw error;
-      }
+      await FinupService.createVirtualCard();
       
       toast({
         title: "Virtual card created",
@@ -115,6 +97,11 @@ const Cards = () => {
     } finally {
       setIsCreatingCard(false);
     }
+  };
+
+  const handleFundCard = (cardToken: string) => {
+    setSelectedCardToken(cardToken);
+    setIsFundCardModalOpen(true);
   };
 
   const toggleCardReveal = (index: number) => {
@@ -142,6 +129,11 @@ const Cards = () => {
     });
     refetch();
     setIsAddCardModalOpen(false);
+  };
+
+  const handleCardFunded = () => {
+    queryClient.invalidateQueries({ queryKey: ['cards'] });
+    queryClient.invalidateQueries({ queryKey: ['card-transactions'] });
   };
 
   const totalPages = Math.ceil((countData || 0) / limit);
@@ -243,7 +235,18 @@ const Cards = () => {
                         
                         <div className="flex justify-between text-sm text-gray-500">
                           <span>Created {new Date(card.created_at).toLocaleDateString()}</span>
-                          <Button variant="link" size="sm" className="p-0 h-auto">Manage</Button>
+                          <div className="space-x-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="p-0 h-auto"
+                              onClick={() => handleFundCard(card.card_token)}
+                            >
+                              <DollarSign className="h-3 w-3 mr-1" />
+                              Fund
+                            </Button>
+                            <Button variant="link" size="sm" className="p-0 h-auto">Manage</Button>
+                          </div>
                         </div>
                       </Card>
                     ))
@@ -358,6 +361,15 @@ const Cards = () => {
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mr-2"
+                                  onClick={() => handleFundCard(card.card_token)}
+                                >
+                                  <DollarSign className="h-4 w-4 mr-1" />
+                                  Fund
+                                </Button>
                                 <Button variant="ghost" size="sm">View</Button>
                               </td>
                             </tr>
@@ -415,6 +427,13 @@ const Cards = () => {
         open={isAddCardModalOpen} 
         onOpenChange={setIsAddCardModalOpen}
         onSuccess={handleCardAdded}
+      />
+      
+      <FundCardModal
+        open={isFundCardModalOpen}
+        onOpenChange={setIsFundCardModalOpen}
+        cardToken={selectedCardToken}
+        onSuccess={handleCardFunded}
       />
     </DashboardLayout>
   );
