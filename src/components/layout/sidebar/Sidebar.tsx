@@ -71,7 +71,7 @@ export const Sidebar = () => {
   return (
     <div 
       className={cn(
-        "h-screen flex flex-col transition-all duration-300 border-r border-gray-100 bg-white dark:bg-[#19363B] dark:border-gray-800",
+        "h-screen flex flex-col transition-all duration-300 border-r border-gray-100 bg-white dark:bg-[#020817] dark:border-gray-800",
         expanded ? "min-w-64" : "w-16"
       )}
     >
