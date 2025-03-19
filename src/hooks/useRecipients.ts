@@ -111,15 +111,11 @@ export const useRecipients = () => {
     mutationFn: addRecipient,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipients'] });
-      toast({ title: "Success", description: "Recipient added successfully" });
+      toast.success("Recipient added successfully");
     },
     onError: (error) => {
       console.error('Error adding recipient:', error);
-      toast({ 
-        title: "Error", 
-        description: "Failed to add recipient", 
-        variant: "destructive" 
-      });
+      toast.error("Failed to add recipient");
     }
   });
 
@@ -128,15 +124,11 @@ export const useRecipients = () => {
       updateRecipient(recipientId, updatedRecipient),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipients'] });
-      toast({ title: "Success", description: "Recipient updated successfully" });
+      toast.success("Recipient updated successfully");
     },
     onError: (error) => {
       console.error('Error updating recipient:', error);
-      toast({ 
-        title: "Error", 
-        description: "Failed to update recipient", 
-        variant: "destructive" 
-      });
+      toast.error("Failed to update recipient");
     }
   });
 
@@ -144,15 +136,11 @@ export const useRecipients = () => {
     mutationFn: deleteRecipient,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipients'] });
-      toast({ title: "Success", description: "Recipient deleted successfully" });
+      toast.success("Recipient deleted successfully");
     },
     onError: (error) => {
       console.error('Error deleting recipient:', error);
-      toast({ 
-        title: "Error", 
-        description: "Failed to delete recipient", 
-        variant: "destructive" 
-      });
+      toast.error("Failed to delete recipient");
     }
   });
 
