@@ -6,3 +6,7 @@ verify_jwt = true
 verify_jwt = true
 [functions.stripe-webhook]
 verify_jwt = false
+[functions.send-email]
+verify_jwt = false
+[functions.auth-hook]
+verify_jwt = false

@@ -109,6 +109,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Configure Supabase Auth to use our custom email template
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        // We can redirect to a custom password reset page if needed
+        // navigate('/reset-password');
+      }
+    });
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user || null)
