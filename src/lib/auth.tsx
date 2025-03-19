@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to ensure user profile exists
   const ensureUserProfile = async (currentUser: User) => {
     try {
-      console.log("Trying to ensure profile exists for user:", currentUser.id);
+      console.log("Ensuring profile exists for user:", currentUser.id);
       
       // First, try directly checking if profile exists
       const { data: profileCheck, error: profileError } = await supabase
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profileError && profileError.code === 'PGRST116') {
         console.log("Profile doesn't exist, creating a new one...");
         
-        // Call the ensure_profile_exists function directly with proper parameters
+        // Call the ensure_profile_exists function through RPC with proper parameters
         const { data: rpcResult, error: rpcError } = await supabase.rpc('ensure_profile_exists', {
           user_id: currentUser.id,
           user_email: currentUser.email || '',
@@ -45,34 +45,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (rpcError) {
           console.error('RPC method failed:', rpcError);
           
-          // Fall back to direct insert with service role client if available
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: currentUser.id,
-              email: currentUser.email,
-              full_name: currentUser.user_metadata?.full_name || '',
-              first_name: currentUser.user_metadata?.first_name || '',
-              last_name: currentUser.user_metadata?.last_name || ''
-            });
-          
-          if (insertError) {
-            console.error('Failed to create profile via direct insert:', insertError);
+          // Fall back to direct insert if RPC fails
+          try {
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: currentUser.id,
+                email: currentUser.email,
+                full_name: currentUser.user_metadata?.full_name || '',
+                first_name: currentUser.user_metadata?.first_name || '',
+                last_name: currentUser.user_metadata?.last_name || ''
+              });
+            
+            if (insertError) {
+              console.error('Failed to create profile via direct insert:', insertError);
+              toast.error("Failed to create user profile");
+              return false;
+            }
+          } catch (err) {
+            console.error('Exception during direct insert fallback:', err);
             toast.error("Failed to create user profile");
             return false;
           }
-        } else if (!rpcResult) {
-          console.error('RPC returned no result');
+        } else if (rpcResult === null) {
+          console.error('RPC returned null result');
           toast.error("Failed to create user profile");
           return false;
         }
         
-        console.log('Profile created successfully');
-        // After profile is created, ensure bank account exists
-        await supabase.rpc('update_balance', {
-          user_id_input: currentUser.id,
-          amount_input: 0
-        });
+        console.log('Profile created successfully, now ensuring bank account exists');
+        
+        try {
+          // After profile is created, ensure bank account exists
+          const { error: bankError } = await supabase.rpc('update_balance', {
+            user_id_input: currentUser.id,
+            amount_input: 0
+          });
+          
+          if (bankError) {
+            console.error('Error ensuring bank account exists:', bankError);
+            // Don't fail the whole flow for bank account issues
+          } else {
+            console.log('Bank account ensured successfully');
+          }
+        } catch (err) {
+          console.error('Exception ensuring bank account:', err);
+          // Don't fail the whole flow for bank account issues
+        }
         
         return true;
       } else if (profileError) {
@@ -94,7 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user || null)
       if (session?.user) {
-        ensureUserProfile(session.user);
+        ensureUserProfile(session.user).then(success => {
+          if (success) {
+            console.log("User profile setup complete");
+          } else {
+            console.warn("User profile setup had issues");
+          }
+        });
       }
       if (!session) navigate("/auth")
     })
@@ -105,7 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user || null)
       if (session?.user) {
-        ensureUserProfile(session.user);
+        ensureUserProfile(session.user).then(success => {
+          if (success) {
+            console.log("User profile setup complete after auth change");
+          } else {
+            console.warn("User profile setup had issues after auth change");
+          }
+        });
       }
       if (!session) navigate("/auth")
     })

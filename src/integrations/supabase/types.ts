@@ -2441,6 +2441,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      ensure_profile_exists: {
+        Args: {
+          user_id: string
+          user_email: string
+          user_full_name?: string
+          user_first_name?: string
+          user_last_name?: string
+        }
+        Returns: boolean
+      }
       get_resellers: {
         Args: Record<PropertyKey, never>
         Returns: Json[]
