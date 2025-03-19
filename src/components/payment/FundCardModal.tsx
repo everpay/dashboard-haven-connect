@@ -23,9 +23,9 @@ export const FundCardModal: React.FC<FundCardModalProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Fund Card</DialogTitle>
+          <DialogTitle className="text-gray-900">Fund Card</DialogTitle>
         </DialogHeader>
         <FundCardForm 
           cardToken={cardToken} 

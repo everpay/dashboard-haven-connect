@@ -18,6 +18,7 @@ import Customers from "./pages/Customers"
 import Cards from "./pages/Cards"
 import BankAccounts from "./pages/BankAccounts"
 import Invoicing from "./pages/Invoicing"
+import RecurringInvoices from "./pages/RecurringInvoices"
 import Products from "./pages/Products"
 import PaymentLink from "./pages/PaymentLink"
 import Payment from "./pages/Payment"
@@ -102,6 +103,7 @@ const App = () => {
                         <Route path="/cards" element={<Cards />} />
                         <Route path="/bank-accounts" element={<BankAccounts />} />
                         <Route path="/invoicing" element={<Invoicing />} />
+                        <Route path="/recurring-invoices" element={<RecurringInvoices />} />
                         <Route path="/products" element={<Products />} />
                         <Route path="/integrations" element={<Integrations />} />
                         <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />

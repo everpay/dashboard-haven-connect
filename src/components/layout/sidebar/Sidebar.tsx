@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -200,8 +199,8 @@ export const Sidebar = () => {
           <SidebarLink
             to="/invoicing"
             icon={<FileText className="h-4 w-4" />}
-            label="Invoicing"
-            isActive={activePath === '/invoicing'}
+            label="Invoices"
+            isActive={activePath === '/invoicing' || activePath === '/recurring-invoices'}
             expanded={expanded}
             onClick={() => navigateTo('/invoicing')}
           />

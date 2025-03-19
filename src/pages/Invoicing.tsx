@@ -1,11 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Check, X, ChevronLeft, ChevronRight, FileText, Link, Download, Plus, MoreHorizontal, Search } from 'lucide-react';
-import { format } from 'date-fns';
+import { 
+  Check, X, ChevronLeft, ChevronRight, FileText, Link, 
+  Download, Plus, MoreHorizontal, Search, Calendar, 
+  DollarSign, User, Tag, Filter
+} from 'lucide-react';
+import { format, parseISO, isAfter } from 'date-fns';
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { PayInvoiceModal } from '@/components/payment/PayInvoiceModal';
 import { exportAsCSV, exportAsXML, exportAsPDF } from '@/utils/exportUtils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useNavigate } from 'react-router-dom';
 
 // Invoice schema
 const invoiceSchema = z.object({
@@ -31,7 +37,7 @@ type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
 // Status mapping for UI display
 const statusColors = {
-  paid: 'bg-[#E3FFCC] text-[#19363B] border-[#1AA47B]',
+  paid: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   overdue: 'bg-red-100 text-red-800 border-red-200',
   draft: 'bg-gray-100 text-gray-800 border-gray-200',
@@ -54,11 +60,12 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-const FilterButton = ({ label, count, isActive = false, onClick }: { 
+const FilterButton = ({ label, count, isActive = false, onClick, icon }: { 
   label: string; 
   count: number; 
   isActive?: boolean;
   onClick: () => void;
+  icon?: React.ReactNode;
 }) => {
   return (
     <button
@@ -66,14 +73,17 @@ const FilterButton = ({ label, count, isActive = false, onClick }: {
       className={cn(
         "flex-1 p-4 text-center border rounded-md transition-colors",
         isActive 
-          ? "bg-[#f0f4ff] border-[#1AA47B] text-[#19363B]" 
+          ? "bg-emerald-50 border-emerald-300 text-emerald-700" 
           : "bg-white border-gray-200 hover:bg-gray-50"
       )}
     >
-      <div className="text-sm font-medium">{label}</div>
+      <div className="text-sm font-medium flex justify-center items-center gap-1">
+        {icon}
+        {label}
+      </div>
       <div className={cn(
         "text-xl font-semibold mt-1",
-        isActive ? "text-[#1AA47B]" : "text-gray-900"
+        isActive ? "text-emerald-600" : "text-gray-900"
       )}>
         {count}
       </div>
@@ -88,8 +98,10 @@ const Invoicing = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isPayInvoiceOpen, setIsPayInvoiceOpen] = useState(false);
+  const [activeFilterButton, setActiveFilterButton] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const limit = 10;
   const offset = (currentPage - 1) * limit;
 
@@ -102,7 +114,7 @@ const Invoicing = () => {
   });
 
   const { data: invoices, isLoading } = useQuery({
-    queryKey: ['invoices', currentPage, activeFilter, searchTerm],
+    queryKey: ['invoices', currentPage, activeFilter, searchTerm, activeFilterButton],
     queryFn: async () => {
       let query = supabase
         .from('invoices')
@@ -116,13 +128,31 @@ const Invoicing = () => {
         query = query.or(`customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
       }
       
-      query = query
-        .order('issue_date', { ascending: false })
-        .range(offset, offset + limit - 1);
+      // Apply additional filters based on activeFilterButton
+      if (activeFilterButton === 'date') {
+        query = query.order('issue_date', { ascending: false });
+      } else if (activeFilterButton === 'amount') {
+        query = query.order('total_amount', { ascending: false });
+      } else if (activeFilterButton === 'customer') {
+        query = query.order('customer_name', { ascending: true });
+      } else if (activeFilterButton === 'status') {
+        query = query.order('status', { ascending: true });
+      } else {
+        query = query.order('issue_date', { ascending: false });
+      }
+      
+      query = query.range(offset, offset + limit - 1);
       
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Flag overdue invoices
+      return (data || []).map(invoice => {
+        if (invoice.status === 'Pending' && isAfter(new Date(), parseISO(invoice.due_date))) {
+          return { ...invoice, status: 'Overdue' };
+        }
+        return invoice;
+      });
     },
   });
 
@@ -153,6 +183,138 @@ const Invoicing = () => {
       return counts;
     },
   });
+
+  // Insert test data if there are no invoices
+  const insertTestData = useMutation({
+    mutationFn: async () => {
+      const testInvoices = [
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'John Smith',
+          customer_email: 'john.smith@example.com',
+          total_amount: 499.99,
+          issue_date: '2023-06-01',
+          due_date: '2023-06-30',
+          status: 'Paid'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'Emily Johnson',
+          customer_email: 'emily.johnson@example.com',
+          total_amount: 299.50,
+          issue_date: '2023-06-15',
+          due_date: '2023-07-15',
+          status: 'Pending'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'Michael Brown',
+          customer_email: 'michael.brown@example.com',
+          total_amount: 1250.00,
+          issue_date: '2023-05-20',
+          due_date: '2023-06-19',
+          status: 'Overdue'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'Sarah Davis',
+          customer_email: 'sarah.davis@example.com',
+          total_amount: 750.25,
+          issue_date: '2023-06-25',
+          due_date: '2023-07-25',
+          status: 'Draft'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'Robert Wilson',
+          customer_email: 'robert.wilson@example.com',
+          total_amount: 1899.99,
+          issue_date: '2023-05-15',
+          due_date: '2023-06-14',
+          status: 'Cancelled'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'Jennifer Taylor',
+          customer_email: 'jennifer.taylor@example.com',
+          total_amount: 599.99,
+          issue_date: '2023-06-10',
+          due_date: '2023-07-10',
+          status: 'Pending'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'David Martinez',
+          customer_email: 'david.martinez@example.com',
+          total_amount: 349.50,
+          issue_date: '2023-06-18',
+          due_date: '2023-07-18',
+          status: 'Pending'
+        },
+        {
+          merchant_id: (await supabase.auth.getUser()).data.user?.id,
+          customer_name: 'Lisa Anderson',
+          customer_email: 'lisa.anderson@example.com',
+          total_amount: 2500.00,
+          issue_date: '2023-05-25',
+          due_date: '2023-06-24',
+          status: 'Paid'
+        }
+      ];
+
+      // Insert test invoices
+      for (const invoice of testInvoices) {
+        const { data, error } = await supabase
+          .from('invoices')
+          .insert([invoice])
+          .select();
+        
+        if (error) throw error;
+        
+        // Add an invoice item for each invoice
+        if (data && data.length > 0) {
+          await supabase
+            .from('invoice_items')
+            .insert([{
+              invoice_id: data[0].id,
+              description: "Service",
+              quantity: 1,
+              unit_price: invoice.total_amount,
+              amount: invoice.total_amount
+            }]);
+        }
+      }
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-status-count'] });
+      toast({ title: "Success", description: "Test invoices have been created" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to create test invoices", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Check if we need to insert test data when the component mounts
+  useEffect(() => {
+    const checkAndInsertTestData = async () => {
+      const { count, error } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true });
+      
+      if (!error && count === 0) {
+        insertTestData.mutate();
+      }
+    };
+    
+    checkAndInsertTestData();
+  }, []);
 
   const createInvoice = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
@@ -273,9 +435,12 @@ const Invoicing = () => {
     queryClient.invalidateQueries({ queryKey: ['invoices-status-count'] });
   };
   
-  const navigateToSubscriptions = () => {
-    // Navigate to subscription section
-    window.location.href = '/billing';
+  const navigateToRecurringInvoices = () => {
+    navigate('/recurring-invoices');
+  };
+
+  const toggleFilterButton = (filter: string) => {
+    setActiveFilterButton(prev => prev === filter ? null : filter);
   };
 
   return (
@@ -283,42 +448,36 @@ const Invoicing = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#19363B]">Invoicing</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button 
               onClick={() => setIsNewInvoiceOpen(true)} 
-              className="bg-[#1AA47B] hover:bg-[#19363B] text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Invoice
             </Button>
-            <Button variant="outline" className="font-medium text-[#19363B] border-[#1AA47B]">
+            <Button variant="outline" className="font-medium text-gray-700 border-gray-300">
               Reports
             </Button>
           </div>
         </div>
         
-        <div className="bg-[#f8fafc] border rounded-md p-4 flex items-start justify-between">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-md p-4 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-1 bg-[#1AA47B] bg-opacity-10 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1AA47B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
+            <div className="p-1 bg-emerald-100 rounded-full">
+              <FileText className="h-4 w-4 text-emerald-600" />
             </div>
-            <span className="text-sm text-[#19363B]">
+            <span className="text-sm text-gray-700">
               Set up recurring invoices to automate your billing process.
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Button 
               variant="link" 
-              className="text-[#19363B] px-2 py-1 h-auto"
-              onClick={navigateToSubscriptions}
+              className="text-emerald-600 px-2 py-1 h-auto"
+              onClick={navigateToRecurringInvoices}
             >
               Set Up Now
             </Button>
@@ -340,6 +499,7 @@ const Invoicing = () => {
             count={statusCounts?.paid || 0} 
             isActive={activeFilter === 'paid'} 
             onClick={() => setActiveFilter('paid')} 
+            icon={<Check className="h-3 w-3" />}
           />
           <FilterButton 
             label="Pending" 
@@ -352,6 +512,7 @@ const Invoicing = () => {
             count={statusCounts?.overdue || 0} 
             isActive={activeFilter === 'overdue'} 
             onClick={() => setActiveFilter('overdue')} 
+            icon={<X className="h-3 w-3" />}
           />
           <FilterButton 
             label="Draft" 
@@ -373,26 +534,56 @@ const Invoicing = () => {
             <Input
               type="search"
               placeholder="Search invoices"
-              className="pl-10 pr-4 py-2 w-full bg-gray-50 border-0 focus-visible:ring-[#1AA47B]"
+              className="pl-10 pr-4 py-2 w-full bg-gray-50 border-gray-300 focus-visible:ring-emerald-500"
               value={searchTerm}
               onChange={handleSearch}
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Date</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn("text-sm", activeFilterButton === 'date' && "bg-emerald-50 border-emerald-300 text-emerald-700")}
+              onClick={() => toggleFilterButton('date')}
+            >
+              <Calendar className="h-4 w-4 mr-1" />
+              <span>Date</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Amount</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn("text-sm", activeFilterButton === 'amount' && "bg-emerald-50 border-emerald-300 text-emerald-700")}
+              onClick={() => toggleFilterButton('amount')}
+            >
+              <DollarSign className="h-4 w-4 mr-1" />
+              <span>Amount</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Customer</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn("text-sm", activeFilterButton === 'customer' && "bg-emerald-50 border-emerald-300 text-emerald-700")}
+              onClick={() => toggleFilterButton('customer')}
+            >
+              <User className="h-4 w-4 mr-1" />
+              <span>Customer</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">Status</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn("text-sm", activeFilterButton === 'status' && "bg-emerald-50 border-emerald-300 text-emerald-700")}
+              onClick={() => toggleFilterButton('status')}
+            >
+              <Tag className="h-4 w-4 mr-1" />
+              <span>Status</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-sm">
-              <span className="mr-1">More filters</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-sm"
+              onClick={() => toast({ title: "More filters", description: "Additional filter options will be available soon" })}
+            >
+              <Filter className="h-4 w-4 mr-1" />
+              <span>More filters</span>
             </Button>
           </div>
         </div>
@@ -472,7 +663,7 @@ const Invoicing = () => {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-6 w-6 bg-[#1AA47B] rounded flex items-center justify-center text-white">
+                          <div className="flex-shrink-0 h-6 w-6 bg-emerald-100 rounded flex items-center justify-center text-emerald-600">
                             <FileText className="h-4 w-4" />
                           </div>
                           <div className="ml-2">
@@ -503,7 +694,7 @@ const Invoicing = () => {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-[#1AA47B] hover:text-[#19363B] hover:bg-[#E3FFCC]"
+                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                             onClick={() => handlePayInvoice(invoice)}
                           >
                             Pay
@@ -547,17 +738,17 @@ const Invoicing = () => {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <Dialog.Title className="text-xl font-semibold mb-4 text-[#19363B]">
+            <Dialog.Title className="text-xl font-semibold mb-4 text-gray-900">
               Create New Invoice
             </Dialog.Title>
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="customer_name" className="text-sm font-medium text-[#19363B]">Customer Name</label>
+                <label htmlFor="customer_name" className="text-sm font-medium text-gray-700">Customer Name</label>
                 <Input
                   id="customer_name"
                   {...register("customer_name")}
-                  className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                  className="w-full border-gray-300 focus-visible:ring-emerald-500"
                 />
                 {errors.customer_name && (
                   <p className="text-sm text-red-500">{errors.customer_name.message}</p>
@@ -565,12 +756,12 @@ const Invoicing = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="customer_email" className="text-sm font-medium text-[#19363B]">Customer Email</label>
+                <label htmlFor="customer_email" className="text-sm font-medium text-gray-700">Customer Email</label>
                 <Input
                   id="customer_email"
                   type="email"
                   {...register("customer_email")}
-                  className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                  className="w-full border-gray-300 focus-visible:ring-emerald-500"
                 />
                 {errors.customer_email && (
                   <p className="text-sm text-red-500">{errors.customer_email.message}</p>
@@ -578,7 +769,7 @@ const Invoicing = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="total_amount" className="text-sm font-medium text-[#19363B]">Total Amount</label>
+                <label htmlFor="total_amount" className="text-sm font-medium text-gray-700">Total Amount</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                   <Input
@@ -586,7 +777,7 @@ const Invoicing = () => {
                     type="number"
                     step="0.01"
                     {...register("total_amount")}
-                    className="w-full pl-8 border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                    className="w-full pl-8 border-gray-300 focus-visible:ring-emerald-500"
                   />
                 </div>
                 {errors.total_amount && (
@@ -596,12 +787,12 @@ const Invoicing = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="issue_date" className="text-sm font-medium text-[#19363B]">Issue Date</label>
+                  <label htmlFor="issue_date" className="text-sm font-medium text-gray-700">Issue Date</label>
                   <Input
                     id="issue_date"
                     type="date"
                     {...register("issue_date")}
-                    className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                    className="w-full border-gray-300 focus-visible:ring-emerald-500"
                   />
                   {errors.issue_date && (
                     <p className="text-sm text-red-500">{errors.issue_date.message}</p>
@@ -609,12 +800,12 @@ const Invoicing = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="due_date" className="text-sm font-medium text-[#19363B]">Due Date</label>
+                  <label htmlFor="due_date" className="text-sm font-medium text-gray-700">Due Date</label>
                   <Input
                     id="due_date"
                     type="date"
                     {...register("due_date")}
-                    className="w-full border-[#1AA47B] focus-visible:ring-[#1AA47B]"
+                    className="w-full border-gray-300 focus-visible:ring-emerald-500"
                   />
                   {errors.due_date && (
                     <p className="text-sm text-red-500">{errors.due_date.message}</p>
@@ -626,7 +817,7 @@ const Invoicing = () => {
                 <Button type="button" variant="outline" onClick={closeModal}>
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-[#1AA47B] hover:bg-[#19363B]">
+                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   Create Invoice
                 </Button>
               </div>
