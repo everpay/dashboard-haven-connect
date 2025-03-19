@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Filter, Plus, Download, RefreshCw } from 'lucide-react';
 import { PayoutModal } from '@/components/payment/PayoutModal';
 import { supabase } from "@/lib/supabase";
@@ -39,18 +40,30 @@ const Payouts = () => {
   });
 
   // Fetch account balance
-  const { data: accountBalance } = useQuery({
+  const { data: accountBalance, refetch: refetchBalance } = useQuery({
     queryKey: ['account-balance', refreshKey],
     queryFn: async () => {
       try {
         const itsPaidService = await getItsPaidService();
-        return await itsPaidService.getAccountBalance();
+        const balanceData = await itsPaidService.getAccountBalance();
+        console.log('Fetched account balance:', balanceData);
+        return balanceData;
       } catch (error) {
         console.error('Error fetching account balance:', error);
-        return null;
+        // Return default values if API fails
+        return {
+          PAYOUT_BALANCE: 0,
+          FLOAT_BALANCE: 0,
+          RESERVE_BALANCE: 0
+        };
       }
     },
   });
+
+  // Fetch real balances on mount and when refreshKey changes
+  useEffect(() => {
+    refetchBalance();
+  }, [refreshKey, refetchBalance]);
 
   const handleOpenPayoutModal = () => {
     setIsPayoutModalOpen(true);
@@ -76,14 +89,6 @@ const Payouts = () => {
     }).format(date);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -104,8 +109,8 @@ const Payouts = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#19363B]">Payouts</h1>
-            <p className="text-gray-500">Send money to bank accounts and cards</p>
+            <h1 className="text-2xl font-bold text-foreground">Payouts</h1>
+            <p className="text-muted-foreground">Send money to bank accounts and cards</p>
           </div>
           <Button 
             onClick={handleOpenPayoutModal}
@@ -117,65 +122,65 @@ const Payouts = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-gray-500">Available Balance</h3>
-            <p className="text-2xl font-bold mt-1">
+          <Card className="p-4 bg-card text-card-foreground">
+            <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
+            <p className="text-2xl font-bold mt-1 text-foreground">
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={accountBalance.PAYOUT_BALANCE} 
+                    end={parseFloat(accountBalance.PAYOUT_BALANCE) || 0} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
                     preserveValue
                   />
                 </> 
-                : 'Loading...'}
+                : '$0.00'}
             </p>
           </Card>
           
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-gray-500">Net Balance</h3>
-            <p className="text-2xl font-bold mt-1">
+          <Card className="p-4 bg-card text-card-foreground">
+            <h3 className="text-sm font-medium text-muted-foreground">Net Balance</h3>
+            <p className="text-2xl font-bold mt-1 text-foreground">
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={accountBalance.FLOAT_BALANCE} 
+                    end={parseFloat(accountBalance.FLOAT_BALANCE) || 0} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
                     preserveValue
                   />
                 </> 
-                : 'Loading...'}
+                : '$0.00'}
             </p>
           </Card>
           
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-gray-500">Reserve Balance</h3>
-            <p className="text-2xl font-bold mt-1">
+          <Card className="p-4 bg-card text-card-foreground">
+            <h3 className="text-sm font-medium text-muted-foreground">Reserve Balance</h3>
+            <p className="text-2xl font-bold mt-1 text-foreground">
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={accountBalance.RESERVE_BALANCE} 
+                    end={parseFloat(accountBalance.RESERVE_BALANCE) || 0} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
                     preserveValue
                   />
                 </> 
-                : 'Loading...'}
+                : '$0.00'}
             </p>
           </Card>
         </div>
         
-        <Card className="p-6">
+        <Card className="p-6 bg-card">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div className="relative w-full md:w-96">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search payouts"
-                className="pl-10"
+                className="pl-10 bg-background text-foreground"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -197,49 +202,49 @@ const Payouts = () => {
             </div>
           </div>
           
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Date</TableHeader>
+                  <TableHeader>Method</TableHeader>
+                  <TableHeader>Description</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  <TableHeader className="text-right">Amount</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center">Loading payouts...</td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">Loading payouts...</TableCell>
+                  </TableRow>
                 ) : error ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-red-500">Failed to load payouts</td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-red-500">Failed to load payouts</TableCell>
+                  </TableRow>
                 ) : payouts && payouts.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center">No payouts found</td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">No payouts found</TableCell>
+                  </TableRow>
                 ) : (
                   payouts?.map((payout: any) => (
-                    <tr key={payout.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatDate(payout.created_at)}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{payout.payment_method}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{payout.description}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <TableRow key={payout.id}>
+                      <TableCell>
+                        <div className="text-sm text-foreground">{formatDate(payout.created_at)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium text-foreground">{payout.payment_method}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-foreground">{payout.description}</div>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant={getStatusColor(payout.status || 'pending')}>
                           {payout.status || 'Pending'}
                         </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="text-sm font-medium text-gray-900">
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="text-sm font-medium text-foreground">
                           ${payout.amount ? (
                             <CountUp 
                               end={payout.amount} 
@@ -250,12 +255,12 @@ const Payouts = () => {
                             />
                           ) : '0.00'}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </Card>
       </div>

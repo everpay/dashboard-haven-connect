@@ -183,3 +183,20 @@
 .alert-success-text {
   color: #FFFFFF !important;
 }
+
+/* Dark mode table overrides */
+.dark .border {
+  border-color: hsl(var(--border));
+}
+
+.dark thead {
+  background-color: hsl(var(--muted));
+}
+
+.dark tbody tr:hover {
+  background-color: hsl(var(--muted) / 0.7);
+}
+
+.dark table {
+  color: hsl(var(--foreground));
+}

@@ -37,7 +37,13 @@ interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 }
 
 const TableRow: React.FC<TableRowProps> = ({ className, children, ...props }) => (
-  <tr className={cn("border-b transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted", className)} {...props}>
+  <tr 
+    className={cn(
+      "border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      className
+    )} 
+    {...props}
+  >
     {children}
   </tr>
 );
@@ -48,7 +54,11 @@ interface TableCellProps extends React.HTMLAttributes<HTMLTableCellElement> {
 }
 
 const TableCell: React.FC<TableCellProps> = ({ className, children, colSpan, ...props }) => (
-  <td className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)} colSpan={colSpan} {...props}>
+  <td 
+    className={cn("p-4 align-middle text-foreground [&:has([role=checkbox])]:pr-0", className)} 
+    colSpan={colSpan} 
+    {...props}
+  >
     {children}
   </td>
 );
@@ -59,7 +69,14 @@ interface TableHeaderProps extends React.HTMLAttributes<HTMLTableCellElement> {
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({ className, children, colSpan, ...props }) => (
-  <th className={cn("h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0", className)} colSpan={colSpan} {...props}>
+  <th 
+    className={cn(
+      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0", 
+      className
+    )} 
+    colSpan={colSpan} 
+    {...props}
+  >
     {children}
   </th>
 );

@@ -30,8 +30,8 @@ export const PayoutMethodSelector = ({
   };
 
   return (
-    <Tabs defaultValue="ach" value={selectedTab} onValueChange={setSelectedTab}>
-      <TabsList className="grid grid-cols-5 mb-4">
+    <Tabs defaultValue="ach" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+      <TabsList className="grid grid-cols-5 mb-4 w-full">
         <TabsTrigger value="ach">ACH</TabsTrigger>
         <TabsTrigger value="swift">SWIFT</TabsTrigger>
         <TabsTrigger value="fedwire">FEDWIRE</TabsTrigger>
