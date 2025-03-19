@@ -128,7 +128,7 @@ export const Sidebar = () => {
           >
             <SubLink
               to="/transactions"
-              label="All Transactions"
+              label="Overview"
               isActive={activePath === '/transactions'}
               expanded={expanded}
               onClick={() => navigateTo('/transactions')}
