@@ -40,25 +40,45 @@ export const ACHPaymentForm = ({
   const validateForm = () => {
     // For Zelle, we only need recipient name and account number (email/phone)
     if (selectedMethod === 'ZELLE') {
-      return !!recipientName && !!accountNumber;
+      if (!recipientName || !accountNumber) {
+        toast.error('Please enter recipient name and Zelle email/phone');
+        return false;
+      }
+      return true;
     }
     
     // For other methods, we need recipient name, account number, and routing number
-    return !!recipientName && !!accountNumber && !!routingNumber;
+    if (!recipientName) {
+      toast.error('Please enter recipient name');
+      return false;
+    }
+    
+    if (!accountNumber) {
+      toast.error('Please enter account number');
+      return false;
+    }
+    
+    if (!routingNumber) {
+      toast.error('Please enter routing number');
+      return false;
+    }
+    
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Form validation
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      // Form validation
-      if (!validateForm()) {
-        toast.error('Please fill all required fields');
-        setLoading(false);
-        return;
-      }
-
+      console.log('Starting payment process...');
+      
       // Initialize the service with configuration
       const itsPaidService = await getItsPaidService();
 
@@ -77,25 +97,37 @@ export const ACHPaymentForm = ({
       } else {
         transactionData.RECIPIENT_BANK_ACCOUNT = accountNumber;
         transactionData.RECIPIENT_BANK_ROUTING = routingNumber;
-        transactionData.RECIPIENT_BANK_NAME = bankName;
+        transactionData.RECIPIENT_BANK_NAME = bankName || 'Unknown Bank';
       }
+      
+      console.log('Transaction data:', transactionData);
 
       // Send the payment
       const response = await itsPaidService.sendMoney(transactionData);
+      console.log('Payment response:', response);
+      
+      // Split the recipient name into first and last names
+      const nameParts = recipientName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
       
       // Add the recipient to the recipients database
       try {
-        // Only add recipient if it's a new one
-        await addRecipient({
-          first_names: recipientName.split(' ')[0],
-          last_names: recipientName.split(' ').slice(1).join(' '),
+        console.log('Adding recipient to database...');
+        const recipientData = {
+          first_names: firstName,
+          last_names: lastName,
           full_name: recipientName,
           email_address: selectedMethod === 'ZELLE' && accountNumber.includes('@') ? accountNumber : undefined,
           telephone_number: selectedMethod === 'ZELLE' && !accountNumber.includes('@') ? accountNumber : undefined,
           bank_account_number: selectedMethod !== 'ZELLE' ? accountNumber : undefined,
           bank_routing_number: routingNumber || undefined,
           bank_name: bankName || undefined
-        });
+        };
+        
+        console.log('Recipient data:', recipientData);
+        const result = await addRecipient(recipientData);
+        console.log('Recipient added:', result);
       } catch (recipientError) {
         console.error('Error adding recipient:', recipientError);
         // Don't fail the transaction if recipient creation fails
@@ -113,7 +145,7 @@ export const ACHPaymentForm = ({
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-card">
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
@@ -122,7 +154,7 @@ export const ACHPaymentForm = ({
               value={selectedMethod} 
               onValueChange={(value) => setSelectedMethod(value as PaymentMethod)}
             >
-              <SelectTrigger id="paymentType">
+              <SelectTrigger id="paymentType" className="bg-background text-foreground">
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
               <SelectContent>
@@ -141,6 +173,7 @@ export const ACHPaymentForm = ({
               value={recipientName}
               onChange={(e) => setRecipientName(e.target.value)}
               required
+              className="bg-background text-foreground"
             />
           </div>
 
@@ -153,6 +186,7 @@ export const ACHPaymentForm = ({
                 onChange={(e) => setAccountNumber(e.target.value)}
                 placeholder="Email or phone number registered with Zelle"
                 required
+                className="bg-background text-foreground"
               />
             </div>
           ) : (
@@ -164,6 +198,7 @@ export const ACHPaymentForm = ({
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   required
+                  className="bg-background text-foreground"
                 />
               </div>
 
@@ -174,6 +209,7 @@ export const ACHPaymentForm = ({
                   value={routingNumber}
                   onChange={(e) => setRoutingNumber(e.target.value)}
                   required
+                  className="bg-background text-foreground"
                 />
               </div>
 
@@ -183,6 +219,7 @@ export const ACHPaymentForm = ({
                   id="bankName"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
+                  className="bg-background text-foreground"
                 />
               </div>
             </>
@@ -195,6 +232,7 @@ export const ACHPaymentForm = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Payment purpose"
+              className="bg-background text-foreground"
             />
           </div>
 

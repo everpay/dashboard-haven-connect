@@ -31,107 +31,116 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
       <div className="grid gap-4 py-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="first_names">First Name</Label>
+            <Label htmlFor="first_names" className="text-foreground">First Name</Label>
             <Input
               id="first_names"
               name="first_names"
               value={formData.first_names}
               onChange={onInputChange}
               required
+              className="bg-background text-foreground"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="last_names">Last Name</Label>
+            <Label htmlFor="last_names" className="text-foreground">Last Name</Label>
             <Input
               id="last_names"
               name="last_names"
               value={formData.last_names}
               onChange={onInputChange}
               required
+              className="bg-background text-foreground"
             />
           </div>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="email_address">Email Address</Label>
+            <Label htmlFor="email_address" className="text-foreground">Email Address</Label>
             <Input
               id="email_address"
               name="email_address"
               type="email"
               value={formData.email_address}
               onChange={onInputChange}
+              className="bg-background text-foreground"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="telephone_number">Telephone Number</Label>
+            <Label htmlFor="telephone_number" className="text-foreground">Telephone Number</Label>
             <Input
               id="telephone_number"
               name="telephone_number"
               value={formData.telephone_number}
               onChange={onInputChange}
+              className="bg-background text-foreground"
             />
           </div>
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="street_1">Address Line 1</Label>
+          <Label htmlFor="street_1" className="text-foreground">Address Line 1</Label>
           <Input
             id="street_1"
             name="street_1"
             value={formData.street_1}
             onChange={onInputChange}
+            className="bg-background text-foreground"
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="street_2">Address Line 2 (Optional)</Label>
+          <Label htmlFor="street_2" className="text-foreground">Address Line 2 (Optional)</Label>
           <Input
             id="street_2"
             name="street_2"
             value={formData.street_2}
             onChange={onInputChange}
+            className="bg-background text-foreground"
           />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
+            <Label htmlFor="city" className="text-foreground">City</Label>
             <Input
               id="city"
               name="city"
               value={formData.city}
               onChange={onInputChange}
+              className="bg-background text-foreground"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="region">State/Region</Label>
+            <Label htmlFor="region" className="text-foreground">State/Region</Label>
             <Input
               id="region"
               name="region"
               value={formData.region}
               onChange={onInputChange}
+              className="bg-background text-foreground"
             />
           </div>
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="postal_code">Postal Code</Label>
+            <Label htmlFor="postal_code" className="text-foreground">Postal Code</Label>
             <Input
               id="postal_code"
               name="postal_code"
               value={formData.postal_code}
               onChange={onInputChange}
+              className="bg-background text-foreground"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="country_iso3">Country</Label>
+            <Label htmlFor="country_iso3" className="text-foreground">Country</Label>
             <Select 
               value={formData.country_iso3} 
               onValueChange={(value) => onSelectChange('country_iso3', value)}
             >
-              <SelectTrigger>
+              <SelectTrigger id="country_iso3" className="bg-background text-foreground">
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent>
@@ -148,7 +157,7 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
         </div>
       </div>
       <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} className="text-foreground">
           Cancel
         </Button>
         <Button type="submit" className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]">

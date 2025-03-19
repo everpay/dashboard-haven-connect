@@ -137,8 +137,8 @@ const Recipients = () => {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Recipients</h1>
-            <p className="text-gray-500">Manage payout recipients for ACH, SWIFT, or card payments</p>
+            <h1 className="text-2xl font-bold text-foreground">Recipients</h1>
+            <p className="text-muted-foreground">Manage payout recipients for ACH, SWIFT, or card payments</p>
           </div>
           <Button 
             onClick={openAddDialog} 
@@ -150,7 +150,7 @@ const Recipients = () => {
           </Button>
         </div>
         
-        <Card className="p-6">
+        <Card className="p-6 bg-card text-card-foreground">
           <RecipientSearch 
             onSearch={setSearchTerm} 
             searchTerm={searchTerm} 
@@ -167,9 +167,9 @@ const Recipients = () => {
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-background">
           <DialogHeader>
-            <DialogTitle>Add New Recipient</DialogTitle>
+            <DialogTitle className="text-foreground">Add New Recipient</DialogTitle>
           </DialogHeader>
           <RecipientForm 
             formData={formData}
@@ -182,9 +182,9 @@ const Recipients = () => {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-background">
           <DialogHeader>
-            <DialogTitle>Edit Recipient</DialogTitle>
+            <DialogTitle className="text-foreground">Edit Recipient</DialogTitle>
           </DialogHeader>
           <RecipientForm 
             formData={formData}

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -52,6 +51,7 @@ export const useRecipients = () => {
 
   const addRecipient = async (newRecipient: Partial<Recipient>) => {
     if (!user) {
+      console.error('User not authenticated');
       throw new Error("User not authenticated");
     }
     
@@ -63,62 +63,92 @@ export const useRecipients = () => {
     
     console.log('Adding recipient:', recipient);
     
-    // Check if recipient already exists by email or phone number
+    // Check if recipient already exists by email, phone, or name
     let existingRecipient = null;
     
-    if (recipient.email_address) {
-      const { data } = await supabase
-        .from('recipients')
-        .select('*')
-        .eq('email_address', recipient.email_address)
-        .eq('user_id', user.id)
-        .maybeSingle();
+    try {
+      if (recipient.email_address) {
+        const { data } = await supabase
+          .from('recipients')
+          .select('*')
+          .eq('email_address', recipient.email_address)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        existingRecipient = data;
+      } 
       
-      existingRecipient = data;
-    } else if (recipient.telephone_number) {
-      const { data } = await supabase
-        .from('recipients')
-        .select('*')
-        .eq('telephone_number', recipient.telephone_number)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      if (!existingRecipient && recipient.telephone_number) {
+        const { data } = await supabase
+          .from('recipients')
+          .select('*')
+          .eq('telephone_number', recipient.telephone_number)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        existingRecipient = data;
+      } 
       
-      existingRecipient = data;
-    } else if (recipient.full_name) {
-      const { data } = await supabase
-        .from('recipients')
-        .select('*')
-        .eq('full_name', recipient.full_name)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      if (!existingRecipient && recipient.bank_account_number) {
+        const { data } = await supabase
+          .from('recipients')
+          .select('*')
+          .eq('bank_account_number', recipient.bank_account_number)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        existingRecipient = data;
+      }
       
-      existingRecipient = data;
-    }
-    
-    if (existingRecipient) {
-      // Update existing recipient with any new information
-      const updatedRecipient = { ...existingRecipient, ...recipient };
+      if (!existingRecipient && recipient.full_name) {
+        const { data } = await supabase
+          .from('recipients')
+          .select('*')
+          .eq('full_name', recipient.full_name)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        existingRecipient = data;
+      }
+      
+      console.log('Existing recipient check result:', existingRecipient);
+      
+      if (existingRecipient) {
+        // Update existing recipient with any new information
+        const updatedRecipient = { ...existingRecipient, ...recipient };
+        console.log('Updating existing recipient:', updatedRecipient);
+        
+        const { data, error } = await supabase
+          .from('recipients')
+          .update(updatedRecipient)
+          .eq('recipient_id', existingRecipient.recipient_id)
+          .select();
+        
+        if (error) {
+          console.error('Error updating recipient:', error);
+          throw error;
+        }
+        console.log('Updated recipient:', data[0]);
+        return data[0];
+      }
+      
+      // Insert new recipient
+      console.log('Inserting new recipient:', recipient);
       const { data, error } = await supabase
         .from('recipients')
-        .update(updatedRecipient)
-        .eq('recipient_id', existingRecipient.recipient_id)
+        .insert([recipient])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding recipient:', error);
+        throw error;
+      }
+      console.log('Added new recipient:', data[0]);
       return data[0];
+    } catch (err) {
+      console.error('Error in recipient processing:', err);
+      throw err;
     }
-    
-    // Insert new recipient
-    const { data, error } = await supabase
-      .from('recipients')
-      .insert([recipient])
-      .select();
-    
-    if (error) {
-      console.error('Error details:', error);
-      throw error;
-    }
-    return data[0];
   };
 
   const updateRecipient = async (recipientId: number, updatedRecipient: Partial<Recipient>) => {

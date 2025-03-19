@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { User, Edit, Trash2 } from 'lucide-react';
 import { Recipient } from '@/hooks/useRecipients';
 
@@ -20,58 +21,58 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
   user
 }) => {
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeader>Name</TableHeader>
+            <TableHeader>Email</TableHeader>
+            <TableHeader>Phone</TableHeader>
+            <TableHeader>Location</TableHeader>
+            <TableHeader className="text-right">Actions</TableHeader>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {!user ? (
-            <tr>
-              <td colSpan={5} className="px-6 py-4 text-center">
+            <TableRow>
+              <TableCell colSpan={5} className="text-center">
                 Please sign in to view your recipients
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ) : isLoading ? (
-            <tr>
-              <td colSpan={5} className="px-6 py-4 text-center">Loading recipients...</td>
-            </tr>
+            <TableRow>
+              <TableCell colSpan={5} className="text-center">Loading recipients...</TableCell>
+            </TableRow>
           ) : recipients && recipients.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="px-6 py-4 text-center">No recipients found</td>
-            </tr>
+            <TableRow>
+              <TableCell colSpan={5} className="text-center">No recipients found</TableCell>
+            </TableRow>
           ) : (
             recipients?.map((recipient: Recipient) => (
-              <tr key={recipient.recipient_id}>
-                <td className="px-6 py-4 whitespace-nowrap">
+              <TableRow key={recipient.recipient_id}>
+                <TableCell>
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-gray-500" />
+                    <div className="flex-shrink-0 h-10 w-10 bg-muted rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{recipient.full_name}</div>
+                      <div className="text-sm font-medium">{recipient.full_name}</div>
                     </div>
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{recipient.email_address || "—"}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{recipient.telephone_number || "—"}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">{recipient.email_address || "—"}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">{recipient.telephone_number || "—"}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
                     {recipient.city && recipient.region ? `${recipient.city}, ${recipient.region}` : 
                       recipient.city || recipient.region || "—"}
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                </TableCell>
+                <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Button 
                       variant="ghost" 
@@ -84,17 +85,17 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
                       variant="ghost" 
                       size="sm" 
                       onClick={() => onDeleteRecipient(recipient.recipient_id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-destructive hover:text-destructive/90 hover:bg-background/80"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 };

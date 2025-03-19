@@ -128,7 +128,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(accountBalance.PAYOUT_BALANCE) || 0} 
+                    end={parseFloat(String(accountBalance.PAYOUT_BALANCE) || '0')} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -145,7 +145,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(accountBalance.FLOAT_BALANCE) || 0} 
+                    end={parseFloat(String(accountBalance.FLOAT_BALANCE) || '0')} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -162,7 +162,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(accountBalance.RESERVE_BALANCE) || 0} 
+                    end={parseFloat(String(accountBalance.RESERVE_BALANCE) || '0')} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
