@@ -35,8 +35,8 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 160 10% 98%;
+    --sidebar-foreground: 220 5.3% 26.1%;
     --sidebar-muted: 220 13% 91%;
     --sidebar-muted-foreground: 240 3.8% 46.1%;
     --sidebar-accent: 143 55% 90%;
@@ -72,11 +72,11 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
     
-    --sidebar-background: 222.2 47.4% 11.2%;
+    --sidebar-background: 161 40% 12%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-muted: 217.2 32.6% 17.5%;
     --sidebar-muted-foreground: 215 20.2% 65.1%;
-    --sidebar-accent: 143 55% 30%;
+    --sidebar-accent: 160 55% 20%;
     --sidebar-accent-foreground: 0 0% 100%;
   }
 }
@@ -88,18 +88,70 @@
 
   body {
     @apply bg-background text-foreground text-sm;
+    font-size: 0.875rem;
   }
   
   h1 {
     @apply text-xl font-bold;
+    font-size: 1.25rem;
   }
   
   h2 {
     @apply text-lg font-semibold;
+    font-size: 1.125rem;
   }
   
   h3 {
     @apply text-base font-medium;
+    font-size: 1rem;
+  }
+  
+  p {
+    font-size: 0.875rem;
+  }
+  
+  label, .text-xs {
+    font-size: 0.75rem;
+  }
+  
+  .btn, button {
+    font-size: 0.875rem;
+  }
+  
+  table {
+    font-size: 0.875rem;
+  }
+  
+  input, textarea, select {
+    font-size: 0.875rem;
   }
 }
 
+/* Add custom styles for sidebar to properly support dark mode */
+.sidebar {
+  @apply bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))];
+}
+
+.sidebar-link {
+  @apply text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-muted))] hover:text-[hsl(var(--sidebar-foreground))];
+}
+
+.sidebar-link.active {
+  @apply bg-[hsl(var(--sidebar-accent))] text-[hsl(var(--sidebar-accent-foreground))];
+}
+
+/* Fix VGS Collect form styling */
+.vgs-field {
+  height: 40px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 0.875rem;
+}
+
+.vgs-field.dark {
+  background-color: hsl(var(--input));
+  border-color: hsl(var(--border));
+  color: hsl(var(--foreground));
+}

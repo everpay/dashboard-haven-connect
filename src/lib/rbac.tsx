@@ -17,12 +17,11 @@ const RBACContext = createContext<RBACContextType | undefined>(undefined);
 
 export function RBACProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
-  // Set default userRole to 'owner' to ensure admin privileges 
-  const [userRole, setUserRole] = useState<UserRole>('owner');
+  const [userRole, setUserRole] = useState<UserRole>('anonymous');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const isAdmin = userRole === 'owner';
-  const isMember = userRole === 'member' || userRole === 'owner';
+  const isAdmin = userRole === 'owner' || userRole === 'admin';
+  const isMember = userRole === 'member' || isAdmin;
 
   const checkPermission = (requiredRoles: UserRole[]): boolean => {
     return requiredRoles.includes(userRole);
@@ -32,11 +31,21 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
     if (session?.user.id) {
       setIsLoading(true);
       try {
-        // Always set role to 'owner' for testing purposes
-        setUserRole('owner');
+        // Check the user's role from the profiles table
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        // Set the role from the profiles table, defaulting to 'member' if not found
+        setUserRole((data?.role as UserRole) || 'member');
       } catch (error) {
         console.error("Error fetching user role:", error);
-        setUserRole('owner'); // Default to 'owner' on error
+        // Default to member on error for security purposes
+        setUserRole('member');
       }
       setIsLoading(false);
     } else {

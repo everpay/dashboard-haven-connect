@@ -1,435 +1,290 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { PlusIcon, Mail, Trash2, X, UserPlus, CheckCircle } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
 import { RoleSelector } from '@/components/team/RoleSelector';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { Plus, Search, Filter, Mail, Trash, Edit } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 interface TeamMember {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  avatar_url: string;
+  full_name: string;
   role: string;
+  status: string;
 }
 
 const Team = () => {
-  const { session } = useAuth();
-  const currentUserId = session?.user.id;
-  
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
-  const [sendingInvite, setSendingInvite] = useState(false);
-  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('member');
+  const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (currentUserId) {
-      fetchTeamMembers();
-      fetchPendingInvites();
+  // Fetch team members
+  const { data: teamMembers, isLoading, refetch } = useQuery({
+    queryKey: ['team-members'],
+    queryFn: async () => {
+      // For demo purposes, return mocked data
+      // In a real app, this would fetch from Supabase
+      const mockTeamMembers: TeamMember[] = [
+        {
+          id: '1',
+          email: 'admin@example.com',
+          full_name: 'Admin User',
+          role: 'admin',
+          status: 'active'
+        },
+        {
+          id: '2',
+          email: 'manager@example.com',
+          full_name: 'Manager User',
+          role: 'manager',
+          status: 'active'
+        },
+        {
+          id: '3',
+          email: 'member@example.com',
+          full_name: 'Team Member',
+          role: 'member',
+          status: 'pending'
+        }
+      ];
+      
+      return mockTeamMembers;
     }
-  }, [currentUserId]);
+  });
 
-  const fetchTeamMembers = async () => {
-    setLoading(true);
-    try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) throw profilesError;
-
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-
-      if (rolesError) throw rolesError;
-
-      const rolesMap = rolesData.reduce((acc, role) => {
-        acc[role.user_id] = role.role;
-        return acc;
-      }, {});
-
-      const members = profilesData.map((profile) => ({
-        id: profile.id,
-        email: profile.email || '',
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        avatar_url: profile.avatar_url || '',
-        role: rolesMap[profile.id] || 'member',
-      }));
-
-      setTeamMembers(members);
-    } catch (error) {
-      console.error('Error fetching team members:', error);
-      toast.error('Failed to load team members');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPendingInvites = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('team_invites')
-        .select('*')
-        .eq('status', 'pending');
-
-      if (error) throw error;
-      setPendingInvites(data || []);
-    } catch (error) {
-      console.error('Error fetching pending invites:', error);
-    }
-  };
-
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    setTeamMembers((prev) =>
-      prev.map((member) =>
-        member.id === userId ? { ...member, role: newRole } : member
-      )
-    );
-
-    try {
-      await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: userId,
-          role: newRole
-        });
-        
-      toast.success('Role updated successfully');
-    } catch (error) {
-      console.error('Error updating role:', error);
-      toast.error('Failed to update role');
-    }
-  };
-
-  const handleSendInvite = async () => {
-    if (!inviteEmail.trim()) {
-      toast.error('Please enter an email address');
+  const handleAddMember = async () => {
+    if (!newMemberEmail || !newMemberName) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
       return;
     }
 
-    setSendingInvite(true);
     try {
-      const { data, error } = await supabase
-        .from('team_invites')
-        .insert({
-          email: inviteEmail.toLowerCase().trim(),
-          role: inviteRole,
-          invited_by: currentUserId,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast.success(`Invitation sent to ${inviteEmail}`);
-      setInviteEmail('');
-      setInviteDialogOpen(false);
-      fetchPendingInvites();
+      // Here you would typically call Supabase to create a new team member
+      // For demo, we'll simulate a successful addition
+      toast({
+        title: "Team member invited",
+        description: `An invitation has been sent to ${newMemberEmail}`
+      });
+      
+      setIsAddMemberOpen(false);
+      setNewMemberEmail('');
+      setNewMemberName('');
+      setNewMemberRole('member');
+      refetch();
     } catch (error) {
-      console.error('Error sending invite:', error);
-      toast.error('Failed to send invitation');
-    } finally {
-      setSendingInvite(false);
+      console.error('Error adding team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add team member. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleCancelInvite = async (inviteId: string) => {
-    try {
-      const { error } = await supabase
-        .from('team_invites')
-        .delete()
-        .eq('id', inviteId);
-
-      if (error) throw error;
-
-      toast.success('Invitation canceled');
-      fetchPendingInvites();
-    } catch (error) {
-      console.error('Error canceling invite:', error);
-      toast.error('Failed to cancel invitation');
-    }
+  const handleRemoveMember = (memberId: string) => {
+    // Here you would call Supabase to remove the team member
+    toast({
+      title: "Team member removed",
+      description: "The team member has been removed successfully"
+    });
+    refetch();
   };
 
-  const filteredMembers = searchQuery.trim() === ''
-    ? teamMembers
-    : teamMembers.filter(member => 
-        `${member.first_name} ${member.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const filteredMembers = teamMembers?.filter(member => 
+    member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.role.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Team Management</h1>
-            <p className="text-gray-500">Invite and manage your team members</p>
+            <p className="text-muted-foreground">Manage your team members and their access permissions</p>
           </div>
           <Button 
-            className="bg-[#013c3f]"
-            onClick={() => setInviteDialogOpen(true)}
+            onClick={() => setIsAddMemberOpen(true)}
+            className="bg-[#1AA47B] hover:bg-[#19363B]"
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Invite Member
+            <Plus className="h-4 w-4 mr-2" />
+            Add Team Member
           </Button>
         </div>
-        
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Team Members</h2>
-            <div className="relative w-64">
-              <Input 
-                placeholder="Search members" 
-                className="pr-8" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <svg
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Members</CardTitle>
+            <CardDescription>View and manage your team members and their roles</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search team members"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
-              </svg>
+              </div>
+              <Button variant="outline" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Filter
+              </Button>
             </div>
-          </div>
-          
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={3} className="px-6 py-4 text-center">
-                      <div className="flex justify-center">
-                        <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredMembers.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
-                      {searchQuery.trim() !== '' ? 'No members found matching your search' : 'No team members yet'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredMembers.map((member) => (
-                    <tr key={member.id} className={member.id === currentUserId ? 'bg-gray-50' : ''}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
-                            <AvatarFallback>
-                              {member.first_name.charAt(0)}{member.last_name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {member.first_name} {member.last_name}
-                              {member.id === currentUserId && (
-                                <span className="ml-2 text-xs text-gray-500">(You)</span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-500">{member.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <RoleSelector 
-                          userId={member.id}
-                          currentRole={member.role}
-                          onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          {member.id !== currentUserId && (
-                            <Button variant="ghost" size="sm" className="text-red-500">
-                              <Trash2 className="h-4 w-4" />
+
+            <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
+              <Table>
+                <TableHeader className="bg-gray-50 dark:bg-gray-800">
+                  <TableRow>
+                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Name</TableHead>
+                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Email</TableHead>
+                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Role</TableHead>
+                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Status</TableHead>
+                    <TableHead className="text-xs text-gray-500 dark:text-gray-300 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">Loading team members...</TableCell>
+                    </TableRow>
+                  ) : filteredMembers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">No team members found</TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredMembers.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell className="font-medium dark:text-gray-100">{member.full_name}</TableCell>
+                        <TableCell className="dark:text-gray-300">{member.email}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 rounded-full text-xs capitalize">
+                            {member.role}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            member.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                          }`}>
+                            {member.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900 dark:hover:text-red-300"
+                              onClick={() => handleRemoveMember(member.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: "Invitation resent",
+                                  description: `A new invitation has been sent to ${member.email}`
+                                });
+                              }}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
         </Card>
-        
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Pending Invitations</h2>
-          
-          {pendingInvites.length === 0 ? (
-            <div className="rounded-lg border p-8 text-center">
-              <p className="text-gray-500">No pending invitations</p>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Invite Link</CardTitle>
+            <CardDescription>Share this link to invite people to your organization</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input value="https://everpay.app/invite/org123abc" readOnly className="font-mono" />
+              <Button onClick={() => {
+                navigator.clipboard.writeText("https://everpay.app/invite/org123abc");
+                toast({
+                  title: "Link copied",
+                  description: "Invite link copied to clipboard"
+                });
+              }}>
+                Copy
+              </Button>
             </div>
-          ) : (
-            <div className="rounded-lg border overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invited On</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {pendingInvites.map((invite) => (
-                    <tr key={invite.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{invite.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          invite.role === 'owner' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {invite.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(invite.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-500"
-                          onClick={() => handleCancelInvite(invite.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </CardContent>
         </Card>
       </div>
 
-      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
-            <DialogDescription>
-              Send an invitation to join your team.
-            </DialogDescription>
+            <DialogTitle>Add Team Member</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4 py-2">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email Address
-              </label>
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                placeholder="John Doe"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="colleague@example.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="john@example.com"
+                value={newMemberEmail}
+                onChange={(e) => setNewMemberEmail(e.target.value)}
               />
             </div>
-            
             <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium">
-                Role
-              </label>
-              <Select
-                value={inviteRole}
-                onValueChange={(value) => setInviteRole(value)}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="owner">Owner</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                {inviteRole === 'owner' 
-                  ? 'Owners have full access to all features and settings.'
-                  : 'Members have limited access to features and settings.'}
-              </p>
+              <Label htmlFor="role">Role</Label>
+              <RoleSelector
+                value={newMemberRole}
+                onChange={setNewMemberRole}
+              />
             </div>
           </div>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
             <Button 
-              onClick={handleSendInvite} 
-              disabled={sendingInvite || !inviteEmail.trim()}
-              className="bg-[#013c3f]"
+              className="bg-[#1AA47B] hover:bg-[#19363B]"
+              onClick={handleAddMember}
             >
-              {sendingInvite ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Send Invite
-                </>
-              )}
+              Add Member
             </Button>
           </DialogFooter>
         </DialogContent>

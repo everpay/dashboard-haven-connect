@@ -23,6 +23,7 @@ export const AddCardModal: React.FC<AddCardModalProps> = ({
   };
 
   const handleError = (error: any) => {
+    console.error('Error adding card:', error);
     toast({
       title: "Error",
       description: "There was a problem adding your card. Please try again.",

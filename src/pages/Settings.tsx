@@ -1,26 +1,67 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
+import { useRBAC } from '@/lib/rbac';
+import { useAuth } from '@/lib/auth';
 import PaymentSettings from '@/components/settings/PaymentSettings';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { DeleteAccountSection } from '@/components/settings/DeleteAccountSection';
-import { User, Bell, Shield, CreditCard, Mail, Settings as SettingsIcon, Palette } from 'lucide-react';
+import { User, Bell, Shield, CreditCard, Mail, Settings as SettingsIcon, Palette, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Settings = () => {
   const { toast } = useToast();
+  const { userRole } = useRBAC();
+  const { signOut } = useAuth();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   
   const saveSettings = (section: string) => {
     toast({
       title: `${section} Settings Saved`,
       description: `Your ${section.toLowerCase()} settings have been updated successfully`,
     });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation.toLowerCase() !== 'delete my account') {
+      toast({
+        title: "Error",
+        description: "Please type 'delete my account' to confirm",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been deleted successfully"
+      });
+      signOut();
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeletingAccount(false);
+      setIsDeleteDialogOpen(false);
+    }
   };
 
   return (
@@ -86,6 +127,10 @@ const Settings = () => {
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input id="phone" placeholder="+1 (555) 123-4567" />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="account-type">Account Type</Label>
+                      <Input id="account-type" value={userRole} readOnly className="bg-gray-100 dark:bg-gray-800" />
+                    </div>
                   </div>
                   
                   <Button 
@@ -97,7 +142,30 @@ const Settings = () => {
                 </CardContent>
               </Card>
               
-              <DeleteAccountSection />
+              <Card className="border border-red-200 dark:border-red-900">
+                <CardHeader>
+                  <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5" />
+                    Delete Account
+                  </CardTitle>
+                  <CardDescription>
+                    Permanently delete your account and all associated data
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Deleting your account is permanent and cannot be undone. All your data will be permanently deleted.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    Delete Account
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           </TabsContent>
           
@@ -245,11 +313,110 @@ const Settings = () => {
                 </Button>
               </CardContent>
             </Card>
+            
+            <Card className="mb-6 overflow-hidden dark:bg-gray-900 border dark:border-gray-800">
+              <CardHeader className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+                <CardTitle>Subscription</CardTitle>
+                <CardDescription>
+                  Manage your subscription plan and billing
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="rounded-lg border dark:border-gray-800 overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-gray-50 dark:bg-gray-800">
+                      <TableRow>
+                        <TableHead className="text-xs text-gray-500 dark:text-gray-300">Plan</TableHead>
+                        <TableHead className="text-xs text-gray-500 dark:text-gray-300">Status</TableHead>
+                        <TableHead className="text-xs text-gray-500 dark:text-gray-300">Next Billing</TableHead>
+                        <TableHead className="text-xs text-gray-500 dark:text-gray-300 text-right">Price</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="dark:bg-gray-900">
+                      <TableRow>
+                        <TableCell className="font-medium dark:text-gray-100">Premium Plan</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                            Active
+                          </span>
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">Nov 15, 2023</TableCell>
+                        <TableCell className="text-right dark:text-gray-300">$49.99/mo</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-end">
+                  <Button variant="outline">View Billing History</Button>
+                  <Button className="bg-[#1AA47B] text-white hover:bg-[#19363B]">Upgrade Plan</Button>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" /> Delete Account
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete your account and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              To confirm, type "delete my account" in the field below:
+            </p>
+            <Input
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+              placeholder="delete my account"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAccount}
+              disabled={isDeletingAccount}
+            >
+              {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
+
+// Add missing import for the Table components
+const Table = ({ children }: { children: React.ReactNode }) => (
+  <table className="w-full">{children}</table>
+);
+
+const TableHeader = ({ children }: { children: React.ReactNode }) => (
+  <thead>{children}</thead>
+);
+
+const TableBody = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <tbody className={className}>{children}</tbody>
+);
+
+const TableRow = ({ children }: { children: React.ReactNode }) => (
+  <tr className="border-b dark:border-gray-700">{children}</tr>
+);
+
+const TableHead = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <th className={`px-4 py-3 text-left ${className || ''}`}>{children}</th>
+);
+
+const TableCell = ({ children, className, colSpan }: { children: React.ReactNode, className?: string, colSpan?: number }) => (
+  <td className={`px-4 py-3 ${className || ''}`} colSpan={colSpan}>{children}</td>
+);
 
 export default Settings;

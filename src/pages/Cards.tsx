@@ -71,7 +71,7 @@ const Cards = () => {
   const createVirtualCard = async () => {
     try {
       setIsCreatingCard(true);
-      console.log("Creating virtual card via ItsPaid API...");
+      console.log("Creating virtual card via API...");
       
       // Generate mock data for demo purposes
       const cardToken = `card_${Math.random().toString(36).substring(2, 10)}`;
@@ -93,7 +93,10 @@ const Cards = () => {
         ])
         .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating virtual card:', error);
+        throw error;
+      }
       
       toast({
         title: "Virtual card created",
@@ -303,18 +306,18 @@ const Cards = () => {
                     </div>
                   </div>
                   
-                  <div className="overflow-x-auto rounded-lg border">
+                  <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
                     <table className="w-full">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Card Details</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Card Details</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Expiration</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                         {isLoading ? (
                           <tr>
                             <td colSpan={5} className="px-6 py-4 text-center">
@@ -332,24 +335,24 @@ const Cards = () => {
                             <tr key={card.id}>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <CreditCard className="h-4 w-4 text-blue-600" />
+                                  <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <CreditCard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                   </div>
                                   <div className="ml-4">
-                                    <div className="text-sm font-medium text-gray-900">Virtual Card</div>
-                                    <div className="text-sm text-gray-500">•••• {formatCardToken(card.card_token)}</div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Virtual Card</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">•••• {formatCardToken(card.card_token)}</div>
                                   </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">{card.card_type || 'Virtual'}</div>
+                                <div className="text-sm text-gray-900 dark:text-gray-100">{card.card_type || 'Virtual'}</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">{card.expiration || 'MM/YY'}</div>
+                                <div className="text-sm text-gray-900 dark:text-gray-100">{card.expiration || 'MM/YY'}</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  card.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  card.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                                 }`}>
                                   {card.status || 'Active'}
                                 </span>
@@ -361,7 +364,7 @@ const Cards = () => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                            <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                               No cards found
                             </td>
                           </tr>
@@ -372,7 +375,7 @@ const Cards = () => {
                   
                   {countData && countData > 0 && (
                     <div className="flex items-center justify-between mt-6">
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         Showing <span className="font-medium">{offset + 1}</span> to{' '}
                         <span className="font-medium">{Math.min(offset + limit, countData)}</span> of{' '}
                         <span className="font-medium">{countData}</span> results
