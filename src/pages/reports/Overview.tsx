@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { logIpEvent } from "@/utils/logIpEvent";
 import CountUp from 'react-countup';
 import { InteractiveBarChart } from "@/components/charts/InteractiveBarChart";
+import { TimeframeSelector } from "@/components/charts/TimeframeSelector";
+import { TimeframeOption, formatDateRange, filterDataByTimeframe, getStartDateFromTimeframe } from "@/utils/timeframeUtils";
 
 type TransactionData = {
   date: string;
@@ -22,6 +24,7 @@ type TransactionData = {
 const Overview = () => {
   const { session } = useAuth();
   const userId = session?.user?.id;
+  const [timeframe, setTimeframe] = useState<TimeframeOption>('7days');
 
   // Log page view
   useEffect(() => {
@@ -98,13 +101,17 @@ const Overview = () => {
     enabled: !!userId,
   });
 
+  // Filter data by selected timeframe
+  const filteredTransactionData = transactionData ? 
+    filterDataByTimeframe(transactionData, timeframe) : [];
+
   // Calculate totals for CountUp components
-  const totalTransactions = transactionData?.reduce((sum, item) => sum + item.count, 0) || 0;
-  const totalRevenue = transactionData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+  const totalTransactions = filteredTransactionData.reduce((sum, item) => sum + item.count, 0) || 0;
+  const totalRevenue = filteredTransactionData.reduce((sum, item) => sum + item.amount, 0) || 0;
   const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
   // Format data for interactive bar chart
-  const barChartData = transactionData?.map(item => ({
+  const barChartData = filteredTransactionData.map(item => ({
     name: item.date,
     value: item.amount
   })) || [];
@@ -122,15 +129,22 @@ const Overview = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Reports Overview</h1>
-          <p className="text-muted-foreground">View key metrics and analytics for your business</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Reports Overview</h1>
+            <p className="text-muted-foreground text-sm">View key metrics and analytics for your business</p>
+          </div>
+          <TimeframeSelector 
+            currentTimeframe={timeframe} 
+            onTimeframeChange={setTimeframe} 
+            className="mt-2 md:mt-0"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6">
-            <h3 className="font-medium text-lg mb-2">Total Transactions</h3>
-            <p className="text-3xl font-bold">
+          <Card className="p-4">
+            <h3 className="font-medium text-sm mb-1">Total Transactions</h3>
+            <p className="text-xl font-bold">
               <CountUp
                 end={totalTransactions}
                 separator=","
@@ -140,9 +154,9 @@ const Overview = () => {
             </p>
           </Card>
           
-          <Card className="p-6">
-            <h3 className="font-medium text-lg mb-2">Total Revenue</h3>
-            <p className="text-3xl font-bold">
+          <Card className="p-4">
+            <h3 className="font-medium text-sm mb-1">Total Revenue</h3>
+            <p className="text-xl font-bold">
               $<CountUp
                 end={totalRevenue}
                 separator=","
@@ -153,9 +167,9 @@ const Overview = () => {
             </p>
           </Card>
           
-          <Card className="p-6">
-            <h3 className="font-medium text-lg mb-2">Avg. Transaction Value</h3>
-            <p className="text-3xl font-bold">
+          <Card className="p-4">
+            <h3 className="font-medium text-sm mb-1">Avg. Transaction Value</h3>
+            <p className="text-xl font-bold">
               $<CountUp
                 end={avgTransactionValue}
                 separator=","
@@ -169,17 +183,23 @@ const Overview = () => {
 
         <InteractiveBarChart 
           title="Transaction History"
-          description="Sales volume by day"
+          description={`Sales volume by day (${formatDateRange(timeframe)})`}
           data={barChartData}
           className="mb-6"
           valuePrefix="$"
         />
 
-        <Card className="p-6">
-          <h3 className="font-medium text-lg mb-4">Transaction History</h3>
+        <Card className="p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium text-base">Transaction History</h3>
+            <TimeframeSelector 
+              currentTimeframe={timeframe} 
+              onTimeframeChange={setTimeframe}
+            />
+          </div>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={transactionData}>
+              <LineChart data={filteredTransactionData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
@@ -203,8 +223,8 @@ const Overview = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="font-medium text-lg mb-4">Sales by Payment Method</h3>
+        <Card className="p-4">
+          <h3 className="font-medium text-base mb-4">Sales by Payment Method</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={paymentMethodsData}>

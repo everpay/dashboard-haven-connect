@@ -7,7 +7,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { InteractiveBarChart } from "@/components/charts/InteractiveBarChart";
 import { useAuth } from "@/lib/auth";
+import { TimeframeSelector } from "@/components/charts/TimeframeSelector";
+import { TimeframeOption, formatDateRange, filterDataByTimeframe } from "@/utils/timeframeUtils";
 import CountUp from 'react-countup';
+import { format, isToday } from 'date-fns';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,10 +19,15 @@ const Index = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [paymentMethodData, setPaymentMethodData] = useState<any[]>([]);
+  const [timeframe, setTimeframe] = useState<TimeframeOption>('7days');
   const [balanceData, setBalanceData] = useState({
     available: 10540.50,
     reserved: 1250.75,
     net: 9289.75
+  });
+  const [todayTransactions, setTodayTransactions] = useState({
+    count: 0,
+    amount: 0
   });
 
   useEffect(() => {
@@ -54,36 +62,53 @@ const Index = () => {
         setTransactions(transactionData || []);
         
         // Get data for the interactive bar chart - monthly sales
-        const { data: monthlySales, error: monthlySalesError } = await supabase
+        const { data: allTransactions, error: allTransactionsError } = await supabase
           .from('marqeta_transactions')
           .select('created_at, amount');
           
-        if (monthlySalesError) throw monthlySalesError;
+        if (allTransactionsError) throw allTransactionsError;
         
-        // Process data for chart
-        const lastSixMonths: Record<string, number> = {};
-        const now = new Date();
+        // Count today's transactions
+        const today = new Date();
+        const todayString = format(today, 'yyyy-MM-dd');
         
-        // Initialize last 6 months with zero values
-        for (let i = 5; i >= 0; i--) {
-          const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const monthName = month.toLocaleString('default', { month: 'short' });
-          lastSixMonths[monthName] = 0;
-        }
+        let todayCount = 0;
+        let todayAmount = 0;
         
-        // Aggregate data by month
-        monthlySales?.forEach((tx: any) => {
-          const date = new Date(tx.created_at);
-          const monthName = date.toLocaleString('default', { month: 'short' });
-          if (lastSixMonths[monthName] !== undefined) {
-            lastSixMonths[monthName] += Number(tx.amount) || 0;
+        allTransactions?.forEach((tx: any) => {
+          if (tx.created_at && tx.created_at.startsWith(todayString)) {
+            todayCount++;
+            todayAmount += Number(tx.amount) || 0;
+          }
+        });
+        
+        setTodayTransactions({
+          count: todayCount,
+          amount: todayAmount
+        });
+        
+        // Process data for chart based on selected timeframe
+        const dateData: Record<string, number> = {};
+        
+        // Group by date
+        allTransactions?.forEach((tx: any) => {
+          if (tx.created_at) {
+            const date = new Date(tx.created_at);
+            const dateKey = format(date, 'MMM d');
+            
+            if (!dateData[dateKey]) {
+              dateData[dateKey] = 0;
+            }
+            
+            dateData[dateKey] += Number(tx.amount) || 0;
           }
         });
         
         // Convert to chart data format
-        const chartData = Object.entries(lastSixMonths).map(([name, value]) => ({
+        const chartData = Object.entries(dateData).map(([name, value]) => ({
           name,
-          value: Number(value.toFixed(2))
+          value: Number(value.toFixed(2)),
+          date: name // Add date for filtering
         }));
         
         setChartData(chartData);
@@ -104,6 +129,9 @@ const Index = () => {
     testSupabase();
     fetchTransactionData();
   }, []);
+
+  // Filter chart data based on selected timeframe
+  const filteredChartData = filterDataByTimeframe(chartData, timeframe);
 
   if (error) {
     return (
@@ -150,18 +178,24 @@ const Index = () => {
   return (
     <DashboardLayout>
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <TimeframeSelector 
+            currentTimeframe={timeframe} 
+            onTimeframeChange={setTimeframe}
+          />
+        </div>
         
         {/* Balance Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Available Balance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl font-bold">
                 $<CountUp 
                   end={balanceData.available} 
                   separator="," 
@@ -174,12 +208,12 @@ const Index = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Net Balance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl font-bold">
                 $<CountUp 
                   end={balanceData.net} 
                   separator="," 
@@ -192,12 +226,12 @@ const Index = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Reserve Balance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl font-bold">
                 $<CountUp 
                   end={balanceData.reserved} 
                   separator="," 
@@ -208,22 +242,48 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                Today's Transactions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-bold">
+                <CountUp 
+                  end={todayTransactions.count} 
+                  separator="," 
+                  duration={1.5}
+                  preserveValue
+                />
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                ${todayTransactions.amount.toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="md:col-span-2">
+            <div className="flex justify-between items-center mb-2">
+              <div>
+                <h2 className="text-lg font-semibold">Monthly Sales</h2>
+                <p className="text-xs text-muted-foreground">{formatDateRange(timeframe)}</p>
+              </div>
+            </div>
             <InteractiveBarChart 
               title="Monthly Sales" 
-              description="Revenue over the last 6 months"
-              data={chartData}
+              description="Revenue over the selected period"
+              data={filteredChartData}
               valuePrefix="$"
             />
           </div>
           
           <Card>
             <CardHeader>
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Revenue by payment method</CardDescription>
+              <CardTitle className="text-sm">Payment Methods</CardTitle>
+              <CardDescription className="text-xs">Revenue by payment method</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -234,9 +294,9 @@ const Index = () => {
                         method.name === "Credit Card" ? "bg-[#1AA47B]" : 
                         method.name === "ACH" ? "bg-[#19363B]" : "bg-blue-500"
                       }`}></div>
-                      <span>{method.name}</span>
+                      <span className="text-sm">{method.name}</span>
                     </div>
-                    <span className="font-medium">${method.value.toLocaleString()}</span>
+                    <span className="text-sm font-medium">${method.value.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -244,7 +304,7 @@ const Index = () => {
             <CardFooter className="pt-0">
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full text-sm"
                 onClick={() => navigate('/reports/overview')}
               >
                 View Full Report
@@ -258,12 +318,13 @@ const Index = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Recent Transactions</CardTitle>
-                  <CardDescription>Your latest payment activity</CardDescription>
+                  <CardTitle className="text-sm">Recent Transactions</CardTitle>
+                  <CardDescription className="text-xs">Your latest payment activity</CardDescription>
                 </div>
                 <Button 
                   variant="outline"
                   size="sm"
+                  className="text-xs"
                   onClick={() => navigate('/transactions')}
                 >
                   View All
@@ -275,16 +336,16 @@ const Index = () => {
                     transactions.map((tx, i) => (
                       <div key={i} className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
                         <div className="flex flex-col">
-                          <span className="font-medium">{tx.merchant_name || 'Unknown Merchant'}</span>
-                          <span className="text-sm text-muted-foreground">{formatTimeAgo(tx.created_at)}</span>
+                          <span className="text-sm font-medium text-gray-900">{tx.merchant_name || 'Unknown Merchant'}</span>
+                          <span className="text-xs text-muted-foreground">{formatTimeAgo(tx.created_at)}</span>
                         </div>
-                        <span className={`font-medium ${Number(tx.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                        <span className={`text-sm font-medium ${Number(tx.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}>
                           ${Number(tx.amount).toFixed(2)}
                         </span>
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">
+                    <div className="text-center py-4 text-muted-foreground text-sm">
                       No recent transactions
                     </div>
                   )}
@@ -295,34 +356,34 @@ const Index = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common tasks and tools</CardDescription>
+              <CardTitle className="text-sm">Quick Actions</CardTitle>
+              <CardDescription className="text-xs">Common tasks and tools</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2">
               <Button 
                 onClick={() => navigate('/payment-link')}
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 variant="outline"
               >
                 Create Payment Link
               </Button>
               <Button 
                 onClick={() => navigate('/invoicing')}
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 variant="outline"
               >
                 Send Invoice
               </Button>
               <Button 
                 onClick={() => navigate('/payouts')}
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 variant="outline"
               >
                 Make Payout
               </Button>
               <Button 
                 onClick={() => navigate('/customers')}
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 variant="outline"
               >
                 Manage Customers
@@ -330,8 +391,8 @@ const Index = () => {
             </CardContent>
             <CardFooter className="flex justify-between border-t pt-4">
               <div>
-                <p className="text-sm font-medium">Available Balance</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs font-medium">Available Balance</p>
+                <p className="text-lg font-bold">
                   $<CountUp 
                     end={balanceData.available} 
                     separator="," 
@@ -343,7 +404,7 @@ const Index = () => {
               </div>
               <Button 
                 onClick={() => navigate('/banking')}
-                className="bg-[#1AA47B] hover:bg-[#19363B]"
+                className="bg-[#1AA47B] hover:bg-[#19363B] text-sm"
               >
                 Transfer
               </Button>
