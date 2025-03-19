@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -14,7 +15,10 @@ import {
   ChevronRight,
   ArrowUpRight,
   User,
-  ArrowDown
+  ArrowDown,
+  DollarSign,
+  ArrowDownLeft,
+  ArrowUpLeft
 } from 'lucide-react';
 import { SidebarLink, SubLink } from './SidebarLink';
 import { SidebarMenuGroup } from './SidebarMenuGroup';
@@ -37,6 +41,7 @@ export const Sidebar = () => {
     transactions: false,
     customers: false,
     settings: false,
+    wallet: false
   });
   
   const toggleMenuGroup = (group: keyof typeof menuGroups) => {
@@ -53,6 +58,8 @@ export const Sidebar = () => {
       setMenuGroups(prev => ({ ...prev, customers: true }));
     } else if (activePath.includes('/account') || activePath.includes('/team') || activePath.includes('/cards') || activePath.includes('/billing') || activePath.includes('/bank-accounts')) {
       setMenuGroups(prev => ({ ...prev, settings: true }));
+    } else if (activePath.includes('/banking') || activePath.includes('/payins') || activePath.includes('/payouts')) {
+      setMenuGroups(prev => ({ ...prev, wallet: true }));
     }
   }, [activePath]);
   
@@ -187,14 +194,37 @@ export const Sidebar = () => {
             />
           </SidebarMenuGroup>
           
-          <SidebarLink
-            to="/banking"
+          <SidebarMenuGroup
+            title="Wallet"
             icon={<Wallet className="h-4 w-4" />}
-            label="Wallet"
-            isActive={activePath === '/banking'}
             expanded={expanded}
-            onClick={() => navigateTo('/banking')}
-          />
+            isOpen={menuGroups.wallet}
+            toggleOpen={() => toggleMenuGroup('wallet')}
+            activePath={activePath}
+            closeMobile={isMobile ? closeMobile : undefined}
+          >
+            <SubLink
+              to="/banking"
+              label="Overview"
+              isActive={activePath === '/banking'}
+              expanded={expanded}
+              onClick={() => navigateTo('/banking')}
+            />
+            <SubLink
+              to="/payins"
+              label="Pay-ins"
+              isActive={activePath === '/payins'}
+              expanded={expanded}
+              onClick={() => navigateTo('/payins')}
+            />
+            <SubLink
+              to="/payouts"
+              label="Payouts"
+              isActive={activePath === '/payouts'}
+              expanded={expanded}
+              onClick={() => navigateTo('/payouts')}
+            />
+          </SidebarMenuGroup>
           
           <SidebarLink
             to="/invoicing"
