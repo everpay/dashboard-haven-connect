@@ -13,7 +13,7 @@ const alertVariants = cva(
         destructive:
           "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
         success: 
-          "bg-[hsl(var(--alert-success-background))] border-[hsl(var(--alert-success-border))] text-[hsl(var(--alert-success-foreground))] [&>svg]:text-[hsl(var(--alert-success-foreground))]",
+          "bg-[hsl(var(--alert-success-background))] border-[hsl(var(--alert-success-border))] text-white [&>svg]:text-white",
       },
     },
     defaultVariants: {

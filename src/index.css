@@ -178,3 +178,8 @@
 .text-emerald-600, .text-emerald-700 {
   color: hsl(var(--alert-success-foreground));
 }
+
+/* Fix for alert text color */
+.text-[hsl(var(--alert-success-foreground))] {
+  color: #FFFFFF !important;
+}

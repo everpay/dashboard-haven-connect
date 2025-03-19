@@ -250,76 +250,78 @@ const RecurringInvoices = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Frequency</TableHead>
-                    <TableHead>Next Invoice</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recurringInvoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.name}</TableCell>
-                      <TableCell>
-                        <div>{invoice.customer.name}</div>
-                        <div className="text-xs text-gray-500">{invoice.customer.email}</div>
-                      </TableCell>
-                      <TableCell>
-                        ${invoice.amount.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <FrequencyText frequency={invoice.frequency} />
-                      </TableCell>
-                      <TableCell>
-                        {invoice.next_invoice_date}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={invoice.status} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit2 className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            {invoice.status === 'active' ? (
-                              <DropdownMenuItem onClick={() => handleStatusChange(invoice.id, 'paused')}>
-                                <Clock className="h-4 w-4 mr-2" />
-                                Pause
-                              </DropdownMenuItem>
-                            ) : invoice.status === 'paused' ? (
-                              <DropdownMenuItem onClick={() => handleStatusChange(invoice.id, 'active')}>
-                                <Clock className="h-4 w-4 mr-2" />
-                                Resume
-                              </DropdownMenuItem>
-                            ) : null}
-                            <DropdownMenuItem onClick={() => handleStatusChange(invoice.id, 'cancelled')}>
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Cancel
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(invoice.id)}>
-                              <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-                              <span className="text-red-500">Delete</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead>Next Invoice</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {recurringInvoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.name}</TableCell>
+                        <TableCell>
+                          <div>{invoice.customer.name}</div>
+                          <div className="text-xs text-gray-500">{invoice.customer.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          ${invoice.amount.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <FrequencyText frequency={invoice.frequency} />
+                        </TableCell>
+                        <TableCell>
+                          {invoice.next_invoice_date}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={invoice.status} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Edit2 className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              {invoice.status === 'active' ? (
+                                <DropdownMenuItem onClick={() => handleStatusChange(invoice.id, 'paused')}>
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Pause
+                                </DropdownMenuItem>
+                              ) : invoice.status === 'paused' ? (
+                                <DropdownMenuItem onClick={() => handleStatusChange(invoice.id, 'active')}>
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Resume
+                                </DropdownMenuItem>
+                              ) : null}
+                              <DropdownMenuItem onClick={() => handleStatusChange(invoice.id, 'cancelled')}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Cancel
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDelete(invoice.id)}>
+                                <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                                <span className="text-red-500">Delete</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
               <div className="flex items-center justify-between w-full">

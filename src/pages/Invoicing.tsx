@@ -286,14 +286,10 @@ const Invoicing = () => {
         }
       ];
 
-      let invoiceId = 1001;
       for (const invoice of testInvoices) {
         const { data, error } = await supabase
           .from('invoices')
-          .insert([{
-            id: invoiceId,
-            ...invoice
-          }])
+          .insert([invoice])
           .select();
         
         if (error) {
@@ -312,8 +308,6 @@ const Invoicing = () => {
               amount: invoice.total_amount
             }]);
         }
-        
-        invoiceId++;
       }
 
       return { success: true };
@@ -349,20 +343,9 @@ const Invoicing = () => {
 
   const createInvoice = useMutation({
     mutationFn: async (values: InvoiceFormValues) => {
-      const { data: maxIdData, error: maxIdError } = await supabase
-        .from('invoices')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(1);
-      
-      if (maxIdError) throw maxIdError;
-      
-      const nextId = maxIdData && maxIdData.length > 0 ? Number(maxIdData[0].id) + 1 : 1001;
-      
       const { data, error } = await supabase
         .from('invoices')
         .insert([{
-          id: nextId,
           merchant_id: (await supabase.auth.getUser()).data.user?.id,
           customer_name: values.customer_name,
           customer_email: values.customer_email,
@@ -375,19 +358,21 @@ const Invoicing = () => {
       
       if (error) throw error;
       
-      const { error: itemError } = await supabase
-        .from('invoice_items')
-        .insert([{
-          invoice_id: nextId,
-          description: "Service",
-          quantity: 1,
-          unit_price: Number(values.total_amount),
-          amount: Number(values.total_amount)
-        }]);
-        
-      if (itemError) throw itemError;
+      if (data && data.length > 0) {
+        const { error: itemError } = await supabase
+          .from('invoice_items')
+          .insert([{
+            invoice_id: data[0].id,
+            description: "Service",
+            quantity: 1,
+            unit_price: Number(values.total_amount),
+            amount: Number(values.total_amount)
+          }]);
+          
+        if (itemError) throw itemError;
+      }
       
-      return data[0];
+      return data?.[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
