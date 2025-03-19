@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { logIpEvent } from "@/utils/logIpEvent";
 import CountUp from 'react-countup';
+import { InteractiveBarChart } from "@/components/charts/InteractiveBarChart";
 
 type TransactionData = {
   date: string;
@@ -102,6 +103,12 @@ const Overview = () => {
   const totalRevenue = transactionData?.reduce((sum, item) => sum + item.amount, 0) || 0;
   const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
+  // Format data for interactive bar chart
+  const barChartData = transactionData?.map(item => ({
+    name: item.date,
+    value: item.amount
+  })) || [];
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -159,6 +166,14 @@ const Overview = () => {
             </p>
           </Card>
         </div>
+
+        <InteractiveBarChart 
+          title="Transaction History"
+          description="Sales volume by day"
+          data={barChartData}
+          className="mb-6"
+          valuePrefix="$"
+        />
 
         <Card className="p-6">
           <h3 className="font-medium text-lg mb-4">Transaction History</h3>

@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import PaymentSettings from '@/components/settings/PaymentSettings';
-import { User, Bell, Shield, CreditCard, Mail, Settings as SettingsIcon } from 'lucide-react';
+import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
+import { DeleteAccountSection } from '@/components/settings/DeleteAccountSection';
+import { User, Bell, Shield, CreditCard, Mail, Settings as SettingsIcon, Palette } from 'lucide-react';
 
 const Settings = () => {
   const { toast } = useToast();
@@ -26,11 +28,11 @@ const Settings = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-gray-500">Manage your account settings and preferences</p>
+          <p className="text-muted-foreground">Manage your account settings and preferences</p>
         </div>
         
-        <Tabs defaultValue="payment" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-4xl">
+        <Tabs defaultValue="account" className="space-y-6">
+          <TabsList className="grid grid-cols-6 w-full max-w-4xl">
             <TabsTrigger value="account">
               <User className="h-4 w-4 mr-2" />
               Account
@@ -38,6 +40,10 @@ const Settings = () => {
             <TabsTrigger value="payment">
               <CreditCard className="h-4 w-4 mr-2" />
               Payment
+            </TabsTrigger>
+            <TabsTrigger value="appearance">
+              <Palette className="h-4 w-4 mr-2" />
+              Appearance
             </TabsTrigger>
             <TabsTrigger value="notifications">
               <Bell className="h-4 w-4 mr-2" />
@@ -54,45 +60,53 @@ const Settings = () => {
           </TabsList>
           
           <TabsContent value="account">
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>
-                  Manage your personal account information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" placeholder="John Doe" />
+            <div className="grid gap-6">
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Account Settings</CardTitle>
+                  <CardDescription>
+                    Manage your personal account information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input id="name" placeholder="John Doe" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input id="email" type="email" placeholder="john@example.com" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company Name</Label>
+                      <Input id="company" placeholder="Acme Inc." />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input id="phone" placeholder="+1 (555) 123-4567" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="john@example.com" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company Name</Label>
-                    <Input id="company" placeholder="Acme Inc." />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" placeholder="+1 (555) 123-4567" />
-                  </div>
-                </div>
-                
-                <Button 
-                  className="mt-4 bg-[#1AA47B] text-white hover:bg-[#19363B]"
-                  onClick={() => saveSettings('Account')}
-                >
-                  Save Account Settings
-                </Button>
-              </CardContent>
-            </Card>
+                  
+                  <Button 
+                    className="mt-4 bg-[#1AA47B] text-white hover:bg-[#19363B]"
+                    onClick={() => saveSettings('Account')}
+                  >
+                    Save Account Settings
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <DeleteAccountSection />
+            </div>
           </TabsContent>
           
           <TabsContent value="payment">
             <PaymentSettings />
+          </TabsContent>
+          
+          <TabsContent value="appearance">
+            <AppearanceSettings />
           </TabsContent>
           
           <TabsContent value="notifications">
@@ -107,7 +121,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="email-notifications">Email Notifications</Label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Receive notifications via email
                     </p>
                   </div>
@@ -117,7 +131,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="payment-notifications">Payment Alerts</Label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Get notified about new payments and payment status changes
                     </p>
                   </div>
@@ -127,7 +141,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="marketing-emails">Marketing Emails</Label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Receive updates about new features and promotions
                     </p>
                   </div>
@@ -171,7 +185,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between mt-4">
                   <div className="space-y-0.5">
                     <Label htmlFor="two-factor">Two-Factor Authentication</Label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Add an extra layer of security to your account
                     </p>
                   </div>
@@ -203,7 +217,7 @@ const Settings = () => {
                     <Input id="api-key" value="sk_test_••••••••••••••••••••••••" readOnly className="rounded-r-none" />
                     <Button variant="outline" className="rounded-l-none">Copy</Button>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     This is your secret API key. Keep it confidential.
                   </p>
                 </div>
@@ -216,7 +230,7 @@ const Settings = () => {
                 <div className="flex items-center justify-between mt-4">
                   <div className="space-y-0.5">
                     <Label htmlFor="webhook-active">Webhook Enabled</Label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Receive real-time notifications via webhooks
                     </p>
                   </div>
