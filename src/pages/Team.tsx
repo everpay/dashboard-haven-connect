@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,12 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { RoleSelector } from '@/components/team/RoleSelector';
 import { Plus, Search, Filter, Mail, Trash, Edit } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+
+// Custom TableCell component that supports colSpan
+interface CustomTableCellProps {
+  children: React.ReactNode;
+  className?: string;
+  colSpan?: number;
+}
+
+const CustomTableCell: React.FC<CustomTableCellProps> = ({ children, className, colSpan }) => (
+  <td className={`px-4 py-3 ${className || ''}`} colSpan={colSpan}>
+    {children}
+  </td>
+);
 
 interface TeamMember {
   id: string;
@@ -144,43 +157,47 @@ const Team = () => {
             </div>
 
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
-              <Table>
-                <TableHeader className="bg-gray-50 dark:bg-gray-800">
-                  <TableRow>
-                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Name</TableHead>
-                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Email</TableHead>
-                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Role</TableHead>
-                    <TableHead className="text-xs text-gray-500 dark:text-gray-300">Status</TableHead>
-                    <TableHead className="text-xs text-gray-500 dark:text-gray-300 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="px-4 py-3 text-xs text-gray-500 dark:text-gray-300 text-left">Name</th>
+                    <th className="px-4 py-3 text-xs text-gray-500 dark:text-gray-300 text-left">Email</th>
+                    <th className="px-4 py-3 text-xs text-gray-500 dark:text-gray-300 text-left">Role</th>
+                    <th className="px-4 py-3 text-xs text-gray-500 dark:text-gray-300 text-left">Status</th>
+                    <th className="px-4 py-3 text-xs text-gray-500 dark:text-gray-300 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">Loading team members...</TableCell>
-                    </TableRow>
+                    <tr>
+                      <CustomTableCell colSpan={5} className="text-center py-4">
+                        Loading team members...
+                      </CustomTableCell>
+                    </tr>
                   ) : filteredMembers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">No team members found</TableCell>
-                    </TableRow>
+                    <tr>
+                      <CustomTableCell colSpan={5} className="text-center py-4">
+                        No team members found
+                      </CustomTableCell>
+                    </tr>
                   ) : (
                     filteredMembers.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium dark:text-gray-100">{member.full_name}</TableCell>
-                        <TableCell className="dark:text-gray-300">{member.email}</TableCell>
-                        <TableCell>
+                      <tr key={member.id}>
+                        <td className="px-4 py-3 font-medium dark:text-gray-100">{member.full_name}</td>
+                        <td className="px-4 py-3 dark:text-gray-300">{member.email}</td>
+                        <td className="px-4 py-3">
                           <span className="px-2 py-1 rounded-full text-xs capitalize">
                             {member.role}
                           </span>
-                        </TableCell>
-                        <TableCell>
+                        </td>
+                        <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             member.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
                           }`}>
                             {member.status}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </td>
+                        <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="sm">
                               <Edit className="h-4 w-4" />
@@ -206,12 +223,12 @@ const Team = () => {
                               <Mail className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     ))
                   )}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           </CardContent>
         </Card>
@@ -266,9 +283,8 @@ const Team = () => {
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <RoleSelector
-                value={newMemberRole}
-                onChange={setNewMemberRole}
                 currentRole={newMemberRole}
+                onRoleChange={setNewMemberRole}
               />
             </div>
           </div>

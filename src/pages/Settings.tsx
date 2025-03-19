@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,13 +9,24 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { PaymentSettings } from '@/components/settings/PaymentSettings';
+import { 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, 
+  AlertDialogTitle, AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
+import PaymentSettings from '@/components/settings/PaymentSettings';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { DeleteAccountSection } from '@/components/settings/DeleteAccountSection';
 import { useAuth } from '@/lib/auth';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  User, CreditCard, Palette, Bell, Shield, Settings as SettingsIcon, 
+  AlertTriangle, ArrowUpRight, ChevronLeft, ChevronRight, ArrowDown 
+} from 'lucide-react';
 import { useRBAC } from '@/lib/rbac';
+import { 
+  Dialog, DialogContent, DialogDescription, 
+  DialogFooter, DialogHeader, DialogTitle 
+} from '@/components/ui/dialog';
 
 const Settings = () => {
   const { toast } = useToast();
@@ -374,75 +385,51 @@ const Settings = () => {
   );
 };
 
-const Table = ({ children }: { children: React.ReactNode }) => (
-  <table className="w-full">{children}</table>
-);
-
-const TableHeader = ({ children }: { children: React.ReactNode }) => (
-  <thead>{children}</thead>
-);
-
-const TableBody = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <tbody className={className}>{children}</tbody>
-);
-
-const TableRow = ({ children }: { children: React.ReactNode }) => (
-  <tr className="border-b dark:border-gray-700">{children}</tr>
-);
-
-const TableHead = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-  <th className={`px-4 py-3 text-left ${className || ''}`}>{children}</th>
-);
-
-const TableCell = ({ children, className, colSpan }: { children: React.ReactNode, className?: string, colSpan?: number }) => (
-  <td className={`px-4 py-3 ${className || ''}`} colSpan={colSpan}>{children}</td>
-);
-
 const SubscriptionTable = () => {
   return (
     <div className="rounded-md border border-gray-700 overflow-hidden">
-      <Table>
-        <TableHead className="bg-gray-800">
-          <TableRow>
-            <TableHeader>Date</TableHeader>
-            <TableHeader>Type</TableHeader>
-            <TableHeader>Amount</TableHeader>
-            <TableHeader>Status</TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBody className="bg-gray-900 text-white">
-          <TableRow>
-            <TableCell>Sept 1, 2023</TableCell>
-            <TableCell>Monthly Subscription</TableCell>
-            <TableCell>$49.00</TableCell>
-            <TableCell>
+      <table className="w-full">
+        <thead className="bg-gray-800">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs text-gray-300">Date</th>
+            <th className="px-4 py-3 text-left text-xs text-gray-300">Type</th>
+            <th className="px-4 py-3 text-left text-xs text-gray-300">Amount</th>
+            <th className="px-4 py-3 text-left text-xs text-gray-300">Status</th>
+          </tr>
+        </thead>
+        <tbody className="bg-gray-900 text-white divide-y divide-gray-700">
+          <tr className="border-b dark:border-gray-700">
+            <td className="px-4 py-3">Sept 1, 2023</td>
+            <td className="px-4 py-3">Monthly Subscription</td>
+            <td className="px-4 py-3">$49.00</td>
+            <td className="px-4 py-3">
               <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
                 Paid
               </span>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Aug 1, 2023</TableCell>
-            <TableCell>Monthly Subscription</TableCell>
-            <TableCell>$49.00</TableCell>
-            <TableCell>
+            </td>
+          </tr>
+          <tr className="border-b dark:border-gray-700">
+            <td className="px-4 py-3">Aug 1, 2023</td>
+            <td className="px-4 py-3">Monthly Subscription</td>
+            <td className="px-4 py-3">$49.00</td>
+            <td className="px-4 py-3">
               <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
                 Paid
               </span>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>Jul 1, 2023</TableCell>
-            <TableCell>Monthly Subscription</TableCell>
-            <TableCell>$49.00</TableCell>
-            <TableCell>
+            </td>
+          </tr>
+          <tr className="border-b dark:border-gray-700">
+            <td className="px-4 py-3">Jul 1, 2023</td>
+            <td className="px-4 py-3">Monthly Subscription</td>
+            <td className="px-4 py-3">$49.00</td>
+            <td className="px-4 py-3">
               <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
                 Paid
               </span>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 };

@@ -21,7 +21,7 @@ export function RBACProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Fix the type comparison by properly checking admin roles
-  const isAdmin = userRole === 'owner' || userRole === 'admin';
+  const isAdmin = ['owner', 'admin'].includes(userRole as string);
   // Fix for isMember by checking if userRole is 'member' or if isAdmin is true
   const isMember = userRole === 'member' || isAdmin;
 
