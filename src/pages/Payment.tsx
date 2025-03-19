@@ -17,6 +17,25 @@ const Payment = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load VGS Collect script if not already loaded
+    if (!document.getElementById('vgs-collect-script') && !document.getElementById('vgs-collect-script-alt')) {
+      console.log("Loading VGS Collect script from Payment page...");
+      const script = document.createElement('script');
+      script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
+      script.id = 'vgs-collect-script';
+      script.async = true;
+      script.onerror = (e) => {
+        console.error("Failed to load VGS Collect script:", e);
+        // Try alternative CDN
+        const altScript = document.createElement('script');
+        altScript.src = 'https://js.verygoodvault.com/vgs-collect/vgs-collect-latest.min.js';
+        altScript.id = 'vgs-collect-script-alt';
+        altScript.async = true;
+        document.body.appendChild(altScript);
+      };
+      document.body.appendChild(script);
+    }
+
     const fetchPaymentData = async () => {
       try {
         if (!paymentId) {

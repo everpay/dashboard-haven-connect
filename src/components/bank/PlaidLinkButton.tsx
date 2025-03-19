@@ -31,6 +31,7 @@ declare global {
         exit: () => void;
       };
     };
+    VGSCollect?: any;
   }
 }
 
@@ -50,39 +51,81 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
   children
 }) => {
   const [isPlaidLoaded, setIsPlaidLoaded] = useState(false);
+  const [isVGSLoaded, setIsVGSLoaded] = useState(false);
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { toast } = useToast();
 
-  // Load Plaid Link script
+  // Load all required scripts: Plaid Link and VGS Collect
   useEffect(() => {
-    // Only load if not already loaded
-    if (!document.getElementById('plaid-link-script')) {
-      console.log("Loading Plaid Link script...");
-      const script = document.createElement('script');
-      script.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
-      script.id = 'plaid-link-script';
-      script.async = true;
-      script.onload = () => {
-        console.log("Plaid Link script loaded successfully");
+    const loadScripts = async () => {
+      // Load Plaid Link script if not already loaded
+      if (!document.getElementById('plaid-link-script')) {
+        console.log("Loading Plaid Link script...");
+        const plaidScript = document.createElement('script');
+        plaidScript.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+        plaidScript.id = 'plaid-link-script';
+        plaidScript.async = true;
+        plaidScript.onload = () => {
+          console.log("Plaid Link script loaded successfully");
+          setIsPlaidLoaded(true);
+        };
+        plaidScript.onerror = (e) => {
+          console.error("Failed to load Plaid Link script:", e);
+          setErrorMessage("Could not load the Plaid integration");
+          setShowError(true);
+          toast({
+            title: "Error loading Plaid",
+            description: "Could not load the Plaid integration",
+            variant: "destructive"
+          });
+        };
+        document.body.appendChild(plaidScript);
+      } else {
         setIsPlaidLoaded(true);
-      };
-      script.onerror = (e) => {
-        console.error("Failed to load Plaid Link script:", e);
-        setErrorMessage("Could not load the Plaid integration");
-        setShowError(true);
-        toast({
-          title: "Error loading Plaid",
-          description: "Could not load the Plaid integration",
-          variant: "destructive"
-        });
-      };
-      document.body.appendChild(script);
-    } else {
-      setIsPlaidLoaded(true);
-    }
+      }
+
+      // Load VGS Collect script if not already loaded
+      if (!document.getElementById('vgs-collect-script')) {
+        console.log("Loading VGS Collect script...");
+        const vgsScript = document.createElement('script');
+        vgsScript.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
+        vgsScript.id = 'vgs-collect-script';
+        vgsScript.async = true;
+        vgsScript.onload = () => {
+          console.log("VGS Collect script loaded successfully");
+          setIsVGSLoaded(true);
+        };
+        vgsScript.onerror = (e) => {
+          console.error("Failed to load VGS Collect script:", e);
+          // Try alternative CDN
+          const altScript = document.createElement('script');
+          altScript.src = 'https://js.verygoodvault.com/vgs-collect/vgs-collect-latest.min.js';
+          altScript.id = 'vgs-collect-script-alt';
+          altScript.async = true;
+          altScript.onload = () => {
+            console.log("VGS Collect script loaded from alternative source");
+            setIsVGSLoaded(true);
+          };
+          altScript.onerror = (err) => {
+            console.error("Failed to load VGS Collect script from alternative source:", err);
+            toast({
+              title: "Error loading VGS Collect",
+              description: "Could not load the payment form integration",
+              variant: "destructive"
+            });
+          };
+          document.body.appendChild(altScript);
+        };
+        document.body.appendChild(vgsScript);
+      } else {
+        setIsVGSLoaded(true);
+      }
+    };
+
+    loadScripts();
 
     // Use a working test link token
     const getLinkToken = () => {
@@ -94,6 +137,11 @@ const PlaidLinkButton: React.FC<PlaidLinkButtonProps> = ({
     };
 
     getLinkToken();
+
+    // Cleanup function
+    return () => {
+      // Nothing to clean up for scripts that stay loaded
+    };
   }, [toast]);
 
   const handleClick = () => {
