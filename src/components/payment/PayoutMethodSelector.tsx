@@ -18,6 +18,17 @@ export const PayoutMethodSelector = ({
 }: PayoutMethodSelectorProps) => {
   const [selectedTab, setSelectedTab] = useState<string>('ach');
 
+  // Map tabs to payment methods
+  const getPaymentMethod = (tab: string): PaymentMethod => {
+    switch (tab) {
+      case 'ach': return 'ACH';
+      case 'swift': return 'SWIFT';
+      case 'fedwire': return 'FEDWIRE';
+      case 'zelle': return 'ZELLE';
+      default: return 'ACH';
+    }
+  };
+
   return (
     <Tabs defaultValue="ach" value={selectedTab} onValueChange={setSelectedTab}>
       <TabsList className="grid grid-cols-5 mb-4">

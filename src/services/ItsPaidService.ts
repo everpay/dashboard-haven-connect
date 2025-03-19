@@ -1,6 +1,6 @@
 
 import axios from 'axios';
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
 
 // ItsPaid API endpoints
 const BASE_URL = 'https://sandbox-gateway.itspaid.global';
@@ -106,6 +106,8 @@ export class ItsPaidService {
         ...data
       };
 
+      console.log('Sending money with data:', requestData);
+
       const response = await axios.post(
         `${BASE_URL}${SEND_MONEY_ENDPOINT}`,
         requestData,
@@ -115,6 +117,8 @@ export class ItsPaidService {
           }
         }
       );
+
+      console.log('ItsPaid API response:', response.data);
 
       // Log the transaction in the database
       await this.logTransaction(response.data);
@@ -218,11 +222,19 @@ export class ItsPaidService {
    */
   private async logTransaction(transactionData: TransactionResponse) {
     try {
+      // Add safeguards to ensure transactionData and its properties exist
+      if (!transactionData || !transactionData.TRANSACTION_STATUS) {
+        console.error('Invalid transaction data for logging:', transactionData);
+        return;
+      }
+
+      const user = (await supabase.auth.getUser()).data.user;
+
       const { data, error } = await supabase
         .from('marqeta_transactions')
         .insert([
           {
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user?.id,
             amount: transactionData.TRANSACTION_SEND_AMOUNT,
             currency: transactionData.TRANSACTION_CURRENCY_ISO3,
             status: transactionData.TRANSACTION_STATUS.toLowerCase(),

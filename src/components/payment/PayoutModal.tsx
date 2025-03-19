@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PayoutMethodSelector } from './PayoutMethodSelector';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 interface PayoutModalProps {
@@ -21,34 +21,37 @@ export const PayoutModal = ({
 }: PayoutModalProps) => {
   const [amount, setAmount] = useState<string>('');
   const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   const handleContinue = () => {
     // Validate amount
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Please enter a valid amount greater than zero",
-        variant: "destructive"
+      setError("Please enter a valid amount greater than zero");
+      toast.error("Invalid amount", {
+        description: "Please enter a valid amount greater than zero"
       });
       return;
     }
 
+    setError(null);
     setShowPaymentMethods(true);
   };
 
   const handleReset = () => {
     setAmount('');
     setShowPaymentMethods(false);
+    setError(null);
   };
 
   const handlePaymentSuccess = async (response: any) => {
     try {
       // Record the transaction in the database
+      const { data: userData } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from('marqeta_transactions')
         .insert([{
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: userData.user?.id,
           amount: Number(amount),
           currency: 'USD',
           status: 'pending',
@@ -63,9 +66,8 @@ export const PayoutModal = ({
         console.error('Error recording transaction:', error);
       }
 
-      toast({
-        title: "Payout Initiated",
-        description: "Your payout has been successfully initiated",
+      toast.success("Payout Initiated", {
+        description: "Your payout has been successfully initiated"
       });
 
       if (onSuccess) {
@@ -76,10 +78,8 @@ export const PayoutModal = ({
       handleReset();
     } catch (err) {
       console.error('Error processing payout:', err);
-      toast({
-        title: "Error",
-        description: "There was an error processing your payout",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "There was an error processing your payout"
       });
     }
   };
@@ -92,6 +92,11 @@ export const PayoutModal = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{showPaymentMethods ? "Select Payment Method" : "Initialize Payout"}</DialogTitle>
+          <DialogDescription>
+            {showPaymentMethods 
+              ? "Choose how you want to send your money" 
+              : "Enter the amount you want to send"}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
@@ -107,7 +112,9 @@ export const PayoutModal = ({
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  className={error ? "border-red-500" : ""}
                 />
+                {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
               </div>
               
               <Button 
@@ -130,10 +137,9 @@ export const PayoutModal = ({
                 amount={Number(amount)}
                 onSuccess={handlePaymentSuccess}
                 onError={(error) => {
-                  toast({
-                    title: "Payment Failed",
-                    description: "There was an error processing your payment",
-                    variant: "destructive"
+                  console.error("Payment error:", error);
+                  toast.error("Payment Failed", {
+                    description: "There was an error processing your payment"
                   });
                 }}
               />

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
+import { useRecipients } from '@/hooks/useRecipients';
 
 interface ACHPaymentFormProps {
   amount: number;
@@ -29,6 +30,22 @@ export const ACHPaymentForm = ({
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethod);
+  const { addRecipient } = useRecipients();
+
+  // Update selected method when the paymentMethod prop changes
+  useEffect(() => {
+    setSelectedMethod(paymentMethod);
+  }, [paymentMethod]);
+
+  const validateForm = () => {
+    // For Zelle, we only need recipient name and account number (email/phone)
+    if (selectedMethod === 'ZELLE') {
+      return !!recipientName && !!accountNumber;
+    }
+    
+    // For other methods, we need recipient name, account number, and routing number
+    return !!recipientName && !!accountNumber && !!routingNumber;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +53,7 @@ export const ACHPaymentForm = ({
 
     try {
       // Form validation
-      if (!recipientName || !accountNumber || !routingNumber) {
+      if (!validateForm()) {
         toast.error('Please fill all required fields');
         setLoading(false);
         return;
@@ -46,19 +63,43 @@ export const ACHPaymentForm = ({
       const itsPaidService = await getItsPaidService();
 
       // Format data based on the selected payment method
-      const transactionData = {
+      const transactionData: any = {
         SEND_METHOD: selectedMethod,
         SEND_CURRENCY_ISO3: 'USD',
         SEND_AMOUNT: amount,
         RECIPIENT_FULL_NAME: recipientName,
-        RECIPIENT_BANK_ACCOUNT: accountNumber,
-        RECIPIENT_BANK_ROUTING: routingNumber,
-        RECIPIENT_BANK_NAME: bankName,
         PUBLIC_TRANSACTION_DESCRIPTION: description || `Payment of $${amount}`,
       };
 
+      // Add appropriate fields based on payment method
+      if (selectedMethod === 'ZELLE') {
+        transactionData.RECIPIENT_ZELLE_ADDRESS = accountNumber;
+      } else {
+        transactionData.RECIPIENT_BANK_ACCOUNT = accountNumber;
+        transactionData.RECIPIENT_BANK_ROUTING = routingNumber;
+        transactionData.RECIPIENT_BANK_NAME = bankName;
+      }
+
       // Send the payment
       const response = await itsPaidService.sendMoney(transactionData);
+      
+      // Add the recipient to the recipients database
+      try {
+        // Only add recipient if it's a new one
+        await addRecipient({
+          first_names: recipientName.split(' ')[0],
+          last_names: recipientName.split(' ').slice(1).join(' '),
+          full_name: recipientName,
+          email_address: selectedMethod === 'ZELLE' && accountNumber.includes('@') ? accountNumber : undefined,
+          telephone_number: selectedMethod === 'ZELLE' && !accountNumber.includes('@') ? accountNumber : undefined,
+          bank_account_number: selectedMethod !== 'ZELLE' ? accountNumber : undefined,
+          bank_routing_number: routingNumber || undefined,
+          bank_name: bankName || undefined
+        });
+      } catch (recipientError) {
+        console.error('Error adding recipient:', recipientError);
+        // Don't fail the transaction if recipient creation fails
+      }
       
       toast.success(`${selectedMethod} payment initiated successfully`);
       onSuccess(response);

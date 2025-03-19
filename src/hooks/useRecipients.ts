@@ -19,6 +19,9 @@ export interface Recipient {
   country_iso3?: string;
   created_at?: string;
   user_id?: string;
+  bank_account_number?: string;
+  bank_routing_number?: string;
+  bank_name?: string;
 }
 
 export const useRecipients = () => {
@@ -54,12 +57,58 @@ export const useRecipients = () => {
     
     const recipient = {
       ...newRecipient,
-      full_name: `${newRecipient.first_names} ${newRecipient.last_names}`,
+      full_name: newRecipient.full_name || `${newRecipient.first_names} ${newRecipient.last_names}`,
       user_id: user.id
     };
     
     console.log('Adding recipient:', recipient);
     
+    // Check if recipient already exists by email or phone number
+    let existingRecipient = null;
+    
+    if (recipient.email_address) {
+      const { data } = await supabase
+        .from('recipients')
+        .select('*')
+        .eq('email_address', recipient.email_address)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      existingRecipient = data;
+    } else if (recipient.telephone_number) {
+      const { data } = await supabase
+        .from('recipients')
+        .select('*')
+        .eq('telephone_number', recipient.telephone_number)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      existingRecipient = data;
+    } else if (recipient.full_name) {
+      const { data } = await supabase
+        .from('recipients')
+        .select('*')
+        .eq('full_name', recipient.full_name)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      existingRecipient = data;
+    }
+    
+    if (existingRecipient) {
+      // Update existing recipient with any new information
+      const updatedRecipient = { ...existingRecipient, ...recipient };
+      const { data, error } = await supabase
+        .from('recipients')
+        .update(updatedRecipient)
+        .eq('recipient_id', existingRecipient.recipient_id)
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    }
+    
+    // Insert new recipient
     const { data, error } = await supabase
       .from('recipients')
       .insert([recipient])
