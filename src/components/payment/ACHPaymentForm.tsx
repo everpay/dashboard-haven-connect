@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
 import { useRecipients } from '@/hooks/useRecipients';
-import { supabase } from "@/lib/supabase"; // Added the missing import
+import { supabase } from "@/lib/supabase";
+import { useAuth } from '@/lib/auth';
 
 interface ACHPaymentFormProps {
   amount: number;
@@ -32,11 +33,38 @@ export const ACHPaymentForm = ({
   const [loading, setLoading] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(paymentMethod);
   const { addRecipient } = useRecipients();
+  const { user } = useAuth();
 
   // Update selected method when the paymentMethod prop changes
   useEffect(() => {
     setSelectedMethod(paymentMethod);
   }, [paymentMethod]);
+
+  // Ensure user profile exists
+  useEffect(() => {
+    if (user) {
+      ensureProfileExists(user);
+    }
+  }, [user]);
+
+  const ensureProfileExists = async (currentUser: any) => {
+    try {
+      console.log("Ensuring profile exists for user:", currentUser.id);
+      
+      // Call the ensure_profile_exists function through RPC
+      const { error: rpcError } = await supabase.rpc('ensure_profile_exists', {
+        user_id: currentUser.id,
+        user_email: currentUser.email || '',
+        user_full_name: currentUser.user_metadata?.full_name || ''
+      });
+      
+      if (rpcError) {
+        console.error('RPC method failed:', rpcError);
+      }
+    } catch (error) {
+      console.error('Error ensuring profile exists:', error);
+    }
+  };
 
   const validateForm = () => {
     // For Zelle, we only need recipient name and account number (email/phone)
@@ -121,32 +149,19 @@ export const ACHPaymentForm = ({
           full_name: recipientName,
           email_address: selectedMethod === 'ZELLE' && accountNumber.includes('@') ? accountNumber : undefined,
           telephone_number: selectedMethod === 'ZELLE' && !accountNumber.includes('@') ? accountNumber : undefined,
+          payment_method: selectedMethod,
+          bank_account_number: selectedMethod !== 'ZELLE' ? accountNumber : undefined,
+          bank_routing_number: routingNumber || undefined,
+          bank_name: bankName || undefined
         };
         
-        // Only include these fields if they exist in the database schema
-        // Try to add them one at a time to avoid schema errors
-        try {
-          await supabase.from('recipients').select('bank_account_number').limit(1);
-          Object.assign(recipientData, { bank_account_number: selectedMethod !== 'ZELLE' ? accountNumber : undefined });
-        } catch (e) {
-          console.log('bank_account_number column may not exist, skipping');
-        }
-        
-        try {
-          await supabase.from('recipients').select('bank_routing_number').limit(1);
-          Object.assign(recipientData, { bank_routing_number: routingNumber || undefined });
-        } catch (e) {
-          console.log('bank_routing_number column may not exist, skipping');
-        }
-        
-        try {
-          await supabase.from('recipients').select('bank_name').limit(1);
-          Object.assign(recipientData, { bank_name: bankName || undefined });
-        } catch (e) {
-          console.log('bank_name column may not exist, skipping');
-        }
-        
         console.log('Recipient data:', recipientData);
+        
+        // Make sure profile exists before adding recipient
+        if (user) {
+          await ensureProfileExists(user);
+        }
+        
         const result = await addRecipient(recipientData);
         console.log('Recipient added:', result);
       } catch (recipientError) {

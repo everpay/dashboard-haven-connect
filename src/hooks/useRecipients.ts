@@ -22,6 +22,7 @@ export interface Recipient {
   bank_account_number?: string;
   bank_routing_number?: string;
   bank_name?: string;
+  payment_method?: string;
 }
 
 export const useRecipients = () => {
@@ -79,10 +80,11 @@ export const useRecipients = () => {
         region: newRecipient.region || null,
         postal_code: newRecipient.postal_code || null,
         country_iso3: newRecipient.country_iso3 || null,
-        user_id: user.id
+        user_id: user.id,
+        payment_method: newRecipient.payment_method || null
       };
       
-      // Only add these fields if they exist in the database
+      // Add bank details if they exist
       if (newRecipient.bank_account_number) {
         Object.assign(cleanedRecipient, { bank_account_number: newRecipient.bank_account_number });
       }
@@ -97,30 +99,31 @@ export const useRecipients = () => {
       
       console.log('Adding recipient:', cleanedRecipient);
       
+      // First, ensure the profile exists in the profiles table
+      await ensureProfileExists(user);
+      
       // Check if recipient already exists by name, email, or phone
       let existingRecipient = null;
-      let queryFilters = [];
       
-      if (cleanedRecipient.full_name) {
-        queryFilters.push(`full_name.eq.${cleanedRecipient.full_name}`);
-      }
-      
-      if (cleanedRecipient.email_address) {
-        queryFilters.push(`email_address.eq.${cleanedRecipient.email_address}`);
-      }
-      
-      if (cleanedRecipient.telephone_number) {
-        queryFilters.push(`telephone_number.eq.${cleanedRecipient.telephone_number}`);
-      }
-      
-      if (queryFilters.length > 0) {
-        const { data } = await supabase
+      if (cleanedRecipient.full_name || cleanedRecipient.email_address || cleanedRecipient.telephone_number) {
+        let query = supabase
           .from('recipients')
           .select('*')
-          .eq('user_id', user.id)
-          .or(queryFilters.join(','))
-          .maybeSingle();
+          .eq('user_id', user.id);
         
+        if (cleanedRecipient.full_name) {
+          query = query.eq('full_name', cleanedRecipient.full_name);
+        }
+        
+        if (cleanedRecipient.email_address) {
+          query = query.eq('email_address', cleanedRecipient.email_address);
+        }
+        
+        if (cleanedRecipient.telephone_number) {
+          query = query.eq('telephone_number', cleanedRecipient.telephone_number);
+        }
+        
+        const { data } = await query.maybeSingle();
         existingRecipient = data;
       }
       
@@ -154,36 +157,6 @@ export const useRecipients = () => {
       
       if (error) {
         console.error('Error adding recipient:', error);
-        
-        // Check for specific column errors and handle them
-        if (error.message && error.message.includes('column')) {
-          const columnMatch = error.message.match(/column ['"]([^'"]+)['"]/);
-          if (columnMatch && columnMatch[1]) {
-            const problematicColumn = columnMatch[1];
-            console.log(`Problem with column: ${problematicColumn}, removing it and trying again`);
-            
-            // Remove the problematic field and try again
-            delete (cleanedRecipient as any)[problematicColumn];
-            
-            const retryResult = await supabase
-              .from('recipients')
-              .insert([cleanedRecipient])
-              .select();
-              
-            if (retryResult.error) {
-              console.error('Error on retry:', retryResult.error);
-              throw new Error(`Failed to add recipient: ${retryResult.error.message}`);
-            }
-            
-            return retryResult.data[0];
-          }
-        }
-        
-        // Check if the error is related to FK constraint
-        if (error.message && error.message.includes('violates foreign key constraint')) {
-          throw new Error("Database error: User ID is not valid in recipients table. Please check your user authentication.");
-        }
-        
         throw new Error(`Failed to add recipient: ${error.message}`);
       }
       
@@ -191,29 +164,31 @@ export const useRecipients = () => {
       return data[0];
     } catch (err: any) {
       console.error('Error in recipient processing:', err);
+      throw err;
+    }
+  };
+
+  // Helper function to ensure the profile exists
+  const ensureProfileExists = async (currentUser: any) => {
+    try {
+      console.log("Ensuring profile exists for user:", currentUser.id);
       
-      // If error is a foreign key constraint error, try to create the user
-      if (err.message && err.message.includes('foreign key constraint')) {
-        // Try to make sure user exists in profiles table first
-        try {
-          const { data: userData } = await supabase.auth.getUser();
-          if (userData && userData.user) {
-            // Ensure profile exists
-            await supabase.rpc('ensure_profile_exists', {
-              user_id: userData.user.id,
-              user_email: userData.user.email || '',
-              user_full_name: userData.user.user_metadata?.full_name || ''
-            });
-            
-            // Try adding the recipient again
-            return addRecipient(newRecipient);
-          }
-        } catch (profileErr) {
-          console.error('Error ensuring profile exists:', profileErr);
-        }
+      // Call the ensure_profile_exists function through RPC with proper parameters
+      const { error: rpcError } = await supabase.rpc('ensure_profile_exists', {
+        user_id: currentUser.id,
+        user_email: currentUser.email || '',
+        user_full_name: currentUser.user_metadata?.full_name || ''
+      });
+      
+      if (rpcError) {
+        console.error('RPC method failed:', rpcError);
+        throw rpcError;
       }
       
-      throw err;
+      return true;
+    } catch (error) {
+      console.error('Error ensuring profile exists:', error);
+      throw error;
     }
   };
 

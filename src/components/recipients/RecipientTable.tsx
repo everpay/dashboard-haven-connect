@@ -20,14 +20,28 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
   onDeleteRecipient,
   user
 }) => {
+  const getPaymentMethodDisplay = (method?: string) => {
+    if (!method) return "—";
+    
+    const methodMap: {[key: string]: string} = {
+      'ACH': 'ACH',
+      'SWIFT': 'SWIFT',
+      'FEDWIRE': 'FEDWIRE',
+      'ZELLE': 'Zelle',
+      'CARD_PUSH': 'Card Push'
+    };
+    
+    return methodMap[method] || method;
+  };
+  
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <Table>
         <TableHead>
           <TableRow>
             <TableHeader>Name</TableHeader>
-            <TableHeader>Email</TableHeader>
-            <TableHeader>Phone</TableHeader>
+            <TableHeader>Contact</TableHeader>
+            <TableHeader>Payment Method</TableHeader>
             <TableHeader>Location</TableHeader>
             <TableHeader className="text-right">Actions</TableHeader>
           </TableRow>
@@ -61,10 +75,14 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm text-muted-foreground">{recipient.email_address || "—"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {recipient.email_address || recipient.telephone_number || "—"}
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm text-muted-foreground">{recipient.telephone_number || "—"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {getPaymentMethodDisplay(recipient.payment_method)}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm text-muted-foreground">
