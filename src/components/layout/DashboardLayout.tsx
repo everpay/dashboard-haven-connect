@@ -50,12 +50,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </svg>
             </Button>
             
-            <div className="h-8 w-8 rounded-full bg-[#D1D5DB] flex items-center justify-center text-black">
-              <img
-                src="/lovable-uploads/7ad20df5-ac69-41ba-9bd6-25a4e2e71dd8.png"
-                alt="User"
-                className="h-8 w-8 rounded-full"
-              />
+            <div className="h-8 w-8 rounded-full bg-[#1E2736] flex items-center justify-center text-white text-xs">
+              BO
             </div>
           </div>
         </header>

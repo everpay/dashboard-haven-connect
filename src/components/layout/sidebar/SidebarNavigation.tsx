@@ -23,6 +23,26 @@ export const SidebarNavigation = () => {
           Dashboard
         </SidebarNavLink>
         
+        <SidebarDropdown 
+          icon={Receipt} 
+          label="Transactions" 
+          defaultOpen={false}
+          includesPaths={["/transactions", "/recurring-payments", "/recurring-invoices", "/payment-links"]}
+        >
+          <SidebarNavLink to="/overview" isSubmenu>
+            Overview
+          </SidebarNavLink>
+          <SidebarNavLink to="/recurring-payments" isSubmenu>
+            Recurring Payments
+          </SidebarNavLink>
+          <SidebarNavLink to="/recurring-invoices" isSubmenu>
+            Recurring Invoices
+          </SidebarNavLink>
+          <SidebarNavLink to="/payment-links" isSubmenu>
+            Payment Links
+          </SidebarNavLink>
+        </SidebarDropdown>
+        
         <SidebarNavLink to="/customers" icon={Users}>
           Customers
         </SidebarNavLink>
@@ -30,7 +50,7 @@ export const SidebarNavigation = () => {
         <SidebarDropdown 
           icon={Wallet} 
           label="Wallet" 
-          defaultOpen={true}
+          defaultOpen={false}
           includesPaths={["/payins", "/payouts", "/overview", "/banking", "/cards"]}
         >
           <SidebarNavLink to="/overview" isSubmenu>
@@ -64,10 +84,6 @@ export const SidebarNavigation = () => {
         
         <SidebarNavLink to="/integrations" icon={Plug2}>
           Integrations
-        </SidebarNavLink>
-        
-        <SidebarNavLink to="/transactions" icon={Receipt}>
-          Transactions
         </SidebarNavLink>
         
         <SidebarDropdown 
