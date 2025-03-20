@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { useGeoRestriction } from '@/hooks/useGeoRestriction';
 import { getItsPaidService } from '@/services/itsPaid';
 import { prometeoService } from '@/services/prometeo/PrometeoService';
+import { TransactionData } from '@/services/itsPaid/types';
 
 interface PayoutModalProps {
   open: boolean;
@@ -87,9 +88,9 @@ export const PayoutModal: React.FC<PayoutModalProps> = ({
         // Use ItsPaid for North America
         const itsPaidService = await getItsPaidService();
         
-        // Format the payout data for ItsPaid
-        const transactionData = {
-          SEND_METHOD: paymentMethod.toUpperCase(),
+        // Format the payout data for ItsPaid - now properly typed as TransactionData
+        const transactionData: Partial<TransactionData> = {
+          SEND_METHOD: paymentMethod.toUpperCase() as any,
           SEND_CURRENCY_ISO3: 'USD',
           SEND_AMOUNT: parseFloat(formData.amount),
           RECIPIENT_FULL_NAME: formData.recipientName,
