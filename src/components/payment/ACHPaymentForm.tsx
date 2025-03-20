@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
 import { useRecipients } from '@/hooks/useRecipients';
+import { supabase } from "@/lib/supabase"; // Added the missing import
 
 interface ACHPaymentFormProps {
   amount: number;

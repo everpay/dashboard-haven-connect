@@ -1919,6 +1919,9 @@ export type Database = {
       recipients: {
         Row: {
           account_id: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          bank_routing_number: string | null
           city: string | null
           country_iso3: string | null
           created_at: string | null
@@ -1939,6 +1942,9 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          bank_routing_number?: string | null
           city?: string | null
           country_iso3?: string | null
           created_at?: string | null
@@ -1959,6 +1965,9 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          bank_routing_number?: string | null
           city?: string | null
           country_iso3?: string | null
           created_at?: string | null
