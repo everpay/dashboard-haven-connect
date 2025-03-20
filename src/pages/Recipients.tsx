@@ -3,14 +3,13 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useAuth } from '@/lib/auth';
-import { Recipient, useRecipients } from '@/hooks/useRecipients';
+import { useUserProfile } from '@/hooks/payment/useUserProfile';
+import { useRecipients } from '@/hooks/useRecipients';
+import { useRecipientForm } from '@/hooks/useRecipientForm';
 import RecipientTable from '@/components/recipients/RecipientTable';
 import RecipientSearch from '@/components/recipients/RecipientSearch';
 import RecipientHeader from '@/components/recipients/RecipientHeader';
 import RecipientDialog from '@/components/recipients/RecipientDialog';
-import { useRecipientForm } from '@/hooks/useRecipientForm';
-import { useUserProfile } from '@/hooks/payment/useUserProfile';
 
 const Recipients = () => {
   const [searchTerm, setSearchTerm] = useState('');
