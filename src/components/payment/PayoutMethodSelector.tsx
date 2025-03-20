@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ACHPaymentForm } from './ACHPaymentForm';
 import { CardPushForm } from './CardPushForm';
-import { PaymentMethod } from '@/services/ItsPaidService';
+import { PaymentMethod } from '@/services/itsPaid';
 
 interface PayoutMethodSelectorProps {
   amount: number;

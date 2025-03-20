@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
+import { getItsPaidService, PaymentMethod } from '@/services/itsPaid';
 
 interface CardPushFormProps {
   amount: number;

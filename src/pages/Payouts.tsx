@@ -10,7 +10,7 @@ import { Search, Filter, Plus, Download, RefreshCw } from 'lucide-react';
 import { PayoutModal } from '@/components/payment/PayoutModal';
 import { supabase } from "@/lib/supabase";
 import { useQuery } from '@tanstack/react-query';
-import { getItsPaidService } from '@/services/ItsPaidService';
+import { getItsPaidService } from '@/services/itsPaid';
 import CountUp from 'react-countup';
 
 const Payouts = () => {

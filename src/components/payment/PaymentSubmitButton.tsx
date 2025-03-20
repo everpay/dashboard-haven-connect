@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { PaymentMethod } from '@/services/ItsPaidService';
+import { PaymentMethod } from '@/services/itsPaid';
 
 interface PaymentSubmitButtonProps {
   isLoading: boolean;
