@@ -14,6 +14,8 @@ export default function Products() {
   const { products, loading, fetchProducts } = useProducts();
   const { toast } = useToast();
 
+  console.log('Products page rendering:', { productCount: products.length, loading });
+
   const handleCreateSuccess = () => {
     setOpenDialog(false);
     fetchProducts();

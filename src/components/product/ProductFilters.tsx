@@ -20,10 +20,13 @@ export const ProductFilters = ({
   onProductUpdated, 
   isLoading 
 }: ProductFiltersProps) => {
+  // Filter products based on search term
   const filteredProducts = products.filter(product =>
     product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  console.log('Filtered products:', filteredProducts);
 
   return (
     <Tabs defaultValue="all" className="w-full">

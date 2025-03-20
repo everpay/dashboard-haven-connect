@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -11,14 +11,16 @@ export const useProducts = () => {
   const { session } = useAuth();
   const { toast } = useToast();
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       if (!session?.user?.id) {
+        setProducts([]);
         setLoading(false);
         return;
       }
 
+      console.log('Fetching products for user:', session.user.id);
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -47,7 +49,7 @@ export const useProducts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id, toast]);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -55,7 +57,7 @@ export const useProducts = () => {
     } else {
       setLoading(false);
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, fetchProducts]);
 
   return {
     products,

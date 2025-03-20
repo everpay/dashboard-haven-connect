@@ -80,7 +80,7 @@ export function ProductList({ products, onProductUpdated, isLoading = false }: P
     );
   }
 
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg shadow-sm bg-background">
         <p className="text-muted-foreground mb-4">No products found</p>
