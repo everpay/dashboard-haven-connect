@@ -2,7 +2,7 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { PaymentMethod } from '@/services/ItsPaidService';
+import { PaymentMethod } from '@/services/itsPaid';
 
 interface BankDetailsFormProps {
   paymentMethod: PaymentMethod;
