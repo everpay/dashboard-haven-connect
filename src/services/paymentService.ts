@@ -1,6 +1,6 @@
 
 import { getItsPaidService, PaymentMethod } from '@/services/itsPaid';
-import { ensureUserProfile } from '@/services/recipientService';
+import { ensureUserProfile } from '@/services/recipient/userProfileService';
 import { toast } from 'sonner';
 import { Recipient } from '@/types/recipient.types';
 
