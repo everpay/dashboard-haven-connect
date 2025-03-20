@@ -1,7 +1,5 @@
 
 import React from 'react';
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface PayoutData {
   id: string;
@@ -33,71 +31,85 @@ export const PayoutTable: React.FC<PayoutTableProps> = ({
   getStatusColor,
   formatPaymentMethod
 }) => {
+  // Helper to get the badge class based on status
+  const getBadgeClass = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableHeader>Date</TableHeader>
-            <TableHeader>Recipient</TableHeader>
-            <TableHeader>Method</TableHeader>
-            <TableHeader>Description</TableHeader>
-            <TableHeader>Status</TableHeader>
-            <TableHeader className="text-right">Amount</TableHeader>
-          </TableRow>
-        </TableHead>
-        <TableBody>
+    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
           {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+            <tr>
+              <td colSpan={6} className="text-center py-8">
                 <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1AA47B]"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
-                <div className="mt-2 text-sm text-muted-foreground">Loading payouts...</div>
-              </TableCell>
-            </TableRow>
+                <div className="mt-2 text-sm text-gray-600">Loading payouts...</div>
+              </td>
+            </tr>
           ) : error ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-red-500">Failed to load payouts</TableCell>
-            </TableRow>
+            <tr>
+              <td colSpan={6} className="text-center text-red-500 py-4">Failed to load payouts</td>
+            </tr>
           ) : payouts && payouts.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">No payouts found</TableCell>
-            </TableRow>
+            <tr>
+              <td colSpan={6} className="text-center text-gray-500 py-4">No payouts found</td>
+            </tr>
           ) : (
             payouts?.map((payout: PayoutData) => (
-              <TableRow key={payout.id}>
-                <TableCell>
-                  <div className="text-sm text-foreground">{formatDate(payout.created_at)}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm font-medium text-foreground">
+              <tr key={payout.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{formatDate(payout.created_at)}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
                     {payout.metadata?.RECIPIENT_FULL_NAME || "Unknown Recipient"}
                   </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm font-medium text-foreground">
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
                     {formatPaymentMethod(payout.payment_method)}
                   </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm text-muted-foreground">{payout.description}</div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusColor(payout.status || 'pending')}>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{payout.description}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeClass(payout.status || 'pending')}`}>
                     {payout.status ? payout.status.charAt(0).toUpperCase() + payout.status.slice(1) : 'Pending'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="text-sm font-medium text-foreground">
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <div className="text-sm font-medium text-gray-900">
                     ${payout.amount ? parseFloat(payout.amount.toString()).toFixed(2) : '0.00'}
                   </div>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))
           )}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 };
