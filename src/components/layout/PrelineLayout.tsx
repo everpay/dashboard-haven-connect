@@ -1,6 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { IHSPrelineInstance } from 'preline/preline';
 
 interface PrelineLayoutProps {
   children: React.ReactNode;

@@ -39,6 +39,16 @@ const Dialog = ({
   );
 };
 
+const DialogTrigger = ({ 
+  children, 
+  onClick 
+}: { 
+  children: React.ReactNode;
+  onClick?: () => void;
+}) => {
+  return <div onClick={onClick}>{children}</div>;
+};
+
 const DialogContent = ({
   children,
   className,
@@ -108,6 +118,7 @@ const DialogDescription = ({
 
 export {
   Dialog,
+  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogFooter,

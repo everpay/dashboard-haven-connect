@@ -4,10 +4,21 @@ import { cn } from "@/lib/utils";
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options?: { value: string; label: string }[];
+  onValueChange?: (value: string) => void;
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, children, options, ...props }, ref) => {
+  ({ className, children, options, onValueChange, onChange, value, ...props }, ref) => {
+    // Handle both onChange and onValueChange for compatibility
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      if (onChange) {
+        onChange(e);
+      }
+      if (onValueChange) {
+        onValueChange(e.target.value);
+      }
+    };
+
     return (
       <select
         className={cn(
@@ -15,6 +26,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           className
         )}
         ref={ref}
+        onChange={handleChange}
+        value={value}
         {...props}
       >
         {options
@@ -30,6 +43,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 );
 
 Select.displayName = "Select";
+
+interface SelectValueProps extends React.HTMLAttributes<HTMLSpanElement> {
+  placeholder?: string;
+}
 
 const SelectTrigger = React.forwardRef<
   HTMLDivElement,
@@ -59,8 +76,8 @@ SelectTrigger.displayName = "SelectTrigger";
 
 const SelectValue = React.forwardRef<
   HTMLSpanElement,
-  React.HTMLAttributes<HTMLSpanElement>
->(({ className, ...props }, ref) => {
+  SelectValueProps
+>(({ className, placeholder, ...props }, ref) => {
   return (
     <span 
       ref={ref} 
