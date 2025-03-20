@@ -7,6 +7,7 @@ type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
+  forcedTheme?: Theme | null;
 };
 
 type ThemeProviderState = {
@@ -25,6 +26,7 @@ export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "everpay-ui-theme",
+  forcedTheme = null,
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
@@ -35,6 +37,11 @@ export function ThemeProvider({
     const root = window.document.documentElement;
     
     root.classList.remove("light", "dark");
+    
+    if (forcedTheme) {
+      root.classList.add(forcedTheme);
+      return;
+    }
     
     if (theme === "system") {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
@@ -47,7 +54,7 @@ export function ThemeProvider({
     }
     
     root.classList.add(theme);
-  }, [theme]);
+  }, [theme, forcedTheme]);
 
   const value = {
     theme,
