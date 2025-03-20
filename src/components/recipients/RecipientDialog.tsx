@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import RecipientForm from '@/components/recipients/RecipientForm';
 import { Recipient } from '@/types/recipient.types';
 
@@ -25,22 +24,29 @@ const RecipientDialog: React.FC<RecipientDialogProps> = ({
   title,
   isEdit = false
 }) => {
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-background">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">{title}</DialogTitle>
-        </DialogHeader>
-        <RecipientForm 
-          formData={formData}
-          onInputChange={onInputChange}
-          onSelectChange={onSelectChange}
-          onSubmit={onSubmit}
-          onCancel={() => onOpenChange(false)}
-          isEdit={isEdit}
-        />
-      </DialogContent>
-    </Dialog>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 text-center">
+        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={() => onOpenChange(false)}></div>
+        
+        <div className="relative inline-block w-full max-w-md px-4 py-5 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-xl sm:max-w-lg sm:w-full">
+          <div className="pb-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>
+          </div>
+          
+          <RecipientForm 
+            formData={formData}
+            onInputChange={onInputChange}
+            onSelectChange={onSelectChange}
+            onSubmit={onSubmit}
+            onCancel={() => onOpenChange(false)}
+            isEdit={isEdit}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -1,11 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { DialogFooter } from '@/components/ui/dialog';
-import { Recipient } from '@/hooks/useRecipients';
-import PersonalInfoFields from './PersonalInfoFields';
-import AddressFields from './AddressFields';
-import BankingFields from './BankingFields';
+import React from 'react';
+import { Recipient } from '@/types/recipient.types';
 
 interface RecipientFormProps {
   formData: Partial<Recipient>;
@@ -24,111 +19,176 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
   onCancel,
   isEdit = false
 }) => {
-  const submitButtonText = isEdit ? "Update Recipient" : "Add Recipient";
-  const [phoneCountryCode, setPhoneCountryCode] = React.useState('+1');
-  const [phoneNumber, setPhoneNumber] = React.useState('');
-  const [showInternationalBankFields, setShowInternationalBankFields] = React.useState(false);
-
-  // Country codes for telephone formatting
-  const COUNTRY_CODES = [
-    { code: '+1', country: 'US/Canada' },
-    { code: '+44', country: 'UK' },
-    { code: '+49', country: 'Germany' },
-    { code: '+33', country: 'France' },
-    { code: '+61', country: 'Australia' },
-    { code: '+81', country: 'Japan' },
-    { code: '+86', country: 'China' },
-    { code: '+91', country: 'India' },
-    { code: '+52', country: 'Mexico' },
-    { code: '+55', country: 'Brazil' },
-    { code: '+34', country: 'Spain' },
-    { code: '+39', country: 'Italy' },
-  ];
-
-  // Parse telephone number if it exists
-  useEffect(() => {
-    if (formData.telephone_number) {
-      // Try to extract country code from stored number
-      const foundCode = COUNTRY_CODES.find(cc => formData.telephone_number?.startsWith(cc.code));
-      if (foundCode) {
-        setPhoneCountryCode(foundCode.code);
-        setPhoneNumber(formData.telephone_number.substring(foundCode.code.length).trim());
-      } else {
-        setPhoneCountryCode('+1');
-        setPhoneNumber(formData.telephone_number);
-      }
-    }
-  }, [formData.telephone_number]);
-
-  // Check if we need to show international bank fields
-  useEffect(() => {
-    setShowInternationalBankFields(formData.country_iso3 !== 'USA' && !!formData.country_iso3);
-  }, [formData.country_iso3]);
-
-  // Handle phone number changes
-  const handlePhoneCodeChange = (value: string) => {
-    setPhoneCountryCode(value);
-    
-    // Update the full telephone number
-    const fullNumber = `${value} ${phoneNumber}`;
-    const syntheticEvent = {
-      target: {
-        name: 'telephone_number',
-        value: fullNumber
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    onInputChange(syntheticEvent);
-  };
-
-  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhoneNumber(e.target.value);
-    
-    // Update the full telephone number
-    const fullNumber = `${phoneCountryCode} ${e.target.value}`;
-    const syntheticEvent = {
-      target: {
-        name: 'telephone_number',
-        value: fullNumber
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    onInputChange(syntheticEvent);
-  };
-  
   return (
-    <form onSubmit={onSubmit}>
-      <div className="grid gap-4 py-4">
-        <PersonalInfoFields 
-          formData={formData}
-          onInputChange={onInputChange}
-          phoneCountryCode={phoneCountryCode}
-          phoneNumber={phoneNumber}
-          onPhoneCodeChange={handlePhoneCodeChange}
-          onPhoneNumberChange={handlePhoneNumberChange}
-        />
-        
-        <AddressFields 
-          formData={formData}
-          onInputChange={onInputChange}
-          onSelectChange={onSelectChange}
-        />
-        
-        <BankingFields 
-          formData={formData}
-          onInputChange={onInputChange}
-          onSelectChange={onSelectChange}
-          showInternationalBankFields={showInternationalBankFields}
-        />
+    <form onSubmit={onSubmit} className="p-4">
+      {/* Personal Information */}
+      <div className="mb-6">
+        <h4 className="text-base font-semibold mb-3">Personal Information</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="full_name" className="block text-sm font-medium mb-2 text-gray-700">Full Name</label>
+            <input
+              type="text"
+              id="full_name"
+              name="full_name"
+              className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.full_name || ''}
+              onChange={onInputChange}
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="email_address" className="block text-sm font-medium mb-2 text-gray-700">Email Address</label>
+            <input
+              type="email"
+              id="email_address"
+              name="email_address"
+              className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.email_address || ''}
+              onChange={onInputChange}
+              required
+            />
+          </div>
+        </div>
       </div>
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel} className="text-foreground">
+      
+      {/* Address */}
+      <div className="mb-6">
+        <h4 className="text-base font-semibold mb-3">Address</h4>
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label htmlFor="address_line_1" className="block text-sm font-medium mb-2 text-gray-700">Address Line 1</label>
+            <input
+              type="text"
+              id="address_line_1"
+              name="address_line_1"
+              className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.address_line_1 || ''}
+              onChange={onInputChange}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium mb-2 text-gray-700">City</label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+                value={formData.city || ''}
+                onChange={onInputChange}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="region" className="block text-sm font-medium mb-2 text-gray-700">State/Region</label>
+              <input
+                type="text"
+                id="region"
+                name="region"
+                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+                value={formData.region || ''}
+                onChange={onInputChange}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="postal_code" className="block text-sm font-medium mb-2 text-gray-700">Postal Code</label>
+              <input
+                type="text"
+                id="postal_code"
+                name="postal_code"
+                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+                value={formData.postal_code || ''}
+                onChange={onInputChange}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="country" className="block text-sm font-medium mb-2 text-gray-700">Country</label>
+              <select
+                id="country"
+                name="country"
+                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+                value={formData.country || 'US'}
+                onChange={(e) => onSelectChange('country', e.target.value)}
+              >
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="UK">United Kingdom</option>
+                <option value="AU">Australia</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Banking Information */}
+      <div className="mb-6">
+        <h4 className="text-base font-semibold mb-3">Banking Information</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="account_number" className="block text-sm font-medium mb-2 text-gray-700">Account Number</label>
+            <input
+              type="text"
+              id="account_number"
+              name="account_number"
+              className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.account_number || ''}
+              onChange={onInputChange}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="routing_number" className="block text-sm font-medium mb-2 text-gray-700">Routing Number</label>
+            <input
+              type="text"
+              id="routing_number"
+              name="routing_number"
+              className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.routing_number || ''}
+              onChange={onInputChange}
+            />
+          </div>
+        </div>
+        
+        <div className="mt-4">
+          <label htmlFor="payment_method" className="block text-sm font-medium mb-2 text-gray-700">Payment Method</label>
+          <select
+            id="payment_method"
+            name="payment_method"
+            className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500"
+            value={formData.payment_method || 'ACH'}
+            onChange={(e) => onSelectChange('payment_method', e.target.value)}
+          >
+            <option value="ACH">ACH</option>
+            <option value="SWIFT">SWIFT</option>
+            <option value="FEDWIRE">FEDWIRE</option>
+            <option value="ZELLE">ZELLE</option>
+          </select>
+        </div>
+      </div>
+      
+      {/* Form Actions */}
+      <div className="flex justify-end gap-x-2 pt-4 border-t border-gray-200">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none"
+        >
           Cancel
-        </Button>
-        <Button type="submit" className="bg-[#E3FFCC] text-[#19363B] hover:bg-[#D1EEBB]">
-          {submitButtonText}
-        </Button>
-      </DialogFooter>
+        </button>
+        <button
+          type="submit"
+          className="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
+        >
+          {isEdit ? 'Update Recipient' : 'Add Recipient'}
+        </button>
+      </div>
     </form>
   );
 };

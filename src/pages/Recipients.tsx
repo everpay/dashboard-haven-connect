@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserProfile } from '@/hooks/payment/useUserProfile';
 import { useRecipients } from '@/hooks/useRecipients';
@@ -94,7 +93,7 @@ const Recipients = () => {
           isDisabled={false} // Allow adding recipients even for demo
         />
         
-        <Card className="p-6 bg-card text-card-foreground">
+        <div className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
           <RecipientSearch 
             onSearch={setSearchTerm} 
             searchTerm={searchTerm} 
@@ -107,7 +106,7 @@ const Recipients = () => {
             onDeleteRecipient={handleDelete}
             user={user}
           />
-        </Card>
+        </div>
       </div>
 
       <RecipientDialog
