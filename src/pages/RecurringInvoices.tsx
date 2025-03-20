@@ -1,16 +1,11 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { InfoBanner } from '@/components/recurring-invoices/InfoBanner';
-import { EmptyState } from '@/components/recurring-invoices/EmptyState';
-import { RecurringInvoiceList } from '@/components/recurring-invoices/RecurringInvoiceList';
-import { RecurringInvoiceForm, RecurringInvoiceFormValues } from '@/components/recurring-invoices/RecurringInvoiceForm';
+import { RecurringInvoiceHeader } from '@/components/recurring-invoices/RecurringInvoiceHeader';
+import { RecurringInvoiceContent } from '@/components/recurring-invoices/RecurringInvoiceContent';
+import { RecurringInvoiceDialog } from '@/components/recurring-invoices/RecurringInvoiceDialog';
+import { RecurringInvoiceFormValues } from '@/components/recurring-invoices/RecurringInvoiceForm';
 
 // Sample data for customers
 const sampleCustomers = [
@@ -62,7 +57,6 @@ const sampleRecurringInvoices = [
 ];
 
 const RecurringInvoices = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [isNewRecurringOpen, setIsNewRecurringOpen] = useState(false);
   const [recurringInvoices, setRecurringInvoices] = useState(sampleRecurringInvoices);
@@ -120,84 +114,22 @@ const RecurringInvoices = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => navigate('/invoicing')}
-              className="text-gray-500"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Invoices
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Recurring Invoices</h1>
-            </div>
-          </div>
-          <Button 
-            onClick={() => setIsNewRecurringOpen(true)} 
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Recurring Invoice
-          </Button>
-        </div>
-        
+        <RecurringInvoiceHeader onNewClick={() => setIsNewRecurringOpen(true)} />
         <InfoBanner />
-        
-        {recurringInvoices.length === 0 ? (
-          <EmptyState onNewClick={() => setIsNewRecurringOpen(true)} />
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Recurring Invoices</CardTitle>
-              <CardDescription>
-                Manage your scheduled invoices and their status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RecurringInvoiceList 
-                invoices={recurringInvoices}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
-              />
-            </CardContent>
-            <CardFooter className="border-t px-6 py-4">
-              <div className="flex items-center justify-between w-full">
-                <div className="text-sm text-gray-500 flex items-center">
-                  <Info className="h-4 w-4 mr-1" />
-                  Showing {recurringInvoices.length} recurring invoices
-                </div>
-                <Button 
-                  onClick={() => setIsNewRecurringOpen(true)} 
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Recurring Invoice
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        )}
+        <RecurringInvoiceContent 
+          invoices={recurringInvoices}
+          onNewClick={() => setIsNewRecurringOpen(true)}
+          onStatusChange={handleStatusChange}
+          onDelete={handleDelete}
+        />
       </div>
       
-      <Dialog open={isNewRecurringOpen} onOpenChange={setIsNewRecurringOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Recurring Invoice</DialogTitle>
-            <DialogDescription>
-              Set up a schedule to automatically generate invoices at regular intervals.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <RecurringInvoiceForm 
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsNewRecurringOpen(false)}
-            customers={sampleCustomers}
-          />
-        </DialogContent>
-      </Dialog>
+      <RecurringInvoiceDialog 
+        isOpen={isNewRecurringOpen}
+        onOpenChange={setIsNewRecurringOpen}
+        onSubmit={handleFormSubmit}
+        customers={sampleCustomers}
+      />
     </DashboardLayout>
   );
 };
