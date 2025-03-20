@@ -1,88 +1,71 @@
 
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ACHPaymentForm } from './ACHPaymentForm';
-import { CardPushForm } from './CardPushForm';
-import { PaymentMethod } from '@/services/itsPaid';
+import React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreditCard, Building, Send, Lock } from 'lucide-react';
 
 interface PayoutMethodSelectorProps {
-  amount: number;
-  onSuccess: (response: any) => void;
-  onError: (error: any) => void;
+  value: string;
+  onChange: (value: string) => void;
+  region: 'northAmerica' | 'latinAmerica' | 'global';
 }
 
-export const PayoutMethodSelector = ({ 
-  amount, 
-  onSuccess, 
-  onError 
-}: PayoutMethodSelectorProps) => {
-  const [selectedTab, setSelectedTab] = useState<string>('ach');
-
-  // Map tabs to payment methods
-  const getPaymentMethod = (tab: string): PaymentMethod => {
-    switch (tab) {
-      case 'ach': return 'ACH';
-      case 'swift': return 'SWIFT';
-      case 'fedwire': return 'FEDWIRE';
-      case 'zelle': return 'ZELLE';
-      case 'card': return 'CARD_PUSH';
-      default: return 'ACH';
+export const PayoutMethodSelector: React.FC<PayoutMethodSelectorProps> = ({
+  value,
+  onChange,
+  region = 'global'
+}) => {
+  
+  // Define payment methods based on region
+  const getPaymentMethods = () => {
+    switch (region) {
+      case 'northAmerica':
+        return [
+          { id: 'ach', label: 'ACH', icon: <Building className="h-4 w-4" /> },
+          { id: 'wire', label: 'Wire', icon: <Send className="h-4 w-4" /> },
+          { id: 'zelle', label: 'Zelle', icon: <Send className="h-4 w-4" /> }
+        ];
+      case 'latinAmerica':
+        return [
+          { id: 'pix', label: 'PIX', icon: <Send className="h-4 w-4" /> },
+          { id: 'ted', label: 'TED', icon: <Building className="h-4 w-4" /> },
+          { id: 'spei', label: 'SPEI', icon: <Building className="h-4 w-4" /> }
+        ];
+      default: // global
+        return [
+          { id: 'ach', label: 'ACH', icon: <Building className="h-4 w-4" /> },
+          { id: 'wire', label: 'Wire', icon: <Send className="h-4 w-4" /> },
+          { id: 'swift', label: 'SWIFT', icon: <Lock className="h-4 w-4" /> },
+          { id: 'card_push', label: 'Card Push', icon: <CreditCard className="h-4 w-4" /> }
+        ];
     }
   };
 
+  const paymentMethods = getPaymentMethods();
+  
+  // Ensure we have a valid value based on the available methods
+  React.useEffect(() => {
+    if (paymentMethods.length > 0 && !paymentMethods.some(m => m.id === value)) {
+      onChange(paymentMethods[0].id);
+    }
+  }, [region, value, onChange]);
+
   return (
-    <Tabs defaultValue="ach" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-      <TabsList className="grid grid-cols-5 mb-4 w-full bg-muted">
-        <TabsTrigger value="ach" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">ACH</TabsTrigger>
-        <TabsTrigger value="swift" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">SWIFT</TabsTrigger>
-        <TabsTrigger value="fedwire" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">FEDWIRE</TabsTrigger>
-        <TabsTrigger value="zelle" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">ZELLE</TabsTrigger>
-        <TabsTrigger value="card" className="data-[state=active]:bg-[#1AA47B] data-[state=active]:text-white">Card Push</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="ach">
-        <ACHPaymentForm 
-          amount={amount} 
-          onSuccess={onSuccess} 
-          onError={onError} 
-          paymentMethod="ACH"
-        />
-      </TabsContent>
-      
-      <TabsContent value="swift">
-        <ACHPaymentForm 
-          amount={amount} 
-          onSuccess={onSuccess} 
-          onError={onError} 
-          paymentMethod="SWIFT"
-        />
-      </TabsContent>
-      
-      <TabsContent value="fedwire">
-        <ACHPaymentForm 
-          amount={amount} 
-          onSuccess={onSuccess} 
-          onError={onError} 
-          paymentMethod="FEDWIRE"
-        />
-      </TabsContent>
-      
-      <TabsContent value="zelle">
-        <ACHPaymentForm 
-          amount={amount} 
-          onSuccess={onSuccess} 
-          onError={onError} 
-          paymentMethod="ZELLE"
-        />
-      </TabsContent>
-      
-      <TabsContent value="card">
-        <CardPushForm 
-          amount={amount} 
-          onSuccess={onSuccess} 
-          onError={onError} 
-        />
-      </TabsContent>
-    </Tabs>
+    <div className="space-y-2">
+      <label className="text-sm font-medium">Payment Method</label>
+      <Tabs value={value} onValueChange={onChange} className="w-full">
+        <TabsList className="grid grid-cols-3 w-full">
+          {paymentMethods.map(method => (
+            <TabsTrigger 
+              key={method.id}
+              value={method.id}
+              className="flex items-center gap-1 text-xs py-1.5 px-3"
+            >
+              {method.icon}
+              <span>{method.label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+    </div>
   );
 };

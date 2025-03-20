@@ -8,11 +8,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, Building, Wallet } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useGeoRestriction, REGIONS } from '@/hooks/useGeoRestriction';
+import { supabase } from '@/lib/supabase';
 
 interface PayinModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess: (newPayin: any) => void;
+}
+
+interface PayinData {
+  id: string;
+  transaction_id: string;
+  source: string;
+  method: string;
+  date: string;
+  status: string;
+  amount: number;
+  description: string;
+  customer_name: string;
+  customer_email: string;
+  payment_processor: string;
+  currency: string;
+  fee: number;
 }
 
 export const PayinModal: React.FC<PayinModalProps> = ({
@@ -23,6 +41,8 @@ export const PayinModal: React.FC<PayinModalProps> = ({
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState('credit-card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const { userCountry, isNorthAmerica, isLatinAmerica } = useGeoRestriction();
+  
   const [cardForm, setCardForm] = useState({
     cardNumber: '',
     expiry: '',
@@ -39,7 +59,7 @@ export const PayinModal: React.FC<PayinModalProps> = ({
   });
   const [alternativeForm, setAlternativeForm] = useState({
     amount: '',
-    method: 'pix',
+    method: isLatinAmerica ? 'pix' : 'pix',
     email: ''
   });
 
@@ -58,21 +78,95 @@ export const PayinModal: React.FC<PayinModalProps> = ({
     setAlternativeForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      // Determine which payment processor to use based on user location
+      const paymentProcessor = isLatinAmerica ? 'Prometeo' : 'ItsPaid';
+      
+      // Get form data based on payment method
+      let paymentData = {};
+      let amount = 0;
+      let method = '';
+      let description = '';
+      
+      if (paymentMethod === 'credit-card') {
+        paymentData = cardForm;
+        amount = parseFloat(cardForm.amount);
+        method = 'Credit Card';
+        description = `Card payment by ${cardForm.name}`;
+      } else if (paymentMethod === 'bank-transfer') {
+        paymentData = bankForm;
+        amount = parseFloat(bankForm.amount);
+        method = 'Bank Transfer';
+        description = `Bank transfer from ${bankForm.accountName}`;
+      } else {
+        paymentData = alternativeForm;
+        amount = parseFloat(alternativeForm.amount);
+        method = alternativeForm.method;
+        description = `Alternative payment via ${alternativeForm.method.toUpperCase()}`;
+      }
+
+      // Create transaction record
+      const newPayin: PayinData = {
+        id: `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        transaction_id: `TXN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        source: method,
+        method: method,
+        date: new Date().toISOString(),
+        status: "Processing",
+        amount: amount,
+        description: description,
+        customer_name: paymentMethod === 'credit-card' ? cardForm.name : 
+                       paymentMethod === 'bank-transfer' ? bankForm.accountName : "Customer",
+        customer_email: paymentMethod === 'alternative' ? alternativeForm.email : "customer@example.com",
+        payment_processor: paymentProcessor,
+        currency: "USD",
+        fee: parseFloat((amount * 0.029 + 0.30).toFixed(2)) // Sample fee calculation
+      };
+
+      // Save to database
+      const { data, error } = await supabase
+        .from('marqeta_transactions')
+        .insert([
+          {
+            id: newPayin.id,
+            amount: newPayin.amount.toString(),
+            currency: newPayin.currency,
+            status: newPayin.status.toLowerCase(),
+            merchant_name: newPayin.customer_name,
+            payment_method: newPayin.method,
+            description: newPayin.description,
+            transaction_type: 'payin',
+            metadata: {
+              payment_processor: newPayin.payment_processor,
+              payment_data: paymentData
+            }
+          }
+        ]);
+
+      if (error) throw error;
+
       toast({
-        title: "Payment Successful",
-        description: "Your payment has been processed successfully.",
+        title: "Payment Initiated",
+        description: `Your ${method} payment of ${newPayin.amount.toFixed(2)} has been submitted.`,
       });
-      onPaymentSuccess();
+
+      onPaymentSuccess(newPayin);
       onOpenChange(false);
       resetForms();
-    }, 1500);
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      toast({
+        title: "Payment Error",
+        description: "There was a problem processing your payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const resetForms = () => {
@@ -92,9 +186,26 @@ export const PayinModal: React.FC<PayinModalProps> = ({
     });
     setAlternativeForm({
       amount: '',
-      method: 'pix',
+      method: isLatinAmerica ? 'pix' : 'pix',
       email: ''
     });
+  };
+
+  // Determine which alternative payment methods to show based on region
+  const getAlternativePaymentMethods = () => {
+    if (isLatinAmerica) {
+      return [
+        { value: 'pix', label: 'PIX (Brazil)' },
+        { value: 'oxxo', label: 'OXXO (Mexico)' },
+        { value: 'boleto', label: 'Boleto (Brazil)' }
+      ];
+    }
+    
+    return [
+      { value: 'apple_pay', label: 'Apple Pay' },
+      { value: 'google_pay', label: 'Google Pay' },
+      { value: 'venmo', label: 'Venmo' }
+    ];
   };
 
   return (
@@ -218,7 +329,7 @@ export const PayinModal: React.FC<PayinModalProps> = ({
                 <Input
                   id="bankName"
                   name="bankName"
-                  placeholder="Bank of America"
+                  placeholder={isLatinAmerica ? "Banco do Brasil" : "Bank of America"}
                   value={bankForm.bankName}
                   onChange={handleBankInputChange}
                   required
@@ -250,11 +361,13 @@ export const PayinModal: React.FC<PayinModalProps> = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="routingNumber">Routing Number</Label>
+                <Label htmlFor="routingNumber">
+                  {isLatinAmerica ? 'Agency Number' : 'Routing Number'}
+                </Label>
                 <Input
                   id="routingNumber"
                   name="routingNumber"
-                  placeholder="021000021"
+                  placeholder={isLatinAmerica ? "1234" : "021000021"}
                   value={bankForm.routingNumber}
                   onChange={handleBankInputChange}
                   required
@@ -293,20 +406,14 @@ export const PayinModal: React.FC<PayinModalProps> = ({
                 <RadioGroup 
                   value={alternativeForm.method} 
                   onValueChange={(value) => setAlternativeForm(prev => ({ ...prev, method: value }))}
-                  className="flex gap-4"
+                  className="flex gap-4 flex-wrap"
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="pix" id="pix" />
-                    <Label htmlFor="pix">PIX (Brazil)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="oxxo" id="oxxo" />
-                    <Label htmlFor="oxxo">OXXO (Mexico)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="boleto" id="boleto" />
-                    <Label htmlFor="boleto">Boleto (Brazil)</Label>
-                  </div>
+                  {getAlternativePaymentMethods().map(method => (
+                    <div key={method.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={method.value} id={method.value} />
+                      <Label htmlFor={method.value}>{method.label}</Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               </div>
               

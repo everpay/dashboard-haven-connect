@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Search, Plus, Download, ArrowUpRight, Filter, Eye } from 'lucide-react';
+import { Search, Filter, Plus, Download, ArrowUpRight, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { exportAsCSV, exportAsXML, exportAsPDF } from '@/utils/exportUtils';
 import { 
@@ -18,6 +18,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PayinModal } from '@/components/payment/PayinModal';
 import CountUp from 'react-countup';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { useGeoRestriction } from '@/hooks/useGeoRestriction';
 import { 
   Dialog,
   DialogContent,
@@ -27,36 +30,114 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 
+interface Payin {
+  id: string;
+  transaction_id: string;
+  source: string;
+  method: string;
+  date: string;
+  status: string;
+  amount: number;
+  description: string;
+  customer_name: string;
+  customer_email: string;
+  payment_processor: string;
+  currency: string;
+  fee: number;
+  created_at?: string;
+}
+
 const Payins = () => {
-  const [payins, setPayins] = useState<any[]>([]);
+  const [payins, setPayins] = useState<Payin[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isPayinModalOpen, setIsPayinModalOpen] = useState(false);
-  const [selectedPayin, setSelectedPayin] = useState<any>(null);
+  const [selectedPayin, setSelectedPayin] = useState<Payin | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const { isAllowed } = useGeoRestriction();
   const limit = 5;
   const totalPayins = 24; // Mock total count
   
-  // This would normally be loaded from an API or database
-  React.useEffect(() => {
-    // Mock data for demonstration
-    const mockPayins = Array.from({ length: 5 }).map((_, i) => ({
+  useEffect(() => {
+    fetchPayins();
+  }, [currentPage]);
+
+  const fetchPayins = async () => {
+    setIsLoading(true);
+    try {
+      // Try to fetch real transactions from Supabase
+      const { data, error } = await supabase
+        .from('marqeta_transactions')
+        .select('*')
+        .eq('transaction_type', 'payin')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Generate mock data to combine with real data
+      const mockPayins = generateMockPayins();
+      
+      // If we got real data, combine it with mock data
+      if (data && data.length > 0) {
+        const formattedRealPayins = data.map(item => ({
+          id: item.id,
+          transaction_id: item.id.substring(0, 10).toUpperCase(),
+          source: item.payment_method || "Bank Transfer",
+          method: item.payment_method || "Card",
+          date: item.created_at,
+          status: item.status || "Processing",
+          amount: parseFloat(item.amount) || Math.floor(100 + Math.random() * 900),
+          description: item.description || "Payment",
+          customer_name: "Customer",
+          customer_email: "customer@example.com",
+          payment_processor: "Stripe",
+          currency: item.currency || "USD",
+          fee: parseFloat((Math.random() * 5).toFixed(2)),
+          created_at: item.created_at
+        }));
+        
+        // Combine real with mock data, limiting to avoid too many entries
+        const combinedPayins = [...formattedRealPayins, ...mockPayins.slice(0, 5 - formattedRealPayins.length)];
+        setPayins(combinedPayins);
+      } else {
+        // If no real data, use mock data
+        setPayins(mockPayins);
+      }
+    } catch (error) {
+      console.error('Error fetching payins:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load transaction data. Using sample data instead.",
+        variant: "destructive"
+      });
+      // Use mock data on error
+      setPayins(generateMockPayins());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateMockPayins = (): Payin[] => {
+    // Create sample data with recent dates
+    return Array.from({ length: 5 }).map((_, i) => ({
       id: `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
       transaction_id: `TXN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
       source: ["Bank Transfer", "Credit Card", "PayPal", "Stripe", "Square"][i % 5],
       method: ["ACH", "Card", "Direct", "Wallet", "Bank Transfer"][i % 5],
-      date: new Date(Date.now() - i * 86400000).toISOString(),
-      status: i % 3 === 0 ? "Completed" : i % 3 === 1 ? "Processing" : "Pending",
+      date: new Date(Date.now() - i * 86400000).toISOString(), // Most recent first
+      status: i % 3 === 0 ? "Processing" : i % 3 === 1 ? "Completed" : "Pending",
       amount: parseFloat((Math.random() * 1000).toFixed(2)),
       description: ["Monthly service fee", "Product purchase", "Subscription", "One-time payment", "Invoice payment"][i % 5],
       customer_name: ["John Smith", "Alice Johnson", "Robert Williams", "Emma Brown", "Michael Davis"][i % 5],
       customer_email: ["john@example.com", "alice@example.com", "robert@example.com", "emma@example.com", "michael@example.com"][i % 5],
       payment_processor: ["Stripe", "PayPal", "Square", "Braintree", "Adyen"][i % 5],
       currency: ["USD", "EUR", "GBP", "USD", "CAD"][i % 5],
-      fee: parseFloat((Math.random() * 10).toFixed(2))
+      fee: parseFloat((Math.random() * 10).toFixed(2)),
+      created_at: new Date(Date.now() - i * 86400000).toISOString()
     }));
-    
-    setPayins(mockPayins);
-  }, [currentPage]);
+  };
 
   const handleExport = (format: 'csv' | 'xml' | 'pdf') => {
     switch (format) {
@@ -72,26 +153,15 @@ const Payins = () => {
     }
   };
 
-  const handlePayinSuccess = () => {
-    // Here we would normally update the payins list
-    // For now, let's just refresh with mock data
-    const newPayin = {
-      id: `PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-      transaction_id: `TXN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-      source: "Credit Card",
-      method: "Card",
-      date: new Date().toISOString(),
-      status: "Processing",
-      amount: Math.floor(100 + Math.random() * 900),
-      description: "New payment",
-      customer_name: "New Customer",
-      customer_email: "new@example.com",
-      payment_processor: "Stripe",
-      currency: "USD",
-      fee: parseFloat((Math.random() * 5).toFixed(2))
-    };
-    
+  const handlePayinSuccess = (newPayin: Payin) => {
+    // Add the new payin to the top of the list
     setPayins([newPayin, ...payins.slice(0, -1)]);
+    toast({
+      title: "Payment successful",
+      description: "Your payment has been processed.",
+      variant: "default"
+    });
+    fetchPayins(); // Refresh the list to show the new payin
   };
 
   const handlePrevPage = () => {
@@ -107,7 +177,7 @@ const Payins = () => {
     }
   };
 
-  const handleViewDetails = (payin: any) => {
+  const handleViewDetails = (payin: Payin) => {
     setSelectedPayin(payin);
     setDetailsOpen(true);
   };
@@ -203,53 +273,59 @@ const Payins = () => {
             <CardDescription>View and manage your incoming payments</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left font-medium py-3 pl-4">Transaction ID</th>
-                    <th className="text-left font-medium py-3">Source</th>
-                    <th className="text-left font-medium py-3">Method</th>
-                    <th className="text-left font-medium py-3">Date</th>
-                    <th className="text-left font-medium py-3">Status</th>
-                    <th className="text-right font-medium py-3">Amount</th>
-                    <th className="text-right font-medium py-3 pr-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {payins.map((payin, i) => (
-                    <tr key={i} className="hover:bg-muted/50">
-                      <td className="py-3 pl-4">{payin.id}</td>
-                      <td className="py-3">{payin.source}</td>
-                      <td className="py-3">{payin.method}</td>
-                      <td className="py-3">
-                        {formatDate(payin.date)}
-                      </td>
-                      <td className="py-3">
-                        <Badge variant={payin.status === "Completed" ? "success" : payin.status === "Processing" ? "default" : "secondary"}>
-                          {payin.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 text-right">
-                        <span className="font-medium text-green-600">
-                          {formatCurrency(payin.amount, payin.currency)}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-7 text-xs" 
-                          onClick={() => handleViewDetails(payin)}
-                        >
-                          <Eye className="h-3 w-3 mr-1" /> Details
-                        </Button>
-                      </td>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1AA47B]"></div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left font-medium py-3 pl-4">Transaction ID</th>
+                      <th className="text-left font-medium py-3">Source</th>
+                      <th className="text-left font-medium py-3">Method</th>
+                      <th className="text-left font-medium py-3">Date</th>
+                      <th className="text-left font-medium py-3">Status</th>
+                      <th className="text-right font-medium py-3">Amount</th>
+                      <th className="text-right font-medium py-3 pr-4">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y">
+                    {payins.map((payin, i) => (
+                      <tr key={i} className="hover:bg-muted/50">
+                        <td className="py-3 pl-4">{payin.transaction_id || payin.id.substring(0, 10).toUpperCase()}</td>
+                        <td className="py-3">{payin.source}</td>
+                        <td className="py-3">{payin.method}</td>
+                        <td className="py-3">
+                          {formatDate(payin.date || payin.created_at || new Date().toISOString())}
+                        </td>
+                        <td className="py-3">
+                          <Badge variant={payin.status === "Completed" ? "success" : payin.status === "Processing" ? "default" : "secondary"}>
+                            {payin.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 text-right">
+                          <span className="font-medium text-green-600">
+                            {formatCurrency(payin.amount, payin.currency)}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 text-right">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs" 
+                            onClick={() => handleViewDetails(payin)}
+                          >
+                            <Eye className="h-3 w-3 mr-1" /> Details
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
             
             <div className="flex justify-between items-center mt-4">
               <div className="text-sm text-muted-foreground">
@@ -369,11 +445,13 @@ const Payins = () => {
       </div>
 
       {/* Pay-in Modal */}
-      <PayinModal
-        open={isPayinModalOpen}
-        onOpenChange={setIsPayinModalOpen}
-        onPaymentSuccess={handlePayinSuccess}
-      />
+      {isAllowed && (
+        <PayinModal
+          open={isPayinModalOpen}
+          onOpenChange={setIsPayinModalOpen}
+          onPaymentSuccess={handlePayinSuccess}
+        />
+      )}
 
       {/* Transaction Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -395,7 +473,7 @@ const Payins = () => {
                 <div className="text-gray-600 break-all">{selectedPayin.id}</div>
                 
                 <div className="font-medium">Date:</div>
-                <div>{formatDate(selectedPayin.date)}</div>
+                <div>{formatDate(selectedPayin.date || selectedPayin.created_at || new Date().toISOString())}</div>
                 
                 <div className="font-medium">Status:</div>
                 <div>
