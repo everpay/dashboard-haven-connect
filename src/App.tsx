@@ -38,40 +38,15 @@ import RecurringPayments from "./pages/RecurringPayments"
 // Debug log to see if App component is loading
 console.log('App component initializing');
 
-// Create a fallback component in case of errors
-const FallbackApp = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-100">
-    <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold mb-4">App Initialization Error</h1>
-      <p className="mb-4">There was a problem initializing the application.</p>
-      <p className="text-sm text-gray-500">Check the console for more details.</p>
-    </div>
-  </div>
-);
-
-// Simple debug component to help diagnose rendering issues
-const DebugComponent = () => {
-  console.log("Debug component rendering");
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center p-8 bg-white rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">Debug Page</h1>
-        <p className="mb-4">This is a minimal debug page to test rendering.</p>
-        <a href="/" className="text-blue-500 hover:underline">Go to Home</a>
-      </div>
-    </div>
-  );
-};
-
 // Creating the main App component
 const App = () => {
   console.log('Rendering App component');
   
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="everpay-ui-theme">
-      <div className="min-h-screen bg-background">
+    <ThemeProvider defaultTheme="dark" storageKey="everpay-ui-theme" forcedTheme="dark">
+      <div className="min-h-screen bg-[#04080F] text-white">
         <Routes>
-          <Route path="/debug" element={<DebugComponent />} />
+          <Route path="/debug" element={<div>Debug Page</div>} />
           <Route path="/simple" element={<SimpleIndex />} />
           <Route 
             path="/*" 
@@ -109,6 +84,7 @@ const App = () => {
                       <Route path="/reports/overview" element={<ReportsOverview />} />
                       <Route path="/reports/analytics" element={<ReportsAnalytics />} />
                       <Route path="/banking" element={<Banking />} />
+                      <Route path="/overview" element={<Banking />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </TooltipProvider>
@@ -122,5 +98,4 @@ const App = () => {
   );
 };
 
-// Single default export at the top level
 export default App;

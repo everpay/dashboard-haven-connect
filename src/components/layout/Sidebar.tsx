@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -10,313 +10,199 @@ import {
   FileText, 
   Package, 
   BarChart2, 
-  Plug2, 
-  Settings, 
-  ChevronRight, 
+  Plug2,
+  LogOut,
   ChevronDown,
-  LogOut
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from "@/lib/auth";
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export const Sidebar = () => {
   const location = useLocation();
   const { signOut } = useAuth();
-  const [transactionsOpen, setTransactionsOpen] = React.useState(true);
-  const [customersOpen, setCustomersOpen] = React.useState(false);
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
-  
-  const isLinkActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const [walletOpen, setWalletOpen] = useState(true);
   
   return (
-    <div className="hidden md:flex w-64 flex-col h-screen border-r border-border bg-background">
-      <div className="h-16 flex items-center px-4 border-b border-border">
+    <div className="w-64 fixed top-0 left-0 h-screen bg-[#0B0F19] text-white flex flex-col border-r border-[#1E2736]">
+      <div className="flex items-center px-6 h-16 border-b border-[#1E2736]">
         <Link to="/" className="flex items-center space-x-2">
           <img 
             src="/lovable-uploads/Everpay-icon.png" 
             alt="Everpay" 
-            className="h-8 w-8"
+            className="h-7 w-7"
           />
-          <span className="font-bold text-2xl text-primary">everpay</span>
+          <span className="font-bold text-xl text-[#1DE9B6]">everpay</span>
         </Link>
       </div>
       
-      <ScrollArea className="flex-1 px-3 py-4">
-        <div className="space-y-1">
+      <div className="flex-1 overflow-y-auto pt-5 pb-4">
+        <nav className="px-4 space-y-1">
           <Link 
             to="/" 
             className={cn(
-              "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-              isLinkActive('/') 
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname === "/" 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
             )}
           >
-            <LayoutGrid className="h-4 w-4" />
-            <span>Dashboard</span>
-          </Link>
-          
-          <Collapsible 
-            open={transactionsOpen} 
-            onOpenChange={setTransactionsOpen}
-            className="space-y-1"
-          >
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={cn(
-                  "w-full justify-between text-sm px-3 py-2 h-auto", 
-                  (location.pathname.includes('/transactions') || 
-                   location.pathname.includes('/payment') || 
-                   location.pathname.includes('/recurring')) 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <div className="flex items-center space-x-3">
-                  <Receipt className="h-4 w-4" />
-                  <span>Transactions</span>
-                </div>
-                {transactionsOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pl-6 space-y-1">
-              <Link
-                to="/transactions"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/transactions') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Overview</span>
-              </Link>
-              <Link
-                to="/recurring-payments"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/recurring-payments') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Recurring Payments</span>
-              </Link>
-              <Link
-                to="/payment-link"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/payment-link') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Payment Links</span>
-              </Link>
-            </CollapsibleContent>
-          </Collapsible>
-          
-          <Collapsible 
-            open={customersOpen} 
-            onOpenChange={setCustomersOpen}
-            className="space-y-1"
-          >
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={cn(
-                  "w-full justify-between text-sm px-3 py-2 h-auto", 
-                  (location.pathname.includes('/customers') || 
-                   location.pathname.includes('/recipients')) 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <div className="flex items-center space-x-3">
-                  <Users className="h-4 w-4" />
-                  <span>Customers</span>
-                </div>
-                {customersOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pl-6 space-y-1">
-              <Link
-                to="/customers"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/customers') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>All Customers</span>
-              </Link>
-              <Link
-                to="/recipients"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/recipients') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Recipients</span>
-              </Link>
-            </CollapsibleContent>
-          </Collapsible>
-          
-          <Link 
-            to="/banking" 
-            className={cn(
-              "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-              isLinkActive('/banking') 
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
-          >
-            <Wallet className="h-4 w-4" />
-            <span>Banking</span>
+            <LayoutGrid className="h-5 w-5 mr-3" />
+            Dashboard
           </Link>
           
           <Link 
-            to="/invoicing" 
+            to="/transactions" 
             className={cn(
-              "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-              isLinkActive('/invoicing') || isLinkActive('/invoices')
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname.includes("/transactions") 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
             )}
           >
-            <FileText className="h-4 w-4" />
-            <span>Invoices</span>
+            <Receipt className="h-5 w-5 mr-3" />
+            Transactions
+          </Link>
+          
+          <Link 
+            to="/customers" 
+            className={cn(
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname.includes("/customers") 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
+            )}
+          >
+            <Users className="h-5 w-5 mr-3" />
+            Customers
+          </Link>
+          
+          <div className="py-2">
+            <button 
+              onClick={() => setWalletOpen(!walletOpen)} 
+              className={cn(
+                "flex items-center w-full text-sm font-medium rounded-md px-3 py-2.5",
+                (location.pathname.includes("/payins") || location.pathname.includes("/payouts")) 
+                  ? "text-white bg-[#1E2736]" 
+                  : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
+              )}
+            >
+              <Wallet className="h-5 w-5 mr-3" />
+              <span className="flex-1 text-left">Wallet</span>
+              {walletOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+            
+            {walletOpen && (
+              <div className="ml-8 mt-2 space-y-1">
+                <Link 
+                  to="/overview"
+                  className={cn(
+                    "flex items-center text-sm font-medium rounded-md px-3 py-2",
+                    location.pathname === "/overview" 
+                      ? "text-white" 
+                      : "text-[#A0AEC0] hover:text-white"
+                  )}
+                >
+                  Overview
+                </Link>
+                <Link 
+                  to="/payins"
+                  className={cn(
+                    "flex items-center text-sm font-medium rounded-md px-3 py-2",
+                    location.pathname.includes("/payins") 
+                      ? "text-white bg-[#1AA47B]/20" 
+                      : "text-[#A0AEC0] hover:text-white"
+                  )}
+                >
+                  Pay-ins
+                </Link>
+                <Link 
+                  to="/payouts"
+                  className={cn(
+                    "flex items-center text-sm font-medium rounded-md px-3 py-2",
+                    location.pathname.includes("/payouts") 
+                      ? "text-white" 
+                      : "text-[#A0AEC0] hover:text-white"
+                  )}
+                >
+                  Payouts
+                </Link>
+              </div>
+            )}
+          </div>
+          
+          <Link 
+            to="/invoices" 
+            className={cn(
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname.includes("/invoices") 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
+            )}
+          >
+            <FileText className="h-5 w-5 mr-3" />
+            Invoices
           </Link>
           
           <Link 
             to="/products" 
             className={cn(
-              "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-              isLinkActive('/products') 
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname.includes("/products") 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
             )}
           >
-            <Package className="h-4 w-4" />
-            <span>Products</span>
+            <Package className="h-5 w-5 mr-3" />
+            Products
           </Link>
           
           <Link 
-            to="/reports/overview" 
+            to="/reports" 
             className={cn(
-              "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-              location.pathname.includes('/reports')
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname.includes("/reports") 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
             )}
           >
-            <BarChart2 className="h-4 w-4" />
-            <span>Reports</span>
+            <BarChart2 className="h-5 w-5 mr-3" />
+            Reports
           </Link>
           
           <Link 
             to="/integrations" 
             className={cn(
-              "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-              isLinkActive('/integrations') 
-                ? "bg-primary/10 text-primary font-medium" 
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              "flex items-center text-sm font-medium rounded-md px-3 py-2.5",
+              location.pathname.includes("/integrations") 
+                ? "text-white bg-[#1E2736]" 
+                : "text-[#A0AEC0] hover:text-white hover:bg-[#1E2736]"
             )}
           >
-            <Plug2 className="h-4 w-4" />
-            <span>Integrations</span>
+            <Plug2 className="h-5 w-5 mr-3" />
+            Integrations
           </Link>
-          
-          <Collapsible 
-            open={settingsOpen} 
-            onOpenChange={setSettingsOpen}
-            className="space-y-1"
-          >
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className={cn(
-                  "w-full justify-between text-sm px-3 py-2 h-auto", 
-                  (location.pathname.includes('/account') || 
-                   location.pathname.includes('/team') || 
-                   location.pathname.includes('/billing') ||
-                   location.pathname.includes('/cards') ||
-                   location.pathname.includes('/bank-accounts')) 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <div className="flex items-center space-x-3">
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </div>
-                {settingsOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pl-6 space-y-1">
-              <Link
-                to="/account"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/account') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Account</span>
-              </Link>
-              <Link
-                to="/team"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/team') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Team</span>
-              </Link>
-              <Link
-                to="/billing"
-                className={cn(
-                  "flex items-center space-x-3 rounded-md px-3 py-2 text-sm",
-                  isLinkActive('/billing') 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span>Billing</span>
-              </Link>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      </ScrollArea>
+        </nav>
+      </div>
       
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-[#1E2736] mt-auto">
+        <div className="flex items-center mb-4">
+          <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium">
+            BO
+          </div>
+          <div className="ml-3">
+            <p className="text-sm font-medium text-white">user</p>
+            <p className="text-xs text-gray-400 truncate">bobby.bizarro@gmail.com</p>
+          </div>
+        </div>
         <Button 
           variant="outline" 
           size="sm" 
-          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="w-full justify-start border-[#1E2736] text-[#A0AEC0] hover:text-white hover:bg-[#1E2736] hover:border-[#1E2736]"
           onClick={signOut}
         >
           <LogOut className="mr-2 h-4 w-4" />

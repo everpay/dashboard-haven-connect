@@ -17,6 +17,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Add dark class to body
+document.documentElement.classList.add('dark');
+
 // Create the root element
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
