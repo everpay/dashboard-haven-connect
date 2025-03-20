@@ -2,6 +2,7 @@
 import { getItsPaidService, PaymentMethod } from '@/services/itsPaid';
 import { ensureUserProfile } from '@/services/recipientService';
 import { toast } from 'sonner';
+import { Recipient } from '@/types/recipient.types';
 
 export const processPayment = async ({
   selectedMethod,
@@ -25,7 +26,7 @@ export const processPayment = async ({
   bankName: string;
   description: string;
   user: any;
-  addRecipient: (data: any) => Promise<any>;
+  addRecipient: (data: Partial<Recipient>) => Promise<any>;
   setLoading: (loading: boolean) => void;
   onSuccess: (response: any) => void;
   onError: (error: any) => void;

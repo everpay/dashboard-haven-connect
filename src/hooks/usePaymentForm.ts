@@ -5,6 +5,7 @@ import { PaymentMethod } from '@/services/itsPaid';
 import { useRecipients } from '@/hooks/useRecipients';
 import { useAuth } from '@/lib/auth';
 import { ensureUserProfile } from '@/services/recipientService';
+import { Recipient } from '@/types/recipient.types';
 
 export const usePaymentForm = (
   amount: number,
@@ -19,7 +20,7 @@ export const usePaymentForm = (
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(initialPaymentMethod);
-  const { addRecipient } = useRecipients();
+  const { addRecipient: addRecipientMutation } = useRecipients();
   const { user } = useAuth();
 
   // Update selected method when the initialPaymentMethod prop changes
@@ -63,6 +64,20 @@ export const usePaymentForm = (
     }
     
     return true;
+  };
+
+  // Create a wrapper function that returns a Promise around the mutation
+  const addRecipient = async (recipientData: Partial<Recipient>): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      addRecipientMutation(recipientData, {
+        onSuccess: (data) => {
+          resolve(data);
+        },
+        onError: (error) => {
+          reject(error);
+        }
+      });
+    });
   };
 
   return {
