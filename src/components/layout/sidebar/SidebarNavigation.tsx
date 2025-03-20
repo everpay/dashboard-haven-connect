@@ -8,7 +8,9 @@ import {
   FileText, 
   Package, 
   BarChart2, 
-  Plug2
+  Plug2,
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import { SidebarNavLink } from './SidebarNavLink';
 import { SidebarDropdown } from './SidebarDropdown';
@@ -21,10 +23,6 @@ export const SidebarNavigation = () => {
           Dashboard
         </SidebarNavLink>
         
-        <SidebarNavLink to="/transactions" icon={Receipt}>
-          Transactions
-        </SidebarNavLink>
-        
         <SidebarNavLink to="/customers" icon={Users}>
           Customers
         </SidebarNavLink>
@@ -33,7 +31,7 @@ export const SidebarNavigation = () => {
           icon={Wallet} 
           label="Wallet" 
           defaultOpen={true}
-          includesPaths={["/payins", "/payouts"]}
+          includesPaths={["/payins", "/payouts", "/overview", "/banking", "/cards"]}
         >
           <SidebarNavLink to="/overview" isSubmenu>
             Overview
@@ -43,6 +41,12 @@ export const SidebarNavigation = () => {
           </SidebarNavLink>
           <SidebarNavLink to="/payouts" isSubmenu>
             Payouts
+          </SidebarNavLink>
+          <SidebarNavLink to="/cards" isSubmenu>
+            Cards
+          </SidebarNavLink>
+          <SidebarNavLink to="/bank-accounts" isSubmenu>
+            Bank Accounts
           </SidebarNavLink>
         </SidebarDropdown>
         
@@ -61,6 +65,27 @@ export const SidebarNavigation = () => {
         <SidebarNavLink to="/integrations" icon={Plug2}>
           Integrations
         </SidebarNavLink>
+        
+        <SidebarNavLink to="/transactions" icon={Receipt}>
+          Transactions
+        </SidebarNavLink>
+        
+        <SidebarDropdown 
+          icon={Settings} 
+          label="Settings" 
+          defaultOpen={false}
+          includesPaths={["/account", "/team", "/billing"]}
+        >
+          <SidebarNavLink to="/account" isSubmenu>
+            Account
+          </SidebarNavLink>
+          <SidebarNavLink to="/team" isSubmenu>
+            Team
+          </SidebarNavLink>
+          <SidebarNavLink to="/billing" isSubmenu>
+            Billing
+          </SidebarNavLink>
+        </SidebarDropdown>
       </nav>
     </div>
   );

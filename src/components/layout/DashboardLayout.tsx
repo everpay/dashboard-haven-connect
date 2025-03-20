@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from "@/lib/auth";
 import { Sidebar } from './Sidebar';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -15,8 +15,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   
   return (
     <div className="min-h-screen bg-[#04080F] text-white">
-      <Sidebar />
-      <div className={`ml-64 transition-all duration-300 ease-in-out ${collapsed ? 'ml-0' : ''}`}>
+      {!collapsed && <Sidebar />}
+      <div className={`transition-all duration-300 ease-in-out ${collapsed ? 'ml-0' : 'ml-64'}`}>
         <header className="h-16 border-b border-[#1E2736] flex items-center px-6">
           <Button 
             variant="ghost" 
@@ -24,7 +24,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             className="text-gray-400 hover:text-white hover:bg-[#1E2736]"
             onClick={() => setCollapsed(!collapsed)}
           >
-            <ChevronLeft className="h-5 w-5" />
+            {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
