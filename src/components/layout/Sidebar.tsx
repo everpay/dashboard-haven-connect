@@ -13,14 +13,17 @@ import {
   Plug2, 
   Settings, 
   ChevronRight, 
-  ChevronDown 
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from "@/lib/auth";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export const Sidebar = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
   const [transactionsOpen, setTransactionsOpen] = React.useState(true);
   const [customersOpen, setCustomersOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -314,10 +317,7 @@ export const Sidebar = () => {
           variant="outline" 
           size="sm" 
           className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-          onClick={() => {
-            const { signOut } = useAuth();
-            signOut && signOut();
-          }}
+          onClick={signOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
