@@ -1,15 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
 import { useRecipients } from '@/hooks/useRecipients';
 import { useAuth } from '@/lib/auth';
 import { ensureUserProfile } from '@/services/recipientService';
+import { BankDetailsForm } from './BankDetailsForm';
+import { PaymentMethodSelector } from './PaymentMethodSelector';
+import { PaymentSubmitButton } from './PaymentSubmitButton';
 
 interface ACHPaymentFormProps {
   amount: number;
@@ -166,23 +167,10 @@ export const ACHPaymentForm = ({
     <Card className="p-4 bg-card">
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="paymentType">Payment Method</Label>
-            <Select 
-              value={selectedMethod} 
-              onValueChange={(value) => setSelectedMethod(value as PaymentMethod)}
-            >
-              <SelectTrigger id="paymentType" className="bg-background text-foreground">
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACH">ACH</SelectItem>
-                <SelectItem value="SWIFT">SWIFT</SelectItem>
-                <SelectItem value="FEDWIRE">FEDWIRE</SelectItem>
-                <SelectItem value="ZELLE">ZELLE</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <PaymentMethodSelector
+            selectedMethod={selectedMethod}
+            onMethodChange={setSelectedMethod}
+          />
 
           <div>
             <Label htmlFor="name">Recipient Name</Label>
@@ -195,53 +183,16 @@ export const ACHPaymentForm = ({
             />
           </div>
 
-          {selectedMethod === 'ZELLE' ? (
-            <div>
-              <Label htmlFor="zelleEmail">Recipient Zelle Email/Phone</Label>
-              <Input
-                id="zelleEmail"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="Email or phone number registered with Zelle"
-                required
-                className="bg-background text-foreground"
-              />
-            </div>
-          ) : (
-            <>
-              <div>
-                <Label htmlFor="accountNumber">Account Number</Label>
-                <Input
-                  id="accountNumber"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  required
-                  className="bg-background text-foreground"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="routingNumber">Routing Number</Label>
-                <Input
-                  id="routingNumber"
-                  value={routingNumber}
-                  onChange={(e) => setRoutingNumber(e.target.value)}
-                  required
-                  className="bg-background text-foreground"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="bankName">Bank Name</Label>
-                <Input
-                  id="bankName"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  className="bg-background text-foreground"
-                />
-              </div>
-            </>
-          )}
+          <BankDetailsForm
+            paymentMethod={selectedMethod}
+            accountNumber={accountNumber}
+            routingNumber={routingNumber}
+            bankName={bankName}
+            zelleEmail={accountNumber}
+            onAccountNumberChange={setAccountNumber}
+            onRoutingNumberChange={setRoutingNumber}
+            onBankNameChange={setBankName}
+          />
 
           <div>
             <Label htmlFor="description">Description (Optional)</Label>
@@ -254,20 +205,11 @@ export const ACHPaymentForm = ({
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-[#1AA47B] hover:bg-[#19363B]"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              `Send $${amount} via ${selectedMethod}`
-            )}
-          </Button>
+          <PaymentSubmitButton
+            isLoading={loading}
+            amount={amount}
+            paymentMethod={selectedMethod}
+          />
         </div>
       </form>
     </Card>
