@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardContent } from './DashboardContent';
 import { ErrorDisplay } from './ErrorDisplay';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
+import { TimeframeOption } from '@/utils/timeframeUtils';
 
 export const Dashboard = () => {
+  const [globalTimeframe, setGlobalTimeframe] = useState<TimeframeOption>('7days');
+  
   const {
     error,
     transactions,
