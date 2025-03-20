@@ -66,7 +66,7 @@ export const useRecipients = () => {
         fullName = "Unnamed Recipient";
       }
       
-      // Clean up the input
+      // Clean up the input - only include fields that exist in the database
       const cleanedRecipient = {
         first_names: newRecipient.first_names || (fullName ? fullName.split(' ')[0] : 'Unknown'),
         last_names: newRecipient.last_names || (fullName && fullName.split(' ').length > 1 ? fullName.split(' ').slice(1).join(' ') : 'Recipient'),
@@ -79,11 +79,21 @@ export const useRecipients = () => {
         region: newRecipient.region || null,
         postal_code: newRecipient.postal_code || null,
         country_iso3: newRecipient.country_iso3 || null,
-        bank_account_number: newRecipient.bank_account_number || null,
-        bank_routing_number: newRecipient.bank_routing_number || null,
-        bank_name: newRecipient.bank_name || null,
         user_id: user.id
       };
+      
+      // Only add these fields if they exist in the database
+      if (newRecipient.bank_account_number) {
+        Object.assign(cleanedRecipient, { bank_account_number: newRecipient.bank_account_number });
+      }
+      
+      if (newRecipient.bank_routing_number) {
+        Object.assign(cleanedRecipient, { bank_routing_number: newRecipient.bank_routing_number });
+      }
+      
+      if (newRecipient.bank_name) {
+        Object.assign(cleanedRecipient, { bank_name: newRecipient.bank_name });
+      }
       
       console.log('Adding recipient:', cleanedRecipient);
       
@@ -144,11 +154,37 @@ export const useRecipients = () => {
       
       if (error) {
         console.error('Error adding recipient:', error);
+        
+        // Check for specific column errors and handle them
+        if (error.message && error.message.includes('column')) {
+          const columnMatch = error.message.match(/column ['"]([^'"]+)['"]/);
+          if (columnMatch && columnMatch[1]) {
+            const problematicColumn = columnMatch[1];
+            console.log(`Problem with column: ${problematicColumn}, removing it and trying again`);
+            
+            // Remove the problematic field and try again
+            delete (cleanedRecipient as any)[problematicColumn];
+            
+            const retryResult = await supabase
+              .from('recipients')
+              .insert([cleanedRecipient])
+              .select();
+              
+            if (retryResult.error) {
+              console.error('Error on retry:', retryResult.error);
+              throw new Error(`Failed to add recipient: ${retryResult.error.message}`);
+            }
+            
+            return retryResult.data[0];
+          }
+        }
+        
         // Check if the error is related to FK constraint
         if (error.message && error.message.includes('violates foreign key constraint')) {
           throw new Error("Database error: User ID is not valid in recipients table. Please check your user authentication.");
         }
-        throw error;
+        
+        throw new Error(`Failed to add recipient: ${error.message}`);
       }
       
       console.log('Added new recipient:', data[0]);

@@ -55,6 +55,17 @@ export const PayoutModal = ({
         RECIPIENT_FULL_NAME: response.RECIPIENT_FULL_NAME
       };
       
+      // Ensure we have a standardized payment method name
+      const paymentMethod = response.SEND_METHOD || response.TRANSACTION_SEND_METHOD || 'bank_transfer';
+      
+      // Format the payment method display name
+      let formattedPaymentMethod = paymentMethod;
+      if (typeof paymentMethod === 'string') {
+        formattedPaymentMethod = paymentMethod.toUpperCase();
+      }
+      
+      console.log('Transaction payment method:', formattedPaymentMethod);
+      
       const { error } = await supabase
         .from('marqeta_transactions')
         .insert([{
@@ -64,8 +75,8 @@ export const PayoutModal = ({
           status: 'pending',
           merchant_name: 'Payout',
           transaction_type: 'payout',
-          description: response.PUBLIC_TRANSACTION_DESCRIPTION || 'Fund transfer',
-          payment_method: response.SEND_METHOD || response.TRANSACTION_SEND_METHOD || 'bank_transfer',
+          description: response.PUBLIC_TRANSACTION_DESCRIPTION || `Sent via ${formattedPaymentMethod}`,
+          payment_method: formattedPaymentMethod,
           metadata: transactionMetadata
         }]);
 

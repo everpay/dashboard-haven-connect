@@ -21,7 +21,7 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
   user
 }) => {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto rounded-lg border border-border">
       <Table>
         <TableHead>
           <TableRow>
@@ -35,17 +35,17 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
         <TableBody>
           {!user ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">
+              <TableCell colSpan={5} className="text-center text-muted-foreground">
                 Please sign in to view your recipients
               </TableCell>
             </TableRow>
           ) : isLoading ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">Loading recipients...</TableCell>
+              <TableCell colSpan={5} className="text-center text-muted-foreground">Loading recipients...</TableCell>
             </TableRow>
           ) : recipients && recipients.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center">No recipients found</TableCell>
+              <TableCell colSpan={5} className="text-center text-muted-foreground">No recipients found</TableCell>
             </TableRow>
           ) : (
             recipients?.map((recipient: Recipient) => (
@@ -53,21 +53,21 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
                 <TableCell>
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 bg-muted rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5" />
+                      <User className="h-5 w-5 text-foreground" />
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium">{recipient.full_name}</div>
+                      <div className="text-sm font-medium text-foreground">{recipient.full_name}</div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">{recipient.email_address || "—"}</div>
+                  <div className="text-sm text-muted-foreground">{recipient.email_address || "—"}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">{recipient.telephone_number || "—"}</div>
+                  <div className="text-sm text-muted-foreground">{recipient.telephone_number || "—"}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm">
+                  <div className="text-sm text-muted-foreground">
                     {recipient.city && recipient.region ? `${recipient.city}, ${recipient.region}` : 
                       recipient.city || recipient.region || "—"}
                   </div>

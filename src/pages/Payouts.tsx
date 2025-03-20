@@ -107,7 +107,7 @@ const Payouts = () => {
   const formatPaymentMethod = (method: string) => {
     if (!method) return 'Unknown';
     
-    // Capitalize the first letter and format special cases
+    // Capitalize and format special cases
     const methodMap: Record<string, string> = {
       'ach': 'ACH',
       'bank_transfer': 'Bank Transfer',
@@ -115,10 +115,17 @@ const Payouts = () => {
       'fedwire': 'FEDWIRE',
       'zelle': 'Zelle',
       'card_push': 'Card Push',
-      'wire': 'Wire Transfer'
+      'wire': 'Wire Transfer',
+      'ACH': 'ACH',
+      'SWIFT': 'SWIFT',
+      'ZELLE': 'Zelle',
+      'WIRE': 'Wire Transfer',
+      'FEDWIRE': 'FEDWIRE',
+      'CARD_PUSH': 'Card Push',
+      'BANK_TRANSFER': 'Bank Transfer'
     };
     
-    return methodMap[method.toLowerCase()] || method;
+    return methodMap[method] || method;
   };
 
   return (
@@ -145,7 +152,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(String(accountBalance.PAYOUT_BALANCE || '0'))} 
+                    end={parseFloat(accountBalance.PAYOUT_BALANCE?.toString() || '0')} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -162,7 +169,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(String(accountBalance.FLOAT_BALANCE || '0'))} 
+                    end={parseFloat(accountBalance.FLOAT_BALANCE?.toString() || '0')} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -179,7 +186,7 @@ const Payouts = () => {
               {accountBalance ? 
                 <>
                   $<CountUp 
-                    end={parseFloat(String(accountBalance.RESERVE_BALANCE || '0'))} 
+                    end={parseFloat(accountBalance.RESERVE_BALANCE?.toString() || '0')} 
                     separator="," 
                     decimals={2}
                     duration={1.5}
@@ -234,7 +241,7 @@ const Payouts = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">Loading payouts...</TableCell>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">Loading payouts...</TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
@@ -242,26 +249,26 @@ const Payouts = () => {
                   </TableRow>
                 ) : payouts && payouts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">No payouts found</TableCell>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">No payouts found</TableCell>
                   </TableRow>
                 ) : (
                   payouts?.map((payout: any) => (
                     <TableRow key={payout.id}>
                       <TableCell>
-                        <div className="text-sm">{formatDate(payout.created_at)}</div>
+                        <div className="text-sm text-foreground">{formatDate(payout.created_at)}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium text-foreground">
                           {payout.metadata?.RECIPIENT_FULL_NAME || "Unknown Recipient"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium">
-                          {formatPaymentMethod(payout.metadata?.SEND_METHOD || payout.payment_method)}
+                        <div className="text-sm font-medium text-foreground">
+                          {formatPaymentMethod(payout.payment_method)}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">{payout.description}</div>
+                        <div className="text-sm text-muted-foreground">{payout.description}</div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusColor(payout.status || 'pending')}>
@@ -269,7 +276,7 @@ const Payouts = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium text-foreground">
                           ${payout.amount ? parseFloat(payout.amount).toFixed(2) : '0.00'}
                         </div>
                       </TableCell>

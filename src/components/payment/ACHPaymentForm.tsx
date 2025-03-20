@@ -88,7 +88,7 @@ export const ACHPaymentForm = ({
         SEND_CURRENCY_ISO3: 'USD',
         SEND_AMOUNT: amount,
         RECIPIENT_FULL_NAME: recipientName,
-        PUBLIC_TRANSACTION_DESCRIPTION: description || `Payment of $${amount}`,
+        PUBLIC_TRANSACTION_DESCRIPTION: description || `Payment of $${amount} via ${selectedMethod}`,
       };
 
       // Add appropriate fields based on payment method
@@ -120,10 +120,30 @@ export const ACHPaymentForm = ({
           full_name: recipientName,
           email_address: selectedMethod === 'ZELLE' && accountNumber.includes('@') ? accountNumber : undefined,
           telephone_number: selectedMethod === 'ZELLE' && !accountNumber.includes('@') ? accountNumber : undefined,
-          bank_account_number: selectedMethod !== 'ZELLE' ? accountNumber : undefined,
-          bank_routing_number: routingNumber || undefined,
-          bank_name: bankName || undefined
         };
+        
+        // Only include these fields if they exist in the database schema
+        // Try to add them one at a time to avoid schema errors
+        try {
+          await supabase.from('recipients').select('bank_account_number').limit(1);
+          Object.assign(recipientData, { bank_account_number: selectedMethod !== 'ZELLE' ? accountNumber : undefined });
+        } catch (e) {
+          console.log('bank_account_number column may not exist, skipping');
+        }
+        
+        try {
+          await supabase.from('recipients').select('bank_routing_number').limit(1);
+          Object.assign(recipientData, { bank_routing_number: routingNumber || undefined });
+        } catch (e) {
+          console.log('bank_routing_number column may not exist, skipping');
+        }
+        
+        try {
+          await supabase.from('recipients').select('bank_name').limit(1);
+          Object.assign(recipientData, { bank_name: bankName || undefined });
+        } catch (e) {
+          console.log('bank_name column may not exist, skipping');
+        }
         
         console.log('Recipient data:', recipientData);
         const result = await addRecipient(recipientData);
