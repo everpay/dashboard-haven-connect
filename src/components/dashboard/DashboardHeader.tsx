@@ -4,7 +4,7 @@ import { TimeframeSelector } from '../charts/TimeframeSelector';
 import { TimeframeOption } from '@/utils/timeframeUtils';
 
 export const DashboardHeader = () => {
-  const [timeframe, setTimeframe] = useState<TimeframeOption>('7d');
+  const [timeframe, setTimeframe] = useState<TimeframeOption>('7days');
   
   return (
     <div className="flex justify-between items-center mb-6">
