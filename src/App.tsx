@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./lib/auth"
 import { RBACProvider } from "./lib/rbac"
 import { ThemeProvider } from "./components/theme/ThemeProvider"
@@ -77,61 +78,55 @@ const App = () => {
   console.log('Rendering App component');
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark">
-        <BrowserRouter>
-          <div className="min-h-screen bg-background">
-            <Routes>
-              <Route path="/debug" element={<DebugComponent />} />
-              <Route path="/simple" element={<SimpleIndex />} />
-              <Route 
-                path="/*" 
-                element={
-                  <AuthProvider>
-                    <RBACProvider>
-                      <TooltipProvider>
-                        <Toaster />
-                        <Sonner />
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/auth" element={<SignIn />} />
-                          <Route path="/account" element={<Account />} />
-                          <Route path="/billing" element={<Billing />} />
-                          <Route path="/team" element={<Team />} />
-                          <Route path="/transactions" element={<Transactions />} />
-                          <Route path="/payment-link" element={<PaymentLink />} />
-                          <Route path="/payment/:paymentId" element={<Payment />} />
-                          <Route path="/customers" element={<Customers />} />
-                          <Route path="/cards" element={<Cards />} />
-                          <Route path="/bank-accounts" element={<BankAccounts />} />
-                          <Route path="/invoices" element={<Invoices />} />
-                          <Route path="/invoicing" element={<Invoices />} />
-                          <Route path="/recurring-invoices" element={<RecurringInvoices />} />
-                          <Route path="/recurring-payments" element={<RecurringPayments />} />
-                          <Route path="/products" element={<Products />} />
-                          <Route path="/integrations" element={<Integrations />} />
-                          <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />
-                          <Route path="/payins" element={<Payins />} />
-                          <Route path="/payouts" element={<Payouts />} />
-                          <Route path="/recipients" element={<Recipients />} />
-                          <Route path="/hosted-payment-page" element={<HostedPaymentPage />} />
-                          <Route path="/payment-widget" element={<PaymentWidget />} />
-                          <Route path="/widget-demo" element={<WidgetDemo />} />
-                          <Route path="/reports/overview" element={<ReportsOverview />} />
-                          <Route path="/reports/analytics" element={<ReportsAnalytics />} />
-                          <Route path="/banking" element={<Banking />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </TooltipProvider>
-                    </RBACProvider>
-                  </AuthProvider>
-                } 
-              />
-            </Routes>
-          </div>
-        </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <div className="min-h-screen bg-background">
+      <Routes>
+        <Route path="/debug" element={<DebugComponent />} />
+        <Route path="/simple" element={<SimpleIndex />} />
+        <Route 
+          path="/*" 
+          element={
+            <AuthProvider>
+              <RBACProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<SignIn />} />
+                    <Route path="/account" element={<Account />} />
+                    <Route path="/billing" element={<Billing />} />
+                    <Route path="/team" element={<Team />} />
+                    <Route path="/transactions" element={<Transactions />} />
+                    <Route path="/payment-link" element={<PaymentLink />} />
+                    <Route path="/payment/:paymentId" element={<Payment />} />
+                    <Route path="/customers" element={<Customers />} />
+                    <Route path="/cards" element={<Cards />} />
+                    <Route path="/bank-accounts" element={<BankAccounts />} />
+                    <Route path="/invoices" element={<Invoices />} />
+                    <Route path="/invoicing" element={<Invoices />} />
+                    <Route path="/recurring-invoices" element={<RecurringInvoices />} />
+                    <Route path="/recurring-payments" element={<RecurringPayments />} />
+                    <Route path="/products" element={<Products />} />
+                    <Route path="/integrations" element={<Integrations />} />
+                    <Route path="/integration-marketplace" element={<IntegrationMarketplace />} />
+                    <Route path="/payins" element={<Payins />} />
+                    <Route path="/payouts" element={<Payouts />} />
+                    <Route path="/recipients" element={<Recipients />} />
+                    <Route path="/hosted-payment-page" element={<HostedPaymentPage />} />
+                    <Route path="/payment-widget" element={<PaymentWidget />} />
+                    <Route path="/widget-demo" element={<WidgetDemo />} />
+                    <Route path="/reports/overview" element={<ReportsOverview />} />
+                    <Route path="/reports/analytics" element={<ReportsAnalytics />} />
+                    <Route path="/banking" element={<Banking />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </TooltipProvider>
+              </RBACProvider>
+            </AuthProvider>
+          } 
+        />
+      </Routes>
+    </div>
   );
 };
 
