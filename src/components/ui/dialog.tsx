@@ -8,13 +8,13 @@ const Dialog = ({
   onOpenChange 
 }: { 
   children: React.ReactNode;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) => {
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) {
-        onOpenChange(false);
+        onOpenChange && onOpenChange(false);
       }
     };
     
@@ -29,7 +29,7 @@ const Dialog = ({
       <div className="hs-overlay-open:opacity-100 hs-overlay-open:duration-500 opacity-100 transition-all w-full h-full">
         <div className="flex items-center justify-center w-full h-full">
           <div 
-            onClick={() => onOpenChange(false)} 
+            onClick={() => onOpenChange && onOpenChange(false)} 
             className="fixed inset-0 bg-black bg-opacity-50"
           />
           {children}
@@ -41,10 +41,12 @@ const Dialog = ({
 
 const DialogTrigger = ({ 
   children, 
-  onClick 
+  onClick,
+  asChild
 }: { 
   children: React.ReactNode;
   onClick?: () => void;
+  asChild?: boolean;
 }) => {
   return <div onClick={onClick}>{children}</div>;
 };

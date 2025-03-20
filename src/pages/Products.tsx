@@ -114,7 +114,7 @@ export default function Products() {
           
           <div className="flex space-x-2">
             <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-              <DialogTrigger asChild>
+              <DialogTrigger onClick={() => setOpenDialog(true)}>
                 <Button>Add New Product</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
