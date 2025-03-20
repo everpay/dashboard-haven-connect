@@ -99,8 +99,36 @@ export const useRecipients = () => {
       
       console.log('Adding recipient:', cleanedRecipient);
       
-      // First, ensure the profile exists in the profiles table
-      await ensureProfileExists(user);
+      // Before inserting, verify that the user exists in the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error checking profile existence:', profileError);
+        
+        // If profile doesn't exist, create it first
+        if (profileError.code === 'PGRST116') { // Not found error
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || ''
+            });
+          
+          if (createProfileError) {
+            console.error('Error creating profile:', createProfileError);
+            throw new Error(`Failed to create user profile: ${createProfileError.message}`);
+          }
+          
+          console.log('Created new profile for user:', user.id);
+        } else {
+          throw profileError;
+        }
+      }
       
       // Check if recipient already exists by name, email, or phone
       let existingRecipient = null;
@@ -168,30 +196,8 @@ export const useRecipients = () => {
     }
   };
 
-  // Helper function to ensure the profile exists
-  const ensureProfileExists = async (currentUser: any) => {
-    try {
-      console.log("Ensuring profile exists for user:", currentUser.id);
-      
-      // Call the ensure_profile_exists function through RPC with proper parameters
-      const { error: rpcError } = await supabase.rpc('ensure_profile_exists', {
-        user_id: currentUser.id,
-        user_email: currentUser.email || '',
-        user_full_name: currentUser.user_metadata?.full_name || ''
-      });
-      
-      if (rpcError) {
-        console.error('RPC method failed:', rpcError);
-        throw rpcError;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error ensuring profile exists:', error);
-      throw error;
-    }
-  };
-
+  // Helper function to ensure the profile exists has been replaced with inline code in the addRecipient function
+  
   const updateRecipient = async ({ recipientId, updatedRecipient }: { recipientId: number, updatedRecipient: Partial<Recipient> }) => {
     if (!user) throw new Error("User not authenticated");
     

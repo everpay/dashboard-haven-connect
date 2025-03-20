@@ -1930,6 +1930,7 @@ export type Database = {
           full_name: string
           last_names: string
           merchant_id: string | null
+          payment_method: string | null
           postal_code: string | null
           recipient_id: number
           region: string | null
@@ -1953,6 +1954,7 @@ export type Database = {
           full_name: string
           last_names: string
           merchant_id?: string | null
+          payment_method?: string | null
           postal_code?: string | null
           recipient_id?: number
           region?: string | null
@@ -1976,6 +1978,7 @@ export type Database = {
           full_name?: string
           last_names?: string
           merchant_id?: string | null
+          payment_method?: string | null
           postal_code?: string | null
           recipient_id?: number
           region?: string | null
