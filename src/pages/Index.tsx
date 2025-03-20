@@ -180,10 +180,6 @@ const Index = () => {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <TimeframeSelector 
-            currentTimeframe={timeframe} 
-            onTimeframeChange={setTimeframe}
-          />
         </div>
         
         {/* Balance Cards */}
@@ -271,6 +267,10 @@ const Index = () => {
                 <h2 className="text-lg font-semibold">Monthly Sales</h2>
                 <p className="text-xs text-muted-foreground">{formatDateRange(timeframe)}</p>
               </div>
+              <TimeframeSelector 
+                currentTimeframe={timeframe} 
+                onTimeframeChange={setTimeframe}
+              />
             </div>
             <InteractiveBarChart 
               title="Monthly Sales" 

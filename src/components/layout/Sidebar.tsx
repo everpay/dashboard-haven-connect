@@ -101,7 +101,7 @@ export const Sidebar = () => {
                 <Link 
                   to="/overview"
                   className={cn(
-                    "flex items-center text-sm font-medium rounded-md px-3 py-2",
+                    "flex items-center text-xs font-normal rounded-md px-3 py-1.5",
                     location.pathname === "/overview" 
                       ? "text-white" 
                       : "text-[#A0AEC0] hover:text-white"
@@ -112,7 +112,7 @@ export const Sidebar = () => {
                 <Link 
                   to="/payins"
                   className={cn(
-                    "flex items-center text-sm font-medium rounded-md px-3 py-2",
+                    "flex items-center text-xs font-normal rounded-md px-3 py-1.5",
                     location.pathname.includes("/payins") 
                       ? "text-white bg-[#1AA47B]/20" 
                       : "text-[#A0AEC0] hover:text-white"
@@ -123,7 +123,7 @@ export const Sidebar = () => {
                 <Link 
                   to="/payouts"
                   className={cn(
-                    "flex items-center text-sm font-medium rounded-md px-3 py-2",
+                    "flex items-center text-xs font-normal rounded-md px-3 py-1.5",
                     location.pathname.includes("/payouts") 
                       ? "text-white" 
                       : "text-[#A0AEC0] hover:text-white"
