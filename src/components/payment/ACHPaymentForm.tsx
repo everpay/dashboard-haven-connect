@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,8 +8,8 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { getItsPaidService, PaymentMethod } from '@/services/ItsPaidService';
 import { useRecipients } from '@/hooks/useRecipients';
-import { supabase } from "@/lib/supabase";
 import { useAuth } from '@/lib/auth';
+import { ensureUserProfile } from '@/services/recipientService';
 
 interface ACHPaymentFormProps {
   amount: number;
@@ -43,28 +42,11 @@ export const ACHPaymentForm = ({
   // Ensure user profile exists
   useEffect(() => {
     if (user) {
-      ensureProfileExists(user);
+      ensureUserProfile(user).catch(err => {
+        console.error("Failed to ensure profile exists:", err);
+      });
     }
   }, [user]);
-
-  const ensureProfileExists = async (currentUser: any) => {
-    try {
-      console.log("Ensuring profile exists for user:", currentUser.id);
-      
-      // Call the ensure_profile_exists function through RPC
-      const { error: rpcError } = await supabase.rpc('ensure_profile_exists', {
-        user_id: currentUser.id,
-        user_email: currentUser.email || '',
-        user_full_name: currentUser.user_metadata?.full_name || ''
-      });
-      
-      if (rpcError) {
-        console.error('RPC method failed:', rpcError);
-      }
-    } catch (error) {
-      console.error('Error ensuring profile exists:', error);
-    }
-  };
 
   const validateForm = () => {
     // For Zelle, we only need recipient name and account number (email/phone)
@@ -159,7 +141,7 @@ export const ACHPaymentForm = ({
         
         // Make sure profile exists before adding recipient
         if (user) {
-          await ensureProfileExists(user);
+          await ensureUserProfile(user);
         }
         
         const result = await addRecipient(recipientData);
