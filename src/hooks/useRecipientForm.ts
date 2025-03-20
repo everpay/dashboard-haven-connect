@@ -17,6 +17,15 @@ export const useRecipientForm = () => {
     region: '',
     postal_code: '',
     country_iso3: 'USA',
+    bank_account_number: '',
+    bank_routing_number: '',
+    bank_name: '',
+    swift_bic: '',
+    bank_street_1: '',
+    bank_street_2: '',
+    bank_city: '',
+    bank_region: '',
+    bank_country_iso3: '',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +49,15 @@ export const useRecipientForm = () => {
       region: '',
       postal_code: '',
       country_iso3: 'USA',
+      bank_account_number: '',
+      bank_routing_number: '',
+      bank_name: '',
+      swift_bic: '',
+      bank_street_1: '',
+      bank_street_2: '',
+      bank_city: '',
+      bank_region: '',
+      bank_country_iso3: '',
     });
     setCurrentRecipient(null);
   };
@@ -61,6 +79,12 @@ export const useRecipientForm = () => {
       bank_routing_number: recipient.bank_routing_number || '',
       bank_name: recipient.bank_name || '',
       payment_method: recipient.payment_method || '',
+      swift_bic: recipient.swift_bic || '',
+      bank_street_1: recipient.bank_street_1 || '',
+      bank_street_2: recipient.bank_street_2 || '',
+      bank_city: recipient.bank_city || '',
+      bank_region: recipient.bank_region || '',
+      bank_country_iso3: recipient.bank_country_iso3 || '',
     });
     setIsEditDialogOpen(true);
   };

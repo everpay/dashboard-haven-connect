@@ -1,11 +1,27 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Recipient } from '@/hooks/useRecipients';
+
+// Country codes for telephone formatting
+const COUNTRY_CODES = [
+  { code: '+1', country: 'US/Canada' },
+  { code: '+44', country: 'UK' },
+  { code: '+49', country: 'Germany' },
+  { code: '+33', country: 'France' },
+  { code: '+61', country: 'Australia' },
+  { code: '+81', country: 'Japan' },
+  { code: '+86', country: 'China' },
+  { code: '+91', country: 'India' },
+  { code: '+52', country: 'Mexico' },
+  { code: '+55', country: 'Brazil' },
+  { code: '+34', country: 'Spain' },
+  { code: '+39', country: 'Italy' },
+];
 
 interface RecipientFormProps {
   formData: Partial<Recipient>;
@@ -25,6 +41,60 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
   isEdit = false
 }) => {
   const submitButtonText = isEdit ? "Update Recipient" : "Add Recipient";
+  const [phoneCountryCode, setPhoneCountryCode] = React.useState('+1');
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [showInternationalBankFields, setShowInternationalBankFields] = React.useState(false);
+
+  // Parse telephone number if it exists
+  useEffect(() => {
+    if (formData.telephone_number) {
+      // Try to extract country code from stored number
+      const foundCode = COUNTRY_CODES.find(cc => formData.telephone_number?.startsWith(cc.code));
+      if (foundCode) {
+        setPhoneCountryCode(foundCode.code);
+        setPhoneNumber(formData.telephone_number.substring(foundCode.code.length).trim());
+      } else {
+        setPhoneCountryCode('+1');
+        setPhoneNumber(formData.telephone_number);
+      }
+    }
+  }, [formData.telephone_number]);
+
+  // Check if we need to show international bank fields
+  useEffect(() => {
+    setShowInternationalBankFields(formData.country_iso3 !== 'USA' && !!formData.country_iso3);
+  }, [formData.country_iso3]);
+
+  // Handle phone number changes
+  const handlePhoneCodeChange = (value: string) => {
+    setPhoneCountryCode(value);
+    
+    // Update the full telephone number
+    const fullNumber = `${value} ${phoneNumber}`;
+    const syntheticEvent = {
+      target: {
+        name: 'telephone_number',
+        value: fullNumber
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    onInputChange(syntheticEvent);
+  };
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoneNumber(e.target.value);
+    
+    // Update the full telephone number
+    const fullNumber = `${phoneCountryCode} ${e.target.value}`;
+    const syntheticEvent = {
+      target: {
+        name: 'telephone_number',
+        value: fullNumber
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    onInputChange(syntheticEvent);
+  };
   
   return (
     <form onSubmit={onSubmit}>
@@ -68,13 +138,30 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="telephone_number" className="text-foreground">Telephone Number</Label>
-            <Input
-              id="telephone_number"
-              name="telephone_number"
-              value={formData.telephone_number}
-              onChange={onInputChange}
-              className="bg-background text-foreground border-border"
-            />
+            <div className="flex gap-2">
+              <Select 
+                value={phoneCountryCode} 
+                onValueChange={handlePhoneCodeChange}
+              >
+                <SelectTrigger className="w-24 bg-background text-foreground border-border">
+                  <SelectValue placeholder="Code" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_CODES.map(cc => (
+                    <SelectItem key={cc.code} value={cc.code}>
+                      {cc.code} {cc.country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="telephone_number_input"
+                value={phoneNumber}
+                onChange={handlePhoneNumberChange}
+                className="flex-1 bg-background text-foreground border-border"
+                placeholder="Phone number"
+              />
+            </div>
           </div>
         </div>
         
@@ -168,7 +255,9 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="bank_routing_number" className="text-foreground">Bank Routing Number</Label>
+            <Label htmlFor="bank_routing_number" className="text-foreground">
+              {formData.country_iso3 === 'USA' ? 'Bank Routing Number' : 'IBAN Number'}
+            </Label>
             <Input
               id="bank_routing_number"
               name="bank_routing_number"
@@ -189,6 +278,87 @@ const RecipientForm: React.FC<RecipientFormProps> = ({
             className="bg-background text-foreground border-border"
           />
         </div>
+
+        {showInternationalBankFields && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="swift_bic" className="text-foreground">SWIFT/BIC Code</Label>
+              <Input
+                id="swift_bic"
+                name="swift_bic"
+                value={formData.swift_bic}
+                onChange={onInputChange}
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bank_street_1" className="text-foreground">Bank Address Line 1</Label>
+              <Input
+                id="bank_street_1"
+                name="bank_street_1"
+                value={formData.bank_street_1}
+                onChange={onInputChange}
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bank_street_2" className="text-foreground">Bank Address Line 2 (Optional)</Label>
+              <Input
+                id="bank_street_2"
+                name="bank_street_2"
+                value={formData.bank_street_2}
+                onChange={onInputChange}
+                className="bg-background text-foreground border-border"
+              />
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="bank_city" className="text-foreground">Bank City</Label>
+                <Input
+                  id="bank_city"
+                  name="bank_city"
+                  value={formData.bank_city}
+                  onChange={onInputChange}
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_region" className="text-foreground">Bank State/Region</Label>
+                <Input
+                  id="bank_region"
+                  name="bank_region"
+                  value={formData.bank_region}
+                  onChange={onInputChange}
+                  className="bg-background text-foreground border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bank_country_iso3" className="text-foreground">Bank Country</Label>
+                <Select 
+                  value={formData.bank_country_iso3} 
+                  onValueChange={(value) => onSelectChange('bank_country_iso3', value)}
+                >
+                  <SelectTrigger id="bank_country_iso3" className="bg-background text-foreground border-border">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USA">United States</SelectItem>
+                    <SelectItem value="CAN">Canada</SelectItem>
+                    <SelectItem value="GBR">United Kingdom</SelectItem>
+                    <SelectItem value="AUS">Australia</SelectItem>
+                    <SelectItem value="DEU">Germany</SelectItem>
+                    <SelectItem value="FRA">France</SelectItem>
+                    <SelectItem value="JPN">Japan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        )}
+
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel} className="text-foreground">

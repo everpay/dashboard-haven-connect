@@ -18,6 +18,12 @@ export interface Recipient {
   bank_routing_number?: string;
   bank_name?: string;
   payment_method?: string;
+  swift_bic?: string;
+  bank_street_1?: string;
+  bank_street_2?: string;
+  bank_city?: string;
+  bank_region?: string;
+  bank_country_iso3?: string;
 }
 
 export interface UpdateRecipientParams {
