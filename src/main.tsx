@@ -5,9 +5,7 @@ import App from './App';
 import './index.css';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
-import 'preline/preline';
 
 // Initialize the query client
 const queryClient = new QueryClient({
@@ -27,30 +25,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="dark">
-          <App />
-          <Toaster />
-        </ThemeProvider>
+        <App />
+        <Toaster />
       </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
-
-// Initialize Preline UI
-document.addEventListener('DOMContentLoaded', () => {
-  import('preline');
-});
-
-// Reinitialize Preline UI on route change
-let initialized = false;
-const observer = new MutationObserver(() => {
-  if (!initialized) {
-    initialized = true;
-    return;
-  }
-  import('preline/preline').then(({ HSStaticMethods }) => {
-    HSStaticMethods.autoInit();
-  });
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
