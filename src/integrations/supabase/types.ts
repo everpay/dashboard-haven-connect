@@ -1994,7 +1994,7 @@ export type Database = {
             foreignKeyName: "recipients_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

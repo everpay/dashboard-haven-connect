@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -10,11 +10,13 @@ import RecipientSearch from '@/components/recipients/RecipientSearch';
 import RecipientHeader from '@/components/recipients/RecipientHeader';
 import RecipientDialog from '@/components/recipients/RecipientDialog';
 import { useRecipientForm } from '@/hooks/useRecipientForm';
+import { useUserProfile } from '@/hooks/payment/useUserProfile';
 
 const Recipients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { user } = useAuth();
+  // Use useUserProfile to ensure profile exists
+  const { user } = useUserProfile();
   const { toast } = useToast();
   
   const {
@@ -84,8 +86,6 @@ const Recipients = () => {
       });
     }
   };
-  
-  // We don't need the auth check warning as we're showing sample data anyway
   
   return (
     <DashboardLayout>
