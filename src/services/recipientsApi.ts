@@ -4,7 +4,7 @@ import {
   addRecipient as addRecipientService,
   updateRecipient as updateRecipientService,
   deleteRecipient as deleteRecipientService
-} from '@/services/recipientService';
+} from '@/services/recipient';
 import { Recipient, UpdateRecipientParams } from '@/types/recipient.types';
 
 export const recipientsApi = {

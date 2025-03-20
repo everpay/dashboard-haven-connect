@@ -1,6 +1,8 @@
 
 import { supabase } from '@/lib/supabase';
 import { Recipient } from '@/types/recipient.types';
+import { findExistingRecipient } from './recipientUtils';
+import { ensureUserProfile } from './userProfileService';
 
 /**
  * Fetches all recipients for a specified user
@@ -25,81 +27,6 @@ export const fetchRecipients = async (userId?: string) => {
   }
   
   return data || [];
-};
-
-/**
- * Ensures a user profile exists in the profiles table
- */
-export const ensureUserProfile = async (user: any) => {
-  if (!user?.id) {
-    throw new Error("Valid user is required");
-  }
-
-  try {
-    // Check if profile exists
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .single();
-    
-    if (profileError) {
-      console.error('Error checking profile existence:', profileError);
-      
-      // If profile doesn't exist, create it first
-      if (profileError.code === 'PGRST116') { // Not found error
-        const { error: createProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || ''
-          });
-        
-        if (createProfileError) {
-          console.error('Error creating profile:', createProfileError);
-          throw new Error(`Failed to create user profile: ${createProfileError.message}`);
-        }
-        
-        console.log('Created new profile for user:', user.id);
-      } else {
-        throw profileError;
-      }
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error ensuring profile exists:', error);
-    throw error;
-  }
-};
-
-/**
- * Checks if a similar recipient already exists for the user
- */
-export const findExistingRecipient = async (user: any, recipient: Partial<Recipient>) => {
-  if (!user?.id) return null;
-  if (!recipient.full_name && !recipient.email_address && !recipient.telephone_number) return null;
-
-  let query = supabase
-    .from('recipients')
-    .select('*')
-    .eq('user_id', user.id);
-  
-  if (recipient.full_name) {
-    query = query.eq('full_name', recipient.full_name);
-  }
-  
-  if (recipient.email_address) {
-    query = query.eq('email_address', recipient.email_address);
-  }
-  
-  if (recipient.telephone_number) {
-    query = query.eq('telephone_number', recipient.telephone_number);
-  }
-  
-  const { data } = await query.maybeSingle();
-  return data;
 };
 
 /**

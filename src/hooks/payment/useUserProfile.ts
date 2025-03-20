@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
-import { ensureUserProfile } from '@/services/recipientService';
+import { ensureUserProfile } from '@/services/recipient/userProfileService';
 
 export function useUserProfile() {
   const { user } = useAuth();
