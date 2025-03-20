@@ -53,6 +53,10 @@ const Recipients = () => {
     addRecipient(formData);
     setIsAddDialogOpen(false);
     resetForm();
+    toast({
+      title: "Recipient added",
+      description: "The recipient has been added successfully",
+    });
   };
   
   const handleEditSubmit = (e: React.FormEvent) => {
@@ -64,31 +68,31 @@ const Recipients = () => {
       });
       setIsEditDialogOpen(false);
       resetForm();
+      toast({
+        title: "Recipient updated",
+        description: "The recipient has been updated successfully",
+      });
     }
   };
   
   const handleDelete = (recipientId: number) => {
     if (window.confirm('Are you sure you want to delete this recipient?')) {
       deleteRecipient(recipientId);
+      toast({
+        title: "Recipient deleted",
+        description: "The recipient has been deleted successfully",
+      });
     }
   };
   
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to manage recipients",
-        variant: "destructive"
-      });
-    }
-  }, [user, toast]);
+  // We don't need the auth check warning as we're showing sample data anyway
   
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <RecipientHeader 
           onAddRecipient={openAddDialog} 
-          isDisabled={!user}
+          isDisabled={false} // Allow adding recipients even for demo
         />
         
         <Card className="p-6 bg-card text-card-foreground">

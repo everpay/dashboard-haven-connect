@@ -47,13 +47,7 @@ const RecipientTable: React.FC<RecipientTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {!user ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
-                Please sign in to view your recipients
-              </TableCell>
-            </TableRow>
-          ) : isLoading ? (
+          {isLoading ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">Loading recipients...</TableCell>
             </TableRow>
