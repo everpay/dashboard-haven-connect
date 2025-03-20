@@ -1,69 +1,36 @@
 
-import { useState } from 'react';
+import { useRecipientFormState } from './recipients/useRecipientFormState';
+import { useRecipientDialogState } from './recipients/useRecipientDialogState';
 import { Recipient } from '@/types/recipient.types';
 
 export const useRecipientForm = () => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentRecipient, setCurrentRecipient] = useState<Recipient | null>(null);
-  const [formData, setFormData] = useState<Partial<Recipient>>({
-    first_names: '',
-    last_names: '',
-    email_address: '',
-    telephone_number: '',
-    street_1: '',
-    street_2: '',
-    city: '',
-    region: '',
-    postal_code: '',
-    country_iso3: 'USA',
-    bank_account_number: '',
-    bank_routing_number: '',
-    bank_name: '',
-    swift_bic: '',
-    bank_street_1: '',
-    bank_street_2: '',
-    bank_city: '',
-    bank_region: '',
-    bank_country_iso3: '',
-  });
+  const {
+    isAddDialogOpen,
+    setIsAddDialogOpen,
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    currentRecipient,
+    setCurrentRecipient,
+    openEditDialog: openEditDialogBase,
+    openAddDialog: openAddDialogBase,
+    closeDialogs
+  } = useRecipientDialogState();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const {
+    formData,
+    setFormData,
+    handleInputChange,
+    handleSelectChange,
+    resetForm: resetFormBase
+  } = useRecipientFormState();
 
   const resetForm = () => {
-    setFormData({
-      first_names: '',
-      last_names: '',
-      email_address: '',
-      telephone_number: '',
-      street_1: '',
-      street_2: '',
-      city: '',
-      region: '',
-      postal_code: '',
-      country_iso3: 'USA',
-      bank_account_number: '',
-      bank_routing_number: '',
-      bank_name: '',
-      swift_bic: '',
-      bank_street_1: '',
-      bank_street_2: '',
-      bank_city: '',
-      bank_region: '',
-      bank_country_iso3: '',
-    });
+    resetFormBase();
     setCurrentRecipient(null);
   };
 
   const openEditDialog = (recipient: Recipient) => {
-    setCurrentRecipient(recipient);
+    // Populate form with recipient data
     setFormData({
       first_names: recipient.first_names,
       last_names: recipient.last_names,
@@ -86,12 +53,13 @@ export const useRecipientForm = () => {
       bank_region: recipient.bank_region || '',
       bank_country_iso3: recipient.bank_country_iso3 || '',
     });
-    setIsEditDialogOpen(true);
+    
+    openEditDialogBase(recipient);
   };
 
   const openAddDialog = () => {
     resetForm();
-    setIsAddDialogOpen(true);
+    openAddDialogBase();
   };
 
   return {
