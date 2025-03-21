@@ -1,298 +1,213 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  User, 
-  Package, 
-  CreditCard, 
-  AlertOctagon, 
-  RefreshCcw, 
-  ArrowLeftRight, 
-  FileText, 
-  CheckCircle, 
-  Clock
-} from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/lib/supabase";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Activity {
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Check, Clock, AlertTriangle, ArrowDownLeft, ArrowUpRight, LucideIcon } from 'lucide-react';
+
+interface Transaction {
   id: string;
-  type: 'transaction' | 'customer' | 'invoice' | 'product' | 'chargeback' | 'refund' | 'transfer' | 'payment';
-  title: string;
+  amount: number;
+  status: string;
+  payment_method: string;
+  customer_email: string;
   description: string;
-  timestamp: string;
-  amount?: number;
-  status?: string;
-  user?: {
-    name: string;
-    avatar?: string;
-    initials: string;
-  };
-  paymentMethod?: string;
+  transaction_type: string;
+  merchant_name?: string;
+  created_at: string;
 }
 
-const seedDatabaseWithSampleData = async () => {
-  try {
-    const { data: existingTransactions, error: checkError } = await supabase
-      .from('transactions')
-      .select('id')
-      .limit(1);
-      
-    if (checkError) throw checkError;
-    
-    if (existingTransactions && existingTransactions.length > 0) {
-      console.log("Database already has transactions, skipping seed");
-      return;
-    }
-    
-    console.log("Seeding database with sample transactions...");
-    
-    const sampleTransactions = [
-      {
-        amount: 253.85,
-        currency: 'USD',
-        status: 'completed',
-        payment_method: 'Credit Card',
-        customer_email: 'john.doe@example.com',
-        description: 'Payment for invoice #INV-2023-001',
-        transaction_type: 'payment',
-        merchant_name: 'Acme Corp',
-        created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString() // 15 mins ago
-      },
-      {
-        amount: 1250.00,
-        currency: 'USD',
-        status: 'completed',
-        payment_method: 'Bank Transfer',
-        customer_email: 'tech.solutions@example.com',
-        description: 'Payment for invoice #INV-2023-042',
-        transaction_type: 'payment',
-        merchant_name: 'Tech Solutions Inc.',
-        created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString() // 2 hours ago
-      },
-      {
-        amount: 500.00,
-        currency: 'USD',
-        status: 'completed',
-        payment_method: 'Wire',
-        customer_email: 'support@example.com',
-        description: 'Transfer to external account',
-        transaction_type: 'transfer',
-        merchant_name: 'Personal Account',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() // 5 hours ago
-      },
-      {
-        amount: 89.99,
-        currency: 'USD',
-        status: 'pending',
-        payment_method: 'Credit Card',
-        customer_email: 'alex.brown@example.com',
-        description: 'Chargeback for transaction #TXN-8876',
-        transaction_type: 'chargeback',
-        merchant_name: 'Retail Store',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString() // 12 hours ago
-      },
-      {
-        amount: 125.50,
-        currency: 'USD',
-        status: 'completed',
-        payment_method: 'PayPal',
-        customer_email: 'maria.garcia@example.com',
-        description: 'Refund issued to customer',
-        transaction_type: 'refund',
-        merchant_name: 'Online Shop',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString() // 26 hours ago
-      },
-      {
-        amount: 29.99,
-        currency: 'USD',
-        status: 'completed',
-        payment_method: 'Credit Card',
-        customer_email: 'david.lee@example.com',
-        description: 'Monthly subscription charge',
-        transaction_type: 'payment',
-        merchant_name: 'Subscription Service',
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() // 2 days ago
-      }
-    ];
-    
-    const { error: insertError } = await supabase
-      .from('transactions')
-      .insert(sampleTransactions);
-      
-    if (insertError) throw insertError;
-    
-    console.log("Sample transactions seeded successfully");
-    
-  } catch (error) {
-    console.error("Error seeding database:", error);
-  }
-};
+interface RecentActivityTimelineProps {
+  transactions?: Transaction[];
+  formatTimeAgo: (dateString: string) => string;
+}
 
-const getActivityIcon = (type: Activity['type']) => {
-  switch (type) {
-    case 'transaction':
-      return <CreditCard className="h-4 w-4" />;
-    case 'customer':
-      return <User className="h-4 w-4" />;
-    case 'invoice':
-      return <FileText className="h-4 w-4" />;
-    case 'product':
-      return <Package className="h-4 w-4" />;
-    case 'chargeback':
-      return <AlertOctagon className="h-4 w-4" />;
-    case 'refund':
-      return <RefreshCcw className="h-4 w-4" />;
-    case 'transfer':
-      return <ArrowLeftRight className="h-4 w-4" />;
+// Helper function to get avatar background color based on transaction type
+const getAvatarColor = (transactionType: string): string => {
+  switch (transactionType?.toLowerCase()) {
     case 'payment':
-      return <CheckCircle className="h-4 w-4" />;
-    default:
-      return <Clock className="h-4 w-4" />;
-  }
-};
-
-const getActivityColor = (type: Activity['type']) => {
-  switch (type) {
-    case 'transaction':
-      return 'bg-blue-500';
-    case 'customer':
-      return 'bg-purple-500';
-    case 'invoice':
-      return 'bg-green-500';
-    case 'product':
-      return 'bg-indigo-500';
-    case 'chargeback':
-      return 'bg-red-500';
-    case 'refund':
-      return 'bg-orange-500';
+      return 'bg-green-100 text-green-700';
     case 'transfer':
-      return 'bg-teal-500';
-    case 'payment':
-      return 'bg-emerald-500';
+      return 'bg-blue-100 text-blue-700';
+    case 'refund':
+      return 'bg-orange-100 text-orange-700';
+    case 'chargeback':
+      return 'bg-red-100 text-red-700';
     default:
-      return 'bg-gray-500';
+      return 'bg-gray-100 text-gray-700';
   }
 };
 
-const formatTimeAgo = (timestamp: string) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (seconds < 60) return `${seconds} seconds ago`;
-  
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
-  
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-  
-  const days = Math.floor(hours / 24);
-  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+// Helper function to get icon based on transaction type
+const getIcon = (transactionType: string): LucideIcon => {
+  switch (transactionType?.toLowerCase()) {
+    case 'payment':
+      return Check;
+    case 'transfer':
+      return ArrowUpRight;
+    case 'refund':
+      return ArrowDownLeft;
+    case 'chargeback':
+      return AlertTriangle;
+    default:
+      return Clock;
+  }
 };
 
-const generateSampleActivities = (): Activity[] => {
-  return [
-    {
-      id: '1',
-      type: 'transaction',
-      title: 'New transaction',
-      description: 'Payment received from John Doe',
-      timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
-      amount: 253.85,
-      status: 'completed',
-      paymentMethod: 'Credit Card',
-      user: {
-        name: 'John Doe',
-        initials: 'JD'
-      }
-    },
-    {
-      id: '2',
-      type: 'customer',
-      title: 'New customer',
-      description: 'Sarah Wilson created an account',
-      timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 mins ago
-      user: {
-        name: 'Sarah Wilson',
-        initials: 'SW'
-      }
-    },
-    {
-      id: '3',
-      type: 'invoice',
-      title: 'Invoice paid',
-      description: 'Invoice #INV-2023-0042 was paid',
-      timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-      amount: 1250.00,
-      status: 'paid',
-      paymentMethod: 'Bank Transfer',
-      user: {
-        name: 'Tech Solutions Inc.',
-        initials: 'TS'
-      }
-    },
-    {
-      id: '4',
-      type: 'transfer',
-      title: 'Funds transfer',
-      description: 'Transfer to external account',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-      amount: 500.00,
-      status: 'completed'
-    },
-    {
-      id: '5',
-      type: 'chargeback',
-      title: 'Chargeback received',
-      description: 'Chargeback for transaction #TXN-8876',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(), // 12 hours ago
-      amount: 89.99,
-      status: 'pending',
-      user: {
-        name: 'Alex Brown',
-        initials: 'AB'
-      }
-    },
-    {
-      id: '6',
-      type: 'product',
-      title: 'Product added',
-      description: 'New product "Premium Plan" added',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    },
-    {
-      id: '7',
-      type: 'refund',
-      title: 'Refund processed',
-      description: 'Refund issued to customer',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(), // 26 hours ago
-      amount: 125.50,
-      status: 'completed',
-      user: {
-        name: 'Maria Garcia',
-        initials: 'MG'
-      }
-    },
-    {
-      id: '8',
-      type: 'payment',
-      title: 'Recurring payment',
-      description: 'Monthly subscription charge',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-      amount: 29.99,
-      status: 'completed',
-      paymentMethod: 'Credit Card',
-      user: {
-        name: 'David Lee',
-        initials: 'DL'
-      }
+// Helper function to get payment method icon
+const getPaymentMethodIcon = (paymentMethod: string): React.ReactNode => {
+  switch (paymentMethod?.toLowerCase()) {
+    case 'credit card':
+    case 'card':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+          <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
+          <line x1="7" y1="15" x2="7" y2="15.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <line x1="11" y1="15" x2="11" y2="15.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      );
+    case 'bank transfer':
+    case 'wire':
+    case 'ach':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 21H21M4 18H20M5 10H19M12 3L19 10L12 3ZM12 10V17V10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+    case 'paypal':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.5 10C6.5 7 8.5 5 11.5 5H13C15.5 5 17.5 7 17.5 9.5C17.5 12 15.5 14 13 14H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9.5 14C9.5 11 11.5 9 14.5 9H16C18.5 9 20.5 11 20.5 13.5C20.5 16 18.5 18 16 18H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M3.5 9V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+    case 'googlepay':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 12.5C6 10 8 8 10.5 8H13.5C16 8 18 10 18 12.5C18 15 16 17 13.5 17H10.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9.5 8V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M14.5 8V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+    case 'applepay':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 6C12 4.5 11 3.5 9.5 3.5C8 3.5 7 4.5 7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9.5 3.5C11 3.5 17 5 17 12C17 19 9.5 20.5 9.5 20.5C9.5 20.5 2 19 2 12C2 5 8 3.5 9.5 3.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+    case 'zelle':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12L20 4L12 20L10 14L4 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+    default:
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+          <path d="M12 8V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      );
+  }
+};
+
+// Helper to get transaction description
+const getTransactionDescription = (transaction: Transaction): string => {
+  if (transaction.description) {
+    return transaction.description;
+  }
+  
+  switch (transaction.transaction_type?.toLowerCase()) {
+    case 'payment':
+      return `Payment received from ${transaction.customer_email}`;
+    case 'transfer':
+      return `Transfer to ${transaction.customer_email}`;
+    case 'refund':
+      return `Refund issued to ${transaction.customer_email}`;
+    case 'chargeback':
+      return `Chargeback from ${transaction.customer_email}`;
+    default:
+      return `Transaction with ${transaction.customer_email}`;
+  }
+};
+
+export const RecentActivityTimeline: React.FC<RecentActivityTimelineProps> = ({ 
+  transactions = [], 
+  formatTimeAgo 
+}) => {
+  // Helper to get initials from email
+  const getInitials = (email: string): string => {
+    if (!email) return 'U';
+    const parts = email.split('@')[0].split('.');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
     }
-  ];
+    return email.substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-xl">Recent Activity</CardTitle>
+        <CardDescription>Your latest transactions and account activity</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-8">
+          {transactions.length > 0 ? (
+            transactions.map((transaction) => {
+              const Icon = getIcon(transaction.transaction_type);
+              const avatarColor = getAvatarColor(transaction.transaction_type);
+              const description = getTransactionDescription(transaction);
+              
+              return (
+                <div key={transaction.id} className="flex">
+                  <div className="mr-4 flex flex-col items-center">
+                    <Avatar className={`h-9 w-9 ${avatarColor}`}>
+                      <Icon className="h-5 w-5" />
+                    </Avatar>
+                    <div className="h-full w-px bg-muted mt-2" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8 bg-muted">
+                        <div className="text-xs font-medium">
+                          {getInitials(transaction.customer_email)}
+                        </div>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{transaction.customer_email}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span>{formatTimeAgo(transaction.created_at)}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">{getPaymentMethodIcon(transaction.payment_method)} {transaction.payment_method}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-sm text-muted-foreground mb-1">{description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs px-2 py-0.5 rounded bg-muted">
+                          {transaction.transaction_type?.toUpperCase()}
+                        </span>
+                        <span className={`font-medium ${transaction.transaction_type === 'refund' || transaction.transaction_type === 'chargeback' ? 'text-red-500' : 'text-green-500'}`}>
+                          {transaction.transaction_type === 'refund' || transaction.transaction_type === 'chargeback' ? '-' : '+'}${Number(transaction.amount).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              <p>No recent activity</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
-
-export
-

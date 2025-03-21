@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SalesChart } from './SalesChart';
 import { PaymentMethodsCard } from './PaymentMethodsCard';
@@ -12,33 +11,35 @@ interface DashboardUpperSectionProps {
   paymentMethodData: any[];
 }
 
-export const DashboardUpperSection = ({
+export const DashboardUpperSection = ({ 
   chartData,
   timeframe,
   setTimeframe,
-  paymentMethodData
+  paymentMethodData 
 }: DashboardUpperSectionProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
-      <div className="md:col-span-2">
-        <SalesChart 
-          chartData={chartData} 
-          timeframe={timeframe} 
-          onTimeframeChange={setTimeframe}
-          paymentMethodData={paymentMethodData}
-        />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div>
+        <Card className="h-full">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Sales Overview</CardTitle>
+                <CardDescription>Mar 14, 2024 - Mar 21, 2024</CardDescription>
+              </div>
+              <TimeframeSelector 
+                timeframe={timeframe} 
+                setTimeframe={setTimeframe} 
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <SalesChart data={chartData} />
+          </CardContent>
+        </Card>
       </div>
-      <div className="md:col-span-1">
-        <div className="mb-3">
-          <TimeframeSelector 
-            currentTimeframe={timeframe} 
-            onTimeframeChange={setTimeframe}
-          />
-        </div>
-        <div className="h-full">
-          <PaymentMethodsCard data={paymentMethodData} />
-        </div>
-      </div>
+      
+      <PaymentMethodsCard data={paymentMethodData} />
     </div>
   );
 };
