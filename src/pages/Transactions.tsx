@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,94 +22,19 @@ interface Transaction {
   payment_method: string;
   transaction_type: string;
   location: string;
-  created_at?: string; // Make it optional with '?'
+  created_at?: string;
+  metadata?: any;
 }
 
-// Sample transaction data (would normally come from an API)
-const sampleTransactions = [
-  {
-    id: 'txn_1',
-    amount: 100.00,
-    currency: 'USD',
-    status: 'completed',
-    merchant_name: 'Amazon',
-    customer_email: 'customer1@example.com',
-    description: 'Online shopping',
-    payment_method: 'Credit Card',
-    transaction_type: 'purchase',
-    location: 'POINT(-77.0364 38.8951)' // Washington DC
-  },
-  {
-    id: 'txn_2',
-    amount: 75.50,
-    currency: 'USD',
-    status: 'completed',
-    merchant_name: 'Apple Store',
-    customer_email: 'customer2@example.com',
-    description: 'iPhone accessories',
-    payment_method: 'Debit Card',
-    transaction_type: 'purchase',
-    location: 'POINT(-74.0060 40.7128)' // New York
-  },
-  {
-    id: 'txn_3',
-    amount: 250.00,
-    currency: 'USD',
-    status: 'pending',
-    merchant_name: 'Best Buy',
-    customer_email: 'customer3@example.com',
-    description: 'Electronics',
-    payment_method: 'Bank Transfer',
-    transaction_type: 'purchase',
-    location: 'POINT(-118.2437 34.0522)' // Los Angeles
-  },
-  {
-    id: 'txn_4',
-    amount: 50.25,
-    currency: 'USD',
-    status: 'failed',
-    merchant_name: 'Netflix',
-    customer_email: 'customer4@example.com',
-    description: 'Monthly subscription',
-    payment_method: 'Credit Card',
-    transaction_type: 'subscription',
-    location: 'POINT(-87.6298 41.8781)' // Chicago
-  },
-  {
-    id: 'txn_5',
-    amount: 120.75,
-    currency: 'GBP',
-    status: 'completed',
-    merchant_name: 'Tesco',
-    customer_email: 'customer5@example.com',
-    description: 'Groceries',
-    payment_method: 'Digital Wallet',
-    transaction_type: 'purchase',
-    location: 'POINT(-0.1278 51.5074)' // London
-  },
-  {
-    id: 'txn_6',
-    amount: 35.99,
-    currency: 'USD',
-    status: 'disputed',
-    merchant_name: 'Target',
-    customer_email: 'customer6@example.com',
-    description: 'Home goods',
-    payment_method: 'Debit Card',
-    transaction_type: 'purchase',
-    location: 'POINT(-93.2650 44.9778)' // Minneapolis
-  }
-];
-
 const Transactions = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [transactionStats, setTransactionStats] = useState({
-    all: 6,
-    succeeded: 1,
+    all: 0,
+    succeeded: 0,
     refunded: 0,
-    disputed: 1,
-    failed: 1,
+    disputed: 0,
+    failed: 0,
     uncaptured: 0
   });
   const { toast } = useToast();
@@ -116,7 +42,8 @@ const Transactions = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        // Try to fetch from Supabase
+        setLoading(true);
+        // Fetch from Supabase transactions table
         const { data, error } = await supabase
           .from('transactions')
           .select('*')
@@ -126,6 +53,7 @@ const Transactions = () => {
         if (error) throw error;
 
         if (data && data.length > 0) {
+          console.log('Transaction data loaded:', data.length, 'records');
           setTransactions(data);
           
           // Calculate transaction stats
@@ -140,41 +68,20 @@ const Transactions = () => {
           
           setTransactionStats(stats);
         } else {
-          // If no data, use sample data and calculate stats
-          setTransactions(sampleTransactions);
-          
-          const stats = {
-            all: sampleTransactions.length,
-            succeeded: sampleTransactions.filter(t => t.status === 'completed').length,
-            refunded: sampleTransactions.filter(t => t.status === 'refunded').length,
-            disputed: sampleTransactions.filter(t => t.status === 'disputed').length,
-            failed: sampleTransactions.filter(t => t.status === 'failed').length,
-            uncaptured: sampleTransactions.filter(t => t.status === 'uncaptured').length
-          };
-          
-          setTransactionStats(stats);
+          console.log('No transaction data found, using sample data');
+          toast({
+            title: "No transactions",
+            description: "No transaction data was found. Please run the SQL setup script.",
+            variant: "destructive"
+          });
         }
       } catch (error) {
         console.error('Error fetching transactions:', error);
         toast({
           title: "Error",
-          description: "Failed to load transactions data. Showing sample data instead.",
+          description: "Failed to load transactions data.",
           variant: "destructive"
         });
-        // Use sample data on error
-        setTransactions(sampleTransactions);
-        
-        // Set stats based on sample data
-        const stats = {
-          all: sampleTransactions.length,
-          succeeded: sampleTransactions.filter(t => t.status === 'completed').length,
-          refunded: sampleTransactions.filter(t => t.status === 'refunded').length,
-          disputed: sampleTransactions.filter(t => t.status === 'disputed').length,
-          failed: sampleTransactions.filter(t => t.status === 'failed').length,
-          uncaptured: sampleTransactions.filter(t => t.status === 'uncaptured').length
-        };
-        
-        setTransactionStats(stats);
       } finally {
         setLoading(false);
       }
@@ -323,26 +230,34 @@ const Transactions = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {transactions.map((transaction) => (
-                    <TableRow key={transaction.id} className="text-xs">
-                      <TableCell className="font-medium">
-                        {formatCurrency(transaction.amount, transaction.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <CreditCard className="h-3.5 w-3.5 mr-2 text-gray-500" />
-                          {transaction.payment_method || 'Credit Card'}
-                        </div>
-                      </TableCell>
-                      <TableCell>{transaction.description || transaction.transaction_type || 'Payment'}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{transaction.customer_email}</TableCell>
-                      <TableCell>{formatDate(transaction.created_at || new Date().toISOString())}</TableCell>
-                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" className="h-7 text-xs">View</Button>
+                  {transactions.length > 0 ? (
+                    transactions.map((transaction) => (
+                      <TableRow key={transaction.id} className="text-xs">
+                        <TableCell className="font-medium">
+                          {formatCurrency(transaction.amount, transaction.currency)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <CreditCard className="h-3.5 w-3.5 mr-2 text-gray-500" />
+                            {transaction.payment_method || 'Credit Card'}
+                          </div>
+                        </TableCell>
+                        <TableCell>{transaction.description || transaction.transaction_type || 'Payment'}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{transaction.customer_email}</TableCell>
+                        <TableCell>{formatDate(transaction.created_at)}</TableCell>
+                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" className="h-7 text-xs">View</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-4 text-gray-500">
+                        No transactions found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>

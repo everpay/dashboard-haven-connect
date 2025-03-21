@@ -46,7 +46,7 @@ export const useDashboardData = () => {
         console.log("Fetching transaction data...");
         // Fetch recent transactions
         const { data: transactionData, error: transactionError } = await supabase
-          .from('marqeta_transactions')
+          .from('transactions')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(5);
@@ -57,8 +57,9 @@ export const useDashboardData = () => {
         
         // Get data for the interactive bar chart - monthly sales
         const { data: allTransactions, error: allTransactionsError } = await supabase
-          .from('marqeta_transactions')
-          .select('created_at, amount');
+          .from('transactions')
+          .select('created_at, amount')
+          .eq('transaction_type', 'payment');
           
         if (allTransactionsError) throw allTransactionsError;
         console.log("Fetched all transactions for chart:", allTransactions?.length || 0);
@@ -109,12 +110,30 @@ export const useDashboardData = () => {
         console.log("Created chart data points:", chartData.length);
         setChartData(chartData);
         
-        // Payment methods data
-        const paymentMethods = [
-          { name: 'Credit Card', value: 6540.50 },
-          { name: 'ACH', value: 2750.25 },
-          { name: 'Wire', value: 1250.75 }
-        ];
+        // Get payment methods data from transactions table
+        const { data: paymentMethodsData, error: methodsError } = await supabase
+          .from('transactions')
+          .select('payment_method, amount')
+          .eq('transaction_type', 'payment');
+          
+        if (methodsError) throw methodsError;
+        
+        // Process payment method data
+        const methodData: Record<string, number> = {};
+        
+        paymentMethodsData?.forEach((tx: any) => {
+          const method = tx.payment_method || 'Other';
+          if (!methodData[method]) {
+            methodData[method] = 0;
+          }
+          methodData[method] += Number(tx.amount) || 0;
+        });
+        
+        // Convert to chart data format
+        const paymentMethods = Object.entries(methodData).map(([name, value]) => ({
+          name,
+          value: Number(value.toFixed(2))
+        }));
         
         setPaymentMethodData(paymentMethods);
         console.log("Dashboard data fetching completed successfully");

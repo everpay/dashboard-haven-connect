@@ -64,6 +64,9 @@ export const InteractiveBarChart = ({
     return null;
   };
 
+  // Handle case with no data
+  const noData = !data || data.length === 0;
+
   return (
     <Card className={cn("w-full", className)}>
       <CardHeader className="p-4 pb-2">
@@ -71,40 +74,46 @@ export const InteractiveBarChart = ({
         {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <div className={`h-[${height}px]`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={data} 
-              margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
-              barSize={barSize}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis 
-                dataKey="name" 
-                tick={{ fontSize: 12 }} 
-                angle={data.length > 8 ? -45 : 0}
-                textAnchor={data.length > 8 ? "end" : "middle"}
-                height={data.length > 8 ? 60 : 30}
-              />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} />
-              {showLegend && <Legend />}
-              <Bar 
-                dataKey="value" 
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+        {noData ? (
+          <div className="flex justify-center items-center h-[300px] border border-dashed rounded-md">
+            <p className="text-muted-foreground">No data available</p>
+          </div>
+        ) : (
+          <div style={{ height: `${height}px` }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={data} 
+                margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+                barSize={barSize}
               >
-                {data.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`}
-                    fill={index === activeIndex ? colorScheme[1] : colorScheme[0]}
-                    cursor="pointer"
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }} 
+                  angle={data.length > 8 ? -45 : 0}
+                  textAnchor={data.length > 8 ? "end" : "middle"}
+                  height={data.length > 8 ? 60 : 30}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip content={<CustomTooltip />} />
+                {showLegend && <Legend />}
+                <Bar 
+                  dataKey="value" 
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {data.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`}
+                      fill={index === activeIndex ? colorScheme[1] : colorScheme[0]}
+                      cursor="pointer"
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

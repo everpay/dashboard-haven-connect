@@ -35,12 +35,12 @@ const Overview = () => {
 
   // Fetch transaction data
   const { data: transactionData, isLoading } = useQuery({
-    queryKey: ['reports-overview', userId],
+    queryKey: ['reports-overview', userId, timeframe],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('marqeta_transactions')
+        .from('transactions')
         .select('created_at, amount')
-        .eq('user_id', userId)
+        .eq('merchant_id', userId)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -73,11 +73,10 @@ const Overview = () => {
   const { data: paymentMethodsData } = useQuery({
     queryKey: ['reports-payment-methods', userId],
     queryFn: async () => {
-      // In a real app, we'd fetch from sales_by_payment_method
       const { data, error } = await supabase
-        .from('marqeta_transactions')
+        .from('transactions')
         .select('payment_method, amount')
-        .eq('user_id', userId);
+        .eq('merchant_id', userId);
       
       if (error) throw error;
 
@@ -198,44 +197,56 @@ const Overview = () => {
             />
           </div>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={filteredTransactionData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="#1AA47B" 
-                  activeDot={{ r: 8 }} 
-                  name="Amount ($)"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="#19363B" 
-                  name="# Transactions"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {filteredTransactionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={filteredTransactionData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#1AA47B" 
+                    activeDot={{ r: 8 }} 
+                    name="Amount ($)"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#19363B" 
+                    name="# Transactions"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex justify-center items-center h-full border border-dashed rounded-md">
+                <p className="text-muted-foreground">No transaction data available</p>
+              </div>
+            )}
           </div>
         </Card>
 
         <Card className="p-4">
           <h3 className="font-medium text-base mb-4">Sales by Payment Method</h3>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={paymentMethodsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#1AA47B" name="Sales ($)" />
-              </BarChart>
-            </ResponsiveContainer>
+            {paymentMethodsData && paymentMethodsData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={paymentMethodsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" fill="#1AA47B" name="Sales ($)" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex justify-center items-center h-full border border-dashed rounded-md">
+                <p className="text-muted-foreground">No payment method data available</p>
+              </div>
+            )}
           </div>
         </Card>
 

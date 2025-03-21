@@ -44,6 +44,8 @@ export const SalesChart = ({
       } else {
         setProcessedPaymentData(sortedData);
       }
+    } else {
+      setProcessedPaymentData([]);
     }
   }, [paymentMethodData]);
 
@@ -78,13 +80,19 @@ export const SalesChart = ({
       </TabsContent>
       
       <TabsContent value="payment" className="mt-0">
-        <InteractiveBarChart 
-          data={processedPaymentData}
-          valuePrefix="$"
-          title="Sales by Payment Method"
-          colorScheme={["#4A6FA5", "#6025C0"]}
-          barSize={processedPaymentData.length > 10 ? 12 : 20}
-        />
+        {processedPaymentData.length > 0 ? (
+          <InteractiveBarChart 
+            data={processedPaymentData}
+            valuePrefix="$"
+            title="Sales by Payment Method"
+            colorScheme={["#4A6FA5", "#6025C0"]}
+            barSize={processedPaymentData.length > 10 ? 12 : 20}
+          />
+        ) : (
+          <div className="flex justify-center items-center h-[300px] border border-dashed rounded-md">
+            <p className="text-muted-foreground">No payment data available</p>
+          </div>
+        )}
       </TabsContent>
     </div>
   );
