@@ -20,6 +20,8 @@ export const useDashboardData = () => {
     amount: 0
   });
 
+  console.log("useDashboardData hook initialized with timeframe:", timeframe);
+
   useEffect(() => {
     // Simple test to verify Supabase connection
     const testSupabase = async () => {
@@ -41,6 +43,7 @@ export const useDashboardData = () => {
 
     const fetchTransactionData = async () => {
       try {
+        console.log("Fetching transaction data...");
         // Fetch recent transactions
         const { data: transactionData, error: transactionError } = await supabase
           .from('marqeta_transactions')
@@ -49,6 +52,7 @@ export const useDashboardData = () => {
           .limit(5);
         
         if (transactionError) throw transactionError;
+        console.log("Fetched transactions:", transactionData?.length || 0);
         setTransactions(transactionData || []);
         
         // Get data for the interactive bar chart - monthly sales
@@ -57,6 +61,7 @@ export const useDashboardData = () => {
           .select('created_at, amount');
           
         if (allTransactionsError) throw allTransactionsError;
+        console.log("Fetched all transactions for chart:", allTransactions?.length || 0);
         
         // Count today's transactions
         const today = new Date();
@@ -101,6 +106,7 @@ export const useDashboardData = () => {
           date: name // Add date for filtering
         }));
         
+        console.log("Created chart data points:", chartData.length);
         setChartData(chartData);
         
         // Payment methods data
@@ -111,6 +117,7 @@ export const useDashboardData = () => {
         ];
         
         setPaymentMethodData(paymentMethods);
+        console.log("Dashboard data fetching completed successfully");
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       }
@@ -122,6 +129,7 @@ export const useDashboardData = () => {
 
   // Filter chart data based on selected timeframe
   const filteredChartData = filterDataByTimeframe(chartData, timeframe);
+  console.log("Filtered chart data for timeframe", timeframe, ":", filteredChartData.length, "points");
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

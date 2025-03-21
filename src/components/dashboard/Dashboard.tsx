@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardContent } from './DashboardContent';
 import { ErrorDisplay } from './ErrorDisplay';
@@ -8,6 +8,10 @@ import { TimeframeOption } from '@/utils/timeframeUtils';
 
 export const Dashboard = () => {
   const [globalTimeframe, setGlobalTimeframe] = useState<TimeframeOption>('7days');
+  
+  useEffect(() => {
+    console.log("Dashboard component mounted with timeframe:", globalTimeframe);
+  }, []);
   
   const {
     error,

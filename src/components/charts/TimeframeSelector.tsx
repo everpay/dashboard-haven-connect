@@ -19,18 +19,25 @@ export const TimeframeSelector = ({
   
   return (
     <div className={`flex items-center ${className}`}>
-      <span className="text-sm mr-2 text-white">Timeframe:</span>
+      <span className="text-sm mr-2 text-foreground">Timeframe:</span>
       <div className="relative">
         <Select 
           value={currentTimeframe} 
-          onValueChange={(value) => onTimeframeChange(value as TimeframeOption)}
+          onValueChange={(value) => {
+            console.log("TimeframeSelector selection changed to:", value);
+            onTimeframeChange(value as TimeframeOption);
+          }}
         >
-          <SelectTrigger className="w-36 h-8 text-sm bg-[#1E2736] border-[#1E2736] text-white">
+          <SelectTrigger className="w-36 h-8 text-sm bg-card border-input text-foreground">
             <SelectValue placeholder="Select timeframe" />
           </SelectTrigger>
-          <SelectContent className="absolute z-50 bg-[#1E2736] border-[#1E2736] text-white min-w-[140px]">
+          <SelectContent className="bg-popover border-border text-foreground min-w-[140px]">
             {timeframeOptions.map(option => (
-              <SelectItem key={option.value} value={option.value} className="text-sm text-white hover:bg-[#2E3746] cursor-pointer">
+              <SelectItem 
+                key={option.value} 
+                value={option.value} 
+                className="text-sm text-foreground hover:bg-accent cursor-pointer"
+              >
                 {option.label}
               </SelectItem>
             ))}

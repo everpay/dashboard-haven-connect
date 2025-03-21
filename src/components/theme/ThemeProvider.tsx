@@ -33,15 +33,16 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
   
-  // For debugging
-  console.log("Current theme:", theme);
+  console.log("ThemeProvider rendering with theme:", theme);
 
   useEffect(() => {
     const root = window.document.documentElement;
     
+    // Clear existing theme classes first
     root.classList.remove("light", "dark");
     
     if (forcedTheme) {
+      console.log("Applying forced theme:", forcedTheme);
       root.classList.add(forcedTheme);
       return;
     }
@@ -52,10 +53,11 @@ export function ThemeProvider({
         ? "dark"
         : "light";
       
+      console.log("Applying system theme:", systemTheme);
       root.classList.add(systemTheme);
-      console.log("Applied system theme:", systemTheme);
       
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      
       const handleChange = () => {
         if (theme === "system") {
           root.classList.remove("light", "dark");
@@ -68,16 +70,16 @@ export function ThemeProvider({
       return () => mediaQuery.removeEventListener("change", handleChange);
     }
     
-    console.log("Applied theme directly:", theme);
+    console.log("Applying theme directly:", theme);
     root.classList.add(theme);
   }, [theme, forcedTheme]);
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      console.log("Setting theme to:", theme);
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      console.log("Setting theme to:", newTheme);
+      localStorage.setItem(storageKey, newTheme);
+      setTheme(newTheme);
     },
   };
 
