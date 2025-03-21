@@ -35,7 +35,9 @@ export const DashboardUpperSection = ({
             onTimeframeChange={setTimeframe}
           />
         </div>
-        <PaymentMethodsCard data={paymentMethodData} />
+        <div className="h-full">
+          <PaymentMethodsCard data={paymentMethodData} />
+        </div>
       </div>
     </div>
   );

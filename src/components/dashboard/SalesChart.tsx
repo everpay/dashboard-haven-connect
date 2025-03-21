@@ -5,7 +5,7 @@ import { TimeframeSelector } from "@/components/charts/TimeframeSelector";
 import { TimeframeOption, formatDateRange } from "@/utils/timeframeUtils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface SalesChartProps {
@@ -69,11 +69,7 @@ export const SalesChart = ({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-2">
-        <div>
-          <h2 className="text-sm font-semibold">Sales Overview</h2>
-          <p className="text-xs text-muted-foreground">{formatDateRange(timeframe)}</p>
-        </div>
+      <div className="flex justify-end mb-2">
         <Tabs defaultValue="overview" onValueChange={setActiveTab} className="w-[200px]">
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -85,7 +81,11 @@ export const SalesChart = ({
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <TabsContent value="overview" className="mt-0">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Sales Overview</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">{formatDateRange(timeframe)}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
               <div style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart

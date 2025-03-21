@@ -17,18 +17,18 @@ export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProp
   const { data, isLoading } = usePaymentMethodsData(initialData);
   
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm">Payment Methods</CardTitle>
         <CardDescription className="text-xs">Revenue by payment method</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-0 flex-grow overflow-auto">
         {isLoading 
           ? <PaymentMethodsLoading /> 
           : <PaymentMethodsList data={data} />
         }
       </CardContent>
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-2 mt-auto">
         <Button 
           variant="outline" 
           className="w-full text-sm"
