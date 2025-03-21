@@ -15,7 +15,7 @@ export const SalesChart = ({ chartData, timeframe, onTimeframeChange }: SalesCha
     <div>
       <div className="flex justify-between items-center mb-2">
         <div>
-          <h2 className="text-lg font-semibold">Monthly Sales</h2>
+          <h2 className="text-lg font-semibold">Sales Overview</h2>
           <p className="text-xs text-muted-foreground">{formatDateRange(timeframe)}</p>
         </div>
         <TimeframeSelector 
@@ -24,8 +24,8 @@ export const SalesChart = ({ chartData, timeframe, onTimeframeChange }: SalesCha
         />
       </div>
       <InteractiveBarChart 
-        title="Monthly Sales" 
-        description="Revenue over the selected period"
+        title="Sales Chart" 
+        description="Revenue for the selected period"
         data={chartData}
         valuePrefix="$"
       />
