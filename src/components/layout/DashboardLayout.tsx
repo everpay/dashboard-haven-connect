@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { Sidebar } from './Sidebar';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -28,27 +29,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </Button>
           
           <div className="flex-1 flex justify-end items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="rounded-full w-8 h-8 bg-gray-800 text-white"
-            >
-              <span className="sr-only">Toggle theme</span>
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                strokeWidth={1.5} 
-                stroke="currentColor" 
-                className="w-4 h-4"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" 
-                />
-              </svg>
-            </Button>
+            <ThemeToggle />
             
             <div className="h-8 w-8 rounded-full bg-[#1E2736] flex items-center justify-center text-white text-xs">
               BO
