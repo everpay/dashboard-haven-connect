@@ -76,20 +76,6 @@ export const SidebarFooter = () => {
             </Link>
           </div>
         </div>
-        
-        <div className={cn(
-          "text-center text-xs py-2",
-          isDarkMode ? "text-gray-500" : "text-gray-400"
-        )}>
-          <p>© 2024 EverPay, Inc. All rights reserved.</p>
-          <div className="flex justify-center space-x-2 mt-1">
-            <Link to="/privacy" className="hover:underline">Privacy</Link>
-            <span>·</span>
-            <Link to="/terms" className="hover:underline">Terms</Link>
-            <span>·</span>
-            <Link to="/cookies" className="hover:underline">Cookies</Link>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
+import { Link } from 'react-router-dom';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -40,9 +41,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [session]);
   
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-[#04080F] text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-[#04080F] text-white' : 'bg-gray-50 text-gray-900'}`}>
       {!collapsed && <Sidebar />}
-      <div className={`transition-all duration-300 ease-in-out ${collapsed ? 'ml-0' : 'ml-64'}`}>
+      <div className={`transition-all duration-300 ease-in-out flex flex-col flex-grow ${collapsed ? 'ml-0' : 'ml-64'}`}>
         <header className={`h-16 border-b flex items-center px-6 ${
           isDarkMode ? 'border-[#1E2736] bg-[#0B0F19]' : 'border-gray-200 bg-white'
         }`}>
@@ -126,9 +127,22 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
         </header>
         
-        <main className={`p-6 ${isDarkMode ? 'bg-[#04080F]' : 'bg-gray-50'}`}>
+        <main className={`p-6 flex-grow ${isDarkMode ? 'bg-[#04080F]' : 'bg-gray-50'}`}>
           {children}
         </main>
+
+        <footer className={`py-3 text-center text-xs ${
+          isDarkMode ? 'bg-[#0B0F19] text-gray-500 border-t border-[#1E2736]' : 'bg-white text-gray-400 border-t border-gray-200'
+        }`}>
+          <div className="flex justify-center space-x-2">
+            <Link to="/privacy" className="hover:underline">Privacy</Link>
+            <span>·</span>
+            <Link to="/terms" className="hover:underline">Terms</Link>
+            <span>·</span>
+            <Link to="/cookies" className="hover:underline">Cookies</Link>
+          </div>
+          <p className="mt-1">© 2024 EverPay, Inc. All rights reserved.</p>
+        </footer>
       </div>
     </div>
   );
