@@ -200,3 +200,62 @@
 .dark table {
   color: hsl(var(--foreground));
 }
+
+/* Light mode specific overrides */
+.light {
+  --select-bg: #FFFFFF;
+  --select-text: #1E293B;
+  --select-border: #E2E8F0;
+  --select-hover: #F1F5F9;
+}
+
+.light .bg-[#04080F] {
+  background-color: #FFFFFF;
+}
+
+.light .text-white {
+  color: #1E293B;
+}
+
+.light .bg-[#1E2736], 
+.light .bg-[#0F1623] {
+  background-color: #F1F5F9;
+}
+
+.light .border-[#1E2736] {
+  border-color: #E2E8F0;
+}
+
+.light .hover\:bg-[#2E3746]:hover {
+  background-color: #E2E8F0;
+}
+
+/* Fix for timeframe selector in light mode */
+.light .select-content {
+  background-color: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #1E293B;
+}
+
+.light .select-item {
+  color: #1E293B;
+}
+
+.light .select-item:hover {
+  background-color: #F1F5F9;
+}
+
+/* Dropdown menus in light mode */
+.light .dropdown-content {
+  background-color: #FFFFFF;
+  border-color: #E2E8F0;
+  color: #1E293B;
+}
+
+.light .dropdown-item {
+  color: #1E293B;
+}
+
+.light .dropdown-item:hover {
+  background-color: #F1F5F9;
+}

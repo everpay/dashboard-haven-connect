@@ -92,11 +92,14 @@ SelectValue.displayName = "SelectValue";
 const SelectContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ children, ...props }, ref) => {
+>(({ children, className, ...props }, ref) => {
   return (
     <div 
       ref={ref}
-      className="absolute z-50 mt-1 w-full bg-[#1E2736] border border-[#1E2736] shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm text-white"
+      className={cn(
+        "absolute z-50 mt-1 w-full bg-[#1E2736] border border-[#1E2736] shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm text-white",
+        className
+      )}
       {...props}
     >
       {children}

@@ -44,7 +44,7 @@ const App = () => {
   
   return (
     <ThemeProvider defaultTheme="dark" storageKey="everpay-ui-theme">
-      <div className="min-h-screen bg-[#04080F] text-white">
+      <div className="min-h-screen bg-[#04080F] text-white dark:bg-[#04080F] light:bg-white dark:text-white light:text-black">
         <Routes>
           <Route path="/debug" element={<div>Debug Page</div>} />
           <Route path="/simple" element={<SimpleIndex />} />
