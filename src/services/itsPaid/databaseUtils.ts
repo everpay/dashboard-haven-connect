@@ -30,7 +30,7 @@ export async function logTransaction(transactionData: TransactionResponse) {
           description: `Payment via ${transactionData.TRANSACTION_SEND_METHOD}`,
           payment_method: transactionData.TRANSACTION_SEND_METHOD,
           metadata: transactionData,
-          customer_email: transactionData.RECIPIENT_FULL_NAME || 'recipient@example.com'
+          customer_email: 'recipient@example.com' // Using a default email as RECIPIENT_FULL_NAME doesn't exist in the type
         }
       ]);
 
