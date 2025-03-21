@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
 
@@ -18,6 +18,9 @@ interface InteractiveBarChartProps {
   valuePrefix?: string;
   valueSuffix?: string;
   colorScheme?: string[];
+  showLegend?: boolean;
+  height?: number;
+  barSize?: number;
 }
 
 export const InteractiveBarChart = ({
@@ -27,7 +30,10 @@ export const InteractiveBarChart = ({
   className,
   valuePrefix = "",
   valueSuffix = "",
-  colorScheme = ["#1AA47B", "#19363B"]
+  colorScheme = ["#1AA47B", "#19363B"],
+  showLegend = false,
+  height = 300,
+  barSize = 20
 }: InteractiveBarChartProps) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -47,6 +53,11 @@ export const InteractiveBarChart = ({
           <p className="text-sm text-primary">
             {`${valuePrefix}${payload[0].value.toLocaleString()}${valueSuffix}`}
           </p>
+          {payload[0].payload.secondaryValue && (
+            <p className="text-xs text-muted-foreground">
+              Count: {payload[0].payload.secondaryValue}
+            </p>
+          )}
         </div>
       );
     }
@@ -60,13 +71,24 @@ export const InteractiveBarChart = ({
         {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
+        <div className={`h-[${height}px]`}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 20 }}>
+            <BarChart 
+              data={data} 
+              margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
+              barSize={barSize}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fontSize: 12 }} 
+                angle={data.length > 8 ? -45 : 0}
+                textAnchor={data.length > 8 ? "end" : "middle"}
+                height={data.length > 8 ? 60 : 30}
+              />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip content={<CustomTooltip />} />
+              {showLegend && <Legend />}
               <Bar 
                 dataKey="value" 
                 onMouseEnter={handleMouseEnter}
