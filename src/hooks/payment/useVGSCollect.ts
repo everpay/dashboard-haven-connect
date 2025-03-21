@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect } from 'react';
 import { useVGSScriptLoader } from './useVGSScriptLoader';
 import { supabase } from '@/lib/supabase';
