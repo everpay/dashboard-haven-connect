@@ -51,7 +51,6 @@ export function ThemeProvider({
       
       root.classList.add(systemTheme);
       
-      // Add event listener for system theme changes
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleChange = () => {
         if (theme === "system") {

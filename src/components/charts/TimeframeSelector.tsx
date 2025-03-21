@@ -35,4 +35,4 @@ export const TimeframeSelector = ({
       </Select>
     </div>
   );
-};
+}

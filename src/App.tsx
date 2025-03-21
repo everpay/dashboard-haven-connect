@@ -43,7 +43,7 @@ const App = () => {
   console.log('Rendering App component');
   
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="everpay-ui-theme" forcedTheme="dark">
+    <ThemeProvider defaultTheme="dark" storageKey="everpay-ui-theme">
       <div className="min-h-screen bg-[#04080F] text-white">
         <Routes>
           <Route path="/debug" element={<div>Debug Page</div>} />
