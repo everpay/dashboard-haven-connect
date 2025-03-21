@@ -4,6 +4,8 @@ import { TransactionResponse, TransactionStatus } from "./types";
 
 /**
  * Log transaction to database
+ * @param transactionData Transaction data to log
+ * @returns Promise resolving when transaction is logged
  */
 export async function logTransaction(transactionData: TransactionResponse) {
   try {
@@ -27,13 +29,18 @@ export async function logTransaction(transactionData: TransactionResponse) {
           transaction_type: 'payout',
           description: `Payment via ${transactionData.TRANSACTION_SEND_METHOD}`,
           payment_method: transactionData.TRANSACTION_SEND_METHOD,
-          metadata: transactionData
+          metadata: transactionData,
+          customer_email: transactionData.RECIPIENT_FULL_NAME || 'recipient@example.com'
         }
       ]);
 
     if (error) {
       console.error('Error logging transaction to database:', error);
+    } else {
+      console.log('Transaction successfully logged to database');
     }
+    
+    return data;
   } catch (error) {
     console.error('Error logging transaction:', error);
   }
@@ -41,18 +48,52 @@ export async function logTransaction(transactionData: TransactionResponse) {
 
 /**
  * Update transaction status in database
+ * @param transactionId Transaction ID to update
+ * @param status New transaction status
+ * @returns Promise resolving when transaction is updated
  */
 export async function updateTransactionStatus(transactionId: string, status: TransactionStatus) {
   try {
     const { data, error } = await supabase
       .from('transactions')
       .update({ status: status.toLowerCase() })
-      .eq('metadata->TRANSACTION_ID', transactionId);
+      .eq('metadata->TRANSACTION_ID', transactionId)
+      .select();
 
     if (error) {
       console.error('Error updating transaction status in database:', error);
+      return null;
     }
+    
+    console.log(`Transaction ${transactionId} status updated to ${status}`);
+    return data;
   } catch (error) {
     console.error('Error updating transaction status:', error);
+    return null;
+  }
+}
+
+/**
+ * Get transaction by ID
+ * @param transactionId Transaction ID to retrieve
+ * @returns Promise resolving to transaction data
+ */
+export async function getTransactionById(transactionId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('metadata->TRANSACTION_ID', transactionId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching transaction by ID:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in getTransactionById:', error);
+    return null;
   }
 }

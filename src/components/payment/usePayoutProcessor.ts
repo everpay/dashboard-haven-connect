@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import { getItsPaidService } from '@/services/itsPaid';
 import { TransactionData } from '@/services/itsPaid/types';
+import { logTransaction } from '@/services/itsPaid/databaseUtils';
 
 interface PayoutFormData {
   amount: string;
@@ -70,30 +71,13 @@ export const usePayoutProcessor = (onSuccess?: () => void) => {
           TRANSACTION_STATUS: 'PENDING',
           TRANSACTION_SEND_AMOUNT: parseFloat(formData.amount),
           TRANSACTION_SEND_METHOD: paymentMethod.toUpperCase(),
-          TRANSACTION_CURRENCY_ISO3: 'USD'
+          TRANSACTION_CURRENCY_ISO3: 'USD',
+          RECIPIENT_FULL_NAME: formData.recipientName
         };
+        
+        // Log the transaction to our database
+        await logTransaction(result);
       }
-
-      // Save transaction to database
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([
-          {
-            amount: formData.amount,
-            currency: 'USD',
-            payment_method: paymentMethod,
-            description: formData.description || `Payment to ${formData.recipientName}`,
-            status: 'pending',
-            transaction_type: 'payout',
-            metadata: {
-              provider: paymentApi,
-              RECIPIENT_FULL_NAME: formData.recipientName,
-              ...result
-            }
-          }
-        ]);
-
-      if (error) throw error;
 
       toast({
         title: "Payout initiated",

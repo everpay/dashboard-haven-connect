@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 import { useToast } from '@/components/ui/use-toast';
@@ -39,7 +38,7 @@ export const usePayoutData = (refreshKey: number, searchTerm: string) => {
           .order('created_at', { ascending: false });
         
         if (searchTerm) {
-          query = query.or(`description.ilike.%${searchTerm}%,payment_method.ilike.%${searchTerm}%`);
+          query = query.or(`description.ilike.%${searchTerm}%,payment_method.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
         }
         
         const { data, error } = await query;
@@ -48,10 +47,12 @@ export const usePayoutData = (refreshKey: number, searchTerm: string) => {
         
         // If we have real data, return it
         if (data && data.length > 0) {
+          console.log(`Retrieved ${data.length} payouts from database`);
           return data;
         }
         
         // Otherwise generate mock data
+        console.log('No payout data found, using sample data');
         return generateMockPayouts();
       } catch (error) {
         console.error('Error fetching payouts:', error);

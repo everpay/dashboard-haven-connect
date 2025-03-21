@@ -1132,65 +1132,6 @@ export type Database = {
           },
         ]
       }
-      marqeta_transactions: {
-        Row: {
-          amount: number
-          card_token: string | null
-          card_type: string | null
-          created_at: string | null
-          currency: string
-          description: string | null
-          id: string
-          merchant_name: string | null
-          metadata: Json | null
-          payment_method: string | null
-          status: string
-          transaction_type: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          amount: number
-          card_token?: string | null
-          card_type?: string | null
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          id?: string
-          merchant_name?: string | null
-          metadata?: Json | null
-          payment_method?: string | null
-          status?: string
-          transaction_type: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          amount?: number
-          card_token?: string | null
-          card_type?: string | null
-          created_at?: string | null
-          currency?: string
-          description?: string | null
-          id?: string
-          merchant_name?: string | null
-          metadata?: Json | null
-          payment_method?: string | null
-          status?: string
-          transaction_type?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "marqeta_transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "reseller_users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       merchant_integrations: {
         Row: {
           active: boolean | null
@@ -2103,46 +2044,64 @@ export type Database = {
         Row: {
           amount: number
           anomaly: boolean | null
+          card_token: string | null
+          card_type: string | null
           created_at: string | null
           currency: string | null
           customer_email: string
+          description: string | null
           id: string
           ip_address: unknown
           location: unknown | null
           merchant_id: string
+          merchant_name: string | null
+          metadata: Json | null
           payment_method: string | null
           risk_score: number | null
           status: string | null
+          transaction_type: string | null
           updated_at: string | null
         }
         Insert: {
           amount: number
           anomaly?: boolean | null
+          card_token?: string | null
+          card_type?: string | null
           created_at?: string | null
           currency?: string | null
           customer_email: string
+          description?: string | null
           id?: string
           ip_address: unknown
           location?: unknown | null
           merchant_id: string
+          merchant_name?: string | null
+          metadata?: Json | null
           payment_method?: string | null
           risk_score?: number | null
           status?: string | null
+          transaction_type?: string | null
           updated_at?: string | null
         }
         Update: {
           amount?: number
           anomaly?: boolean | null
+          card_token?: string | null
+          card_type?: string | null
           created_at?: string | null
           currency?: string | null
           customer_email?: string
+          description?: string | null
           id?: string
           ip_address?: unknown
           location?: unknown | null
           merchant_id?: string
+          merchant_name?: string | null
+          metadata?: Json | null
           payment_method?: string | null
           risk_score?: number | null
           status?: string | null
+          transaction_type?: string | null
           updated_at?: string | null
         }
         Relationships: [
