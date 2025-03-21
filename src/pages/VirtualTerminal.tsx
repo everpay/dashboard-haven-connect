@@ -3,15 +3,14 @@ import React, { useState } from 'react';
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Check, CreditCard, AlertCircle, Banknote } from "lucide-react";
+import { Check, CreditCard, Banknote } from "lucide-react";
 import { VGSPaymentForm } from "@/components/payment/VGSPaymentForm";
 import { toast } from "sonner";
-import { BankDetailsForm } from "@/components/payment/BankDetailsForm";
+import { PaymentFormFields } from "@/components/payment/PaymentFormFields";
+import { CreditCardPaymentTab } from "@/components/payment/CreditCardPaymentTab";
+import { BankAccountPaymentTab } from "@/components/payment/BankAccountPaymentTab";
+import { PaymentSecurityAlert } from "@/components/payment/PaymentSecurityAlert";
 
 const VirtualTerminal = () => {
   const [activeTab, setActiveTab] = useState("credit-card");
@@ -92,13 +91,7 @@ const VirtualTerminal = () => {
           <h1 className="text-2xl font-bold tracking-tight">Virtual Terminal</h1>
         </div>
         
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Secure Payment Processing</AlertTitle>
-          <AlertDescription>
-            All card details are processed securely and never stored on our servers.
-          </AlertDescription>
-        </Alert>
+        <PaymentSecurityAlert />
         
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
@@ -107,51 +100,16 @@ const VirtualTerminal = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount ($)</Label>
-                    <Input
-                      id="amount"
-                      placeholder="0.00"
-                      value={amount}
-                      onChange={handleAmountChange}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="customerEmail">Customer Email</Label>
-                    <Input
-                      id="customerEmail"
-                      placeholder="customer@example.com"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="customerName">Customer Name</Label>
-                    <Input
-                      id="customerName"
-                      placeholder="John Doe"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Input
-                    id="description"
-                    placeholder="Payment for services"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-              </div>
+              <PaymentFormFields 
+                amount={amount}
+                customerEmail={customerEmail}
+                customerName={customerName}
+                description={description}
+                onAmountChange={handleAmountChange}
+                onCustomerEmailChange={(e) => setCustomerEmail(e.target.value)}
+                onCustomerNameChange={(e) => setCustomerName(e.target.value)}
+                onDescriptionChange={(e) => setDescription(e.target.value)}
+              />
               
               <Separator />
               
@@ -168,37 +126,19 @@ const VirtualTerminal = () => {
                 </TabsList>
                 
                 <TabsContent value="credit-card" className="pt-4">
-                  <div className="text-center">
-                    <Button 
-                      onClick={handleSubmitCard}
-                      className="bg-[#1AA47B] w-full md:w-auto"
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Process Card Payment
-                    </Button>
-                  </div>
+                  <CreditCardPaymentTab onSubmit={handleSubmitCard} />
                 </TabsContent>
                 
                 <TabsContent value="bank-account" className="pt-4">
-                  <BankDetailsForm 
-                    paymentMethod="ACH"
+                  <BankAccountPaymentTab 
                     accountNumber={accountNumber}
                     routingNumber={routingNumber}
                     bankName={bankName}
-                    zelleEmail=""
                     onAccountNumberChange={setAccountNumber}
                     onRoutingNumberChange={setRoutingNumber}
                     onBankNameChange={setBankName}
+                    onSubmit={handleSubmitBank}
                   />
-                  <div className="mt-4 text-center">
-                    <Button 
-                      onClick={handleSubmitBank}
-                      className="bg-[#1AA47B] w-full md:w-auto"
-                    >
-                      <Banknote className="mr-2 h-4 w-4" />
-                      Process Bank Payment
-                    </Button>
-                  </div>
                 </TabsContent>
               </Tabs>
             </div>
