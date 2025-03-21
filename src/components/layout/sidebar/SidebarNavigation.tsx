@@ -10,7 +10,8 @@ import {
   BarChart2, 
   Plug2,
   Settings,
-  CreditCard
+  Link as LinkIcon,
+  Globe
 } from 'lucide-react';
 import { SidebarNavLink } from './SidebarNavLink';
 import { SidebarDropdown } from './SidebarDropdown';
@@ -27,7 +28,7 @@ export const SidebarNavigation = () => {
           icon={Receipt} 
           label="Transactions" 
           defaultOpen={false}
-          includesPaths={["/transactions", "/recurring-payments", "/recurring-invoices", "/payment-links"]}
+          includesPaths={["/transactions", "/recurring-payments", "/recurring-invoices", "/payment-links", "/payment-link", "/hosted-payment-page"]}
         >
           <SidebarNavLink to="/overview" isSubmenu>
             Overview
@@ -38,8 +39,11 @@ export const SidebarNavigation = () => {
           <SidebarNavLink to="/recurring-invoices" isSubmenu>
             Recurring Invoices
           </SidebarNavLink>
-          <SidebarNavLink to="/payment-links" isSubmenu>
+          <SidebarNavLink to="/payment-link" isSubmenu>
             Payment Links
+          </SidebarNavLink>
+          <SidebarNavLink to="/hosted-payment-page" isSubmenu>
+            Hosted Payment Page
           </SidebarNavLink>
         </SidebarDropdown>
         
