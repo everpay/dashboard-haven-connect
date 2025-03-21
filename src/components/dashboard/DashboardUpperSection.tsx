@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { SalesChart } from './SalesChart';
 import { PaymentMethodsCard } from './PaymentMethodsCard';
 import { TimeframeOption } from '@/utils/timeframeUtils';
 import { TimeframeSelector } from '@/components/charts/TimeframeSelector';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 interface DashboardUpperSectionProps {
   chartData: any[];
