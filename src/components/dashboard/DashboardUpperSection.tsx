@@ -29,14 +29,16 @@ export const DashboardUpperSection = ({
                 <CardTitle>Sales Overview</CardTitle>
                 <CardDescription>Mar 14, 2024 - Mar 21, 2024</CardDescription>
               </div>
+              {/* Pass timeframe and setTimeframe props to TimeframeSelector */}
               <TimeframeSelector 
-                timeframe={timeframe} 
-                setTimeframe={setTimeframe} 
+                value={timeframe} 
+                onChange={setTimeframe} 
               />
             </div>
           </CardHeader>
           <CardContent>
-            <SalesChart data={chartData} />
+            {/* Ensure props match what SalesChart expects */}
+            <SalesChart chartData={chartData} />
           </CardContent>
         </Card>
       </div>
