@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TimeframeOption, timeframeOptions } from '@/utils/timeframeUtils';
@@ -15,7 +15,18 @@ export const TimeframeSelector = ({
   onTimeframeChange,
   className = ''
 }: TimeframeSelectorProps) => {
-  console.log("Rendering TimeframeSelector with timeframe:", currentTimeframe);
+  // Ensure the currentTimeframe is valid
+  useEffect(() => {
+    if (!currentTimeframe || !timeframeOptions.some(option => option.value === currentTimeframe)) {
+      console.log("Setting default timeframe in TimeframeSelector component");
+      onTimeframeChange('7days');
+    }
+  }, [currentTimeframe, onTimeframeChange]);
+  
+  const handleTimeframeChange = (value: string) => {
+    console.log("TimeframeSelector - changing timeframe to:", value);
+    onTimeframeChange(value as TimeframeOption);
+  };
   
   return (
     <div className={`flex items-center ${className}`}>
@@ -23,10 +34,8 @@ export const TimeframeSelector = ({
       <div className="relative">
         <Select 
           value={currentTimeframe} 
-          onValueChange={(value) => {
-            console.log("TimeframeSelector selection changed to:", value);
-            onTimeframeChange(value as TimeframeOption);
-          }}
+          onValueChange={handleTimeframeChange}
+          defaultValue="7days"
         >
           <SelectTrigger className="w-36 h-8 text-sm bg-card border-input text-foreground">
             <SelectValue placeholder="Select timeframe" />

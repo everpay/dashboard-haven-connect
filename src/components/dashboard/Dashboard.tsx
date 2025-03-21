@@ -13,6 +13,12 @@ export const Dashboard = () => {
     console.log("Dashboard component mounted with timeframe:", globalTimeframe);
   }, []);
   
+  // Update handler for timeframe changes
+  const handleTimeframeChange = (newTimeframe: TimeframeOption) => {
+    console.log("Dashboard - timeframe changed to:", newTimeframe);
+    setGlobalTimeframe(newTimeframe);
+  };
+  
   const {
     error,
     transactions,
@@ -25,6 +31,13 @@ export const Dashboard = () => {
     formatTimeAgo
   } = useDashboardData();
 
+  // Sync the hook's timeframe with our global timeframe
+  useEffect(() => {
+    if (timeframe !== globalTimeframe) {
+      setTimeframe(globalTimeframe);
+    }
+  }, [globalTimeframe, timeframe, setTimeframe]);
+
   if (error) {
     return <ErrorDisplay errorMessage={error} />;
   }
@@ -36,8 +49,8 @@ export const Dashboard = () => {
         balanceData={balanceData}
         todayTransactions={todayTransactions}
         chartData={chartData}
-        timeframe={timeframe}
-        setTimeframe={setTimeframe}
+        timeframe={globalTimeframe}
+        setTimeframe={handleTimeframeChange}
         paymentMethodData={paymentMethodData}
         transactions={transactions}
         formatTimeAgo={formatTimeAgo}
