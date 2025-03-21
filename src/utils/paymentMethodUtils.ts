@@ -53,28 +53,28 @@ export const getPaymentMethodIcon = (method: string): React.ReactNode => {
   const methodLower = method.toLowerCase();
   
   if (methodLower.includes('credit') || methodLower.includes('card') || methodLower.includes('visa') || methodLower.includes('mastercard')) {
-    return <CreditCard className="h-4 w-4" />;
+    return React.createElement(CreditCard, { className: "h-4 w-4" });
   } else if (methodLower.includes('ach')) {
-    return <Building className="h-4 w-4" />;
+    return React.createElement(Building, { className: "h-4 w-4" });
   } else if (methodLower.includes('wire')) {
-    return <Landmark className="h-4 w-4" />;
+    return React.createElement(Landmark, { className: "h-4 w-4" });
   } else if (methodLower.includes('zelle') || methodLower.includes('venmo') || methodLower.includes('cash app')) {
-    return <Send className="h-4 w-4" />;
+    return React.createElement(Send, { className: "h-4 w-4" });
   } else if (methodLower.includes('google') || methodLower.includes('apple') || methodLower.includes('pay')) {
-    return <Smartphone className="h-4 w-4" />;
+    return React.createElement(Smartphone, { className: "h-4 w-4" });
   } else if (methodLower.includes('bank')) {
-    return <Building className="h-4 w-4" />;
+    return React.createElement(Building, { className: "h-4 w-4" });
   } else if (methodLower.includes('swift')) {
-    return <Globe className="h-4 w-4" />;
+    return React.createElement(Globe, { className: "h-4 w-4" });
   } else if (methodLower.includes('crypto') || methodLower.includes('bitcoin')) {
-    return <Coins className="h-4 w-4" />;
+    return React.createElement(Coins, { className: "h-4 w-4" });
   } else if (methodLower.includes('pix') || methodLower.includes('qr')) {
-    return <QrCode className="h-4 w-4" />;
+    return React.createElement(QrCode, { className: "h-4 w-4" });
   } else if (methodLower.includes('cash')) {
-    return <Banknote className="h-4 w-4" />;
+    return React.createElement(Banknote, { className: "h-4 w-4" });
   } else if (methodLower.includes('wallet')) {
-    return <Wallet className="h-4 w-4" />;
+    return React.createElement(Wallet, { className: "h-4 w-4" });
   } else {
-    return <DollarSign className="h-4 w-4" />;
+    return React.createElement(DollarSign, { className: "h-4 w-4" });
   }
 };
