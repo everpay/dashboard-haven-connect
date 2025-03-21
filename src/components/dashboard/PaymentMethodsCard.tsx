@@ -5,11 +5,26 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
+import { 
+  CreditCard, 
+  Banknote, 
+  Bank, 
+  Landmark, 
+  Wallet, 
+  Smartphone, 
+  DollarSign, 
+  Send, 
+  Coins, 
+  QrCode, 
+  Hash,
+  Globe
+} from "lucide-react";
 
 interface PaymentMethod {
   name: string;
   value: number;
   color: string;
+  icon: React.ReactNode;
 }
 
 interface PaymentMethodsCardProps {
@@ -40,6 +55,37 @@ const getPaymentMethodColor = (method: string): string => {
   };
   
   return colorMap[method] || '#808080';
+};
+
+// Helper function to get an icon for each payment method
+const getPaymentMethodIcon = (method: string): React.ReactNode => {
+  const methodLower = method.toLowerCase();
+  
+  if (methodLower.includes('credit') || methodLower.includes('card') || methodLower.includes('visa') || methodLower.includes('mastercard')) {
+    return <CreditCard className="h-4 w-4" />;
+  } else if (methodLower.includes('ach')) {
+    return <Bank className="h-4 w-4" />;
+  } else if (methodLower.includes('wire')) {
+    return <Landmark className="h-4 w-4" />;
+  } else if (methodLower.includes('zelle') || methodLower.includes('venmo') || methodLower.includes('cash app')) {
+    return <Send className="h-4 w-4" />;
+  } else if (methodLower.includes('google') || methodLower.includes('apple') || methodLower.includes('pay')) {
+    return <Smartphone className="h-4 w-4" />;
+  } else if (methodLower.includes('bank')) {
+    return <Bank className="h-4 w-4" />;
+  } else if (methodLower.includes('swift')) {
+    return <Globe className="h-4 w-4" />;
+  } else if (methodLower.includes('crypto') || methodLower.includes('bitcoin')) {
+    return <Coins className="h-4 w-4" />;
+  } else if (methodLower.includes('pix') || methodLower.includes('qr')) {
+    return <QrCode className="h-4 w-4" />;
+  } else if (methodLower.includes('cash')) {
+    return <Banknote className="h-4 w-4" />;
+  } else if (methodLower.includes('wallet')) {
+    return <Wallet className="h-4 w-4" />;
+  } else {
+    return <DollarSign className="h-4 w-4" />;
+  }
 };
 
 export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProps) => {
@@ -74,7 +120,8 @@ export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProp
           const formattedData = Object.entries(methodTotals).map(([name, value]) => ({
             name,
             value,
-            color: getPaymentMethodColor(name)
+            color: getPaymentMethodColor(name),
+            icon: getPaymentMethodIcon(name)
           }));
           
           // If we got real data, use it
@@ -94,19 +141,60 @@ export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProp
     const useDefaultPaymentData = () => {
       // Comprehensive default dataset with all payment methods
       const defaultData: PaymentMethod[] = [
-        { name: 'Credit Card', value: 6540.50, color: getPaymentMethodColor('Credit Card') },
-        { name: 'ACH', value: 2750.25, color: getPaymentMethodColor('ACH') },
-        { name: 'Wire', value: 1250.75, color: getPaymentMethodColor('Wire') },
-        { name: 'Zelle', value: 890.25, color: getPaymentMethodColor('Zelle') },
-        { name: 'GooglePay', value: 450.30, color: getPaymentMethodColor('GooglePay') },
-        { name: 'ApplePay', value: 780.15, color: getPaymentMethodColor('ApplePay') },
-        { name: 'PayPal', value: 1320.45, color: getPaymentMethodColor('PayPal') },
-        { name: 'Pix', value: 580.60, color: getPaymentMethodColor('Pix') },
-        { name: 'Boleto', value: 420.75, color: getPaymentMethodColor('Boleto') },
-        { name: 'OxxoPay', value: 310.50, color: getPaymentMethodColor('OxxoPay') },
-        { name: 'Venmo', value: 650.80, color: getPaymentMethodColor('Venmo') },
-        { name: 'Debit Card', value: 1890.40, color: getPaymentMethodColor('Debit Card') },
-        { name: 'Bank Transfer', value: 3200.25, color: getPaymentMethodColor('Bank Transfer') },
+        { 
+          name: 'Credit Card', 
+          value: 6540.50, 
+          color: getPaymentMethodColor('Credit Card'),
+          icon: getPaymentMethodIcon('Credit Card')
+        },
+        { 
+          name: 'ACH', 
+          value: 2750.25, 
+          color: getPaymentMethodColor('ACH'),
+          icon: getPaymentMethodIcon('ACH')
+        },
+        { 
+          name: 'Wire', 
+          value: 1250.75, 
+          color: getPaymentMethodColor('Wire'),
+          icon: getPaymentMethodIcon('Wire')
+        },
+        { 
+          name: 'Zelle', 
+          value: 890.25, 
+          color: getPaymentMethodColor('Zelle'),
+          icon: getPaymentMethodIcon('Zelle')
+        },
+        { 
+          name: 'GooglePay', 
+          value: 450.30, 
+          color: getPaymentMethodColor('GooglePay'),
+          icon: getPaymentMethodIcon('GooglePay')
+        },
+        { 
+          name: 'ApplePay', 
+          value: 780.15, 
+          color: getPaymentMethodColor('ApplePay'),
+          icon: getPaymentMethodIcon('ApplePay')
+        },
+        { 
+          name: 'PayPal', 
+          value: 1320.45, 
+          color: getPaymentMethodColor('PayPal'),
+          icon: getPaymentMethodIcon('PayPal')
+        },
+        { 
+          name: 'Debit Card', 
+          value: 1890.40, 
+          color: getPaymentMethodColor('Debit Card'),
+          icon: getPaymentMethodIcon('Debit Card')
+        },
+        { 
+          name: 'Bank Transfer', 
+          value: 3200.25, 
+          color: getPaymentMethodColor('Bank Transfer'),
+          icon: getPaymentMethodIcon('Bank Transfer')
+        },
       ];
       setData(defaultData);
     };
@@ -127,14 +215,16 @@ export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProp
             <span className="text-sm">Loading payment data...</span>
           </div>
         ) : (
-          <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+          <div className="space-y-4 max-h-full grid gap-2">
             {data.map((method) => (
-              <div key={method.name} className="flex items-center justify-between">
+              <div key={method.name} className="flex items-center justify-between py-1 border-b border-gray-100 last:border-b-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: method.color }}></div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: method.color }}>
+                    {React.cloneElement(method.icon as React.ReactElement, { className: "h-3.5 w-3.5 text-white" })}
+                  </div>
                   <span className="text-sm">{method.name}</span>
                 </div>
-                <span className="text-sm font-medium">${method.value.toLocaleString()}</span>
+                <span className="text-sm">${method.value.toLocaleString()}</span>
               </div>
             ))}
           </div>

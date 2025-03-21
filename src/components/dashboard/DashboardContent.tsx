@@ -21,6 +21,7 @@ interface DashboardContentProps {
   paymentMethodData: any[];
   transactions: any[];
   formatTimeAgo: (dateString: string) => string;
+  chargebacksCount?: number;
 }
 
 export const DashboardContent = ({
@@ -31,14 +32,16 @@ export const DashboardContent = ({
   setTimeframe,
   paymentMethodData,
   transactions,
-  formatTimeAgo
+  formatTimeAgo,
+  chargebacksCount
 }: DashboardContentProps) => {
   return (
     <>
       {/* Balance Cards */}
       <BalanceCards 
         balanceData={balanceData} 
-        todayTransactions={todayTransactions} 
+        todayTransactions={todayTransactions}
+        chargebacksCount={chargebacksCount}
       />
       
       <DashboardUpperSection 

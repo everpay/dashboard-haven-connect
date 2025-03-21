@@ -5,6 +5,8 @@ import { TimeframeSelector } from "@/components/charts/TimeframeSelector";
 import { TimeframeOption, formatDateRange } from "@/utils/timeframeUtils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface SalesChartProps {
   chartData: any[];
@@ -49,6 +51,22 @@ export const SalesChart = ({
     }
   }, [paymentMethodData]);
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background p-2 border border-border rounded shadow-md">
+          <p className="font-medium">{`${label}`}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value.toLocaleString()}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
@@ -72,12 +90,45 @@ export const SalesChart = ({
       
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
         <TabsContent value="overview" className="mt-0">
-          <InteractiveBarChart 
-            data={chartData}
-            valuePrefix="$"
-            title="Sales Overview"
-            barSize={chartData.length > 10 ? 12 : 20}
-          />
+          <Card>
+            <CardContent className="pt-6">
+              <div style={{ height: '300px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      name="Sales ($)" 
+                      stroke="#1AA47B" 
+                      activeDot={{ r: 8 }} 
+                      strokeWidth={2}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="declines" 
+                      name="Declines ($)" 
+                      stroke="#F97066" 
+                      strokeDasharray="5 5"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="chargebacks" 
+                      name="Chargebacks ($)" 
+                      stroke="#9E77ED" 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="payment" className="mt-0">

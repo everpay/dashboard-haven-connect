@@ -1,59 +1,43 @@
 
-import React, { useState, useEffect } from 'react';
-import { DashboardHeader } from './DashboardHeader';
-import { DashboardContent } from './DashboardContent';
-import { ErrorDisplay } from './ErrorDisplay';
-import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
-import { TimeframeOption } from '@/utils/timeframeUtils';
+// Simply import the updated hooks and components
+import React from 'react';
+import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
+import { ErrorDisplay } from "@/components/dashboard/ErrorDisplay";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 export const Dashboard = () => {
-  const [globalTimeframe, setGlobalTimeframe] = useState<TimeframeOption>('7days');
-  
-  useEffect(() => {
-    console.log("Dashboard component mounted with timeframe:", globalTimeframe);
-  }, []);
-  
-  // Update handler for timeframe changes
-  const handleTimeframeChange = (newTimeframe: TimeframeOption) => {
-    console.log("Dashboard - timeframe changed to:", newTimeframe);
-    setGlobalTimeframe(newTimeframe);
-  };
-  
-  const {
-    error,
-    transactions,
-    chartData,
+  const { 
+    error, 
+    transactions, 
+    chartData, 
+    timeframe, 
+    setTimeframe, 
     paymentMethodData,
-    timeframe,
-    setTimeframe,
     balanceData,
     todayTransactions,
-    formatTimeAgo
+    formatTimeAgo,
+    chargebacksCount
   } = useDashboardData();
 
-  // Sync the hook's timeframe with our global timeframe
-  useEffect(() => {
-    if (timeframe !== globalTimeframe) {
-      setTimeframe(globalTimeframe);
-    }
-  }, [globalTimeframe, timeframe, setTimeframe]);
-
   if (error) {
-    return <ErrorDisplay errorMessage={error} />;
+    return <ErrorDisplay error={error} />;
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="space-y-4">
       <DashboardHeader />
+      
       <DashboardContent 
         balanceData={balanceData}
         todayTransactions={todayTransactions}
         chartData={chartData}
-        timeframe={globalTimeframe}
-        setTimeframe={handleTimeframeChange}
+        timeframe={timeframe}
+        setTimeframe={setTimeframe}
         paymentMethodData={paymentMethodData}
         transactions={transactions}
         formatTimeAgo={formatTimeAgo}
+        chargebacksCount={chargebacksCount}
       />
     </div>
   );
