@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Check, CreditCard, AlertCircle, Bank } from "lucide-react";
+import { Check, CreditCard, AlertCircle, Banknote } from "lucide-react";
 import { VGSPaymentForm } from "@/components/payment/VGSPaymentForm";
 import { toast } from "sonner";
 import { BankDetailsForm } from "@/components/payment/BankDetailsForm";
@@ -20,6 +20,11 @@ const VirtualTerminal = () => {
   const [customerName, setCustomerName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [vgsOpen, setVgsOpen] = useState(false);
+  
+  // Bank account form state
+  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [routingNumber, setRoutingNumber] = useState<string>("");
+  const [bankName, setBankName] = useState<string>("");
   
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -74,6 +79,9 @@ const VirtualTerminal = () => {
     setCustomerEmail("");
     setCustomerName("");
     setDescription("");
+    setAccountNumber("");
+    setRoutingNumber("");
+    setBankName("");
     setVgsOpen(false);
   };
 
@@ -154,7 +162,7 @@ const VirtualTerminal = () => {
                     Credit Card
                   </TabsTrigger>
                   <TabsTrigger value="bank-account" className="flex items-center gap-2">
-                    <Bank className="h-4 w-4" />
+                    <Banknote className="h-4 w-4" />
                     Bank Account
                   </TabsTrigger>
                 </TabsList>
@@ -172,13 +180,22 @@ const VirtualTerminal = () => {
                 </TabsContent>
                 
                 <TabsContent value="bank-account" className="pt-4">
-                  <BankDetailsForm />
+                  <BankDetailsForm 
+                    paymentMethod="ACH"
+                    accountNumber={accountNumber}
+                    routingNumber={routingNumber}
+                    bankName={bankName}
+                    zelleEmail=""
+                    onAccountNumberChange={setAccountNumber}
+                    onRoutingNumberChange={setRoutingNumber}
+                    onBankNameChange={setBankName}
+                  />
                   <div className="mt-4 text-center">
                     <Button 
                       onClick={handleSubmitBank}
                       className="bg-[#1AA47B] w-full md:w-auto"
                     >
-                      <Bank className="mr-2 h-4 w-4" />
+                      <Banknote className="mr-2 h-4 w-4" />
                       Process Bank Payment
                     </Button>
                   </div>
