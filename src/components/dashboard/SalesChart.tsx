@@ -26,6 +26,7 @@ export const SalesChart = ({ chartData, timeframe, onTimeframeChange }: SalesCha
       <InteractiveBarChart 
         data={chartData}
         valuePrefix="$"
+        title="Sales Overview"
       />
     </div>
   );
