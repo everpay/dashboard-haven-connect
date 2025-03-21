@@ -1,19 +1,7 @@
 
-import { useEffect } from 'react';
-import { useAuth } from '@/lib/auth';
-import { ensureUserProfile } from '@/services/recipient/userProfileService';
+import { useUserProfile as baseUseUserProfile } from '@/hooks/useUserProfile';
 
+// Re-export the main useUserProfile hook to avoid duplication
 export function useUserProfile() {
-  const { user } = useAuth();
-
-  // Ensure user profile exists
-  useEffect(() => {
-    if (user) {
-      ensureUserProfile(user).catch(err => {
-        console.error("Failed to ensure profile exists:", err);
-      });
-    }
-  }, [user]);
-
-  return { user };
+  return baseUseUserProfile();
 }

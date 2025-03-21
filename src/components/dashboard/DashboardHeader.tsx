@@ -7,10 +7,11 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, CreditCard, BarChart3, FilePlus, User, ShoppingCart } from "lucide-react";
+import { ChevronDown, CreditCard, BarChart3, FilePlus, User as UserIcon, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import type { User } from '@/types/user.types';
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ export const DashboardHeader = () => {
             onClick={() => navigate('/customers')}
             className={isDarkMode ? 'hover:bg-[#2E3746] text-white' : 'hover:bg-gray-100 text-gray-700'}
           >
-            <User className="mr-2 h-4 w-4" /> Add Customer
+            <UserIcon className="mr-2 h-4 w-4" /> Add Customer
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => navigate('/products')}
