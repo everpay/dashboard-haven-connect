@@ -35,10 +35,10 @@ export const BankAccountPaymentTab = ({
         onRoutingNumberChange={onRoutingNumberChange}
         onBankNameChange={onBankNameChange}
       />
-      <div className="mt-4 text-center">
+      <div className="mt-6 text-center">
         <Button 
           onClick={onSubmit}
-          className="bg-[#1AA47B] w-full md:w-auto"
+          className="bg-[#1AA47B] hover:bg-[#158F6B] w-full md:w-auto"
         >
           <Banknote className="mr-2 h-4 w-4" />
           Process Bank Payment
