@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { ensureUserProfile } from '@/services/recipient/userProfileService';
+import type { User } from '@/types/user.types';
 
 export function useUserProfile() {
   const { user } = useAuth();
