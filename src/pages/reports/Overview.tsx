@@ -40,7 +40,7 @@ const Overview = () => {
       const { data, error } = await supabase
         .from('transactions')
         .select('created_at, amount')
-        .eq('merchant_id', userId)
+        .eq('transaction_type', 'payment')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -76,7 +76,7 @@ const Overview = () => {
       const { data, error } = await supabase
         .from('transactions')
         .select('payment_method, amount')
-        .eq('merchant_id', userId);
+        .eq('transaction_type', 'payment');
       
       if (error) throw error;
 

@@ -61,7 +61,7 @@ export const SalesChart = ({
             currentTimeframe={timeframe} 
             onTimeframeChange={onTimeframeChange}
           />
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[200px]">
+          <Tabs defaultValue="overview" onValueChange={setActiveTab} className="w-[200px]">
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="payment">By Payment</TabsTrigger>
@@ -70,30 +70,32 @@ export const SalesChart = ({
         </div>
       </div>
       
-      <TabsContent value="overview" className="mt-0">
-        <InteractiveBarChart 
-          data={chartData}
-          valuePrefix="$"
-          title="Sales Overview"
-          barSize={chartData.length > 10 ? 12 : 20}
-        />
-      </TabsContent>
-      
-      <TabsContent value="payment" className="mt-0">
-        {processedPaymentData.length > 0 ? (
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+        <TabsContent value="overview" className="mt-0">
           <InteractiveBarChart 
-            data={processedPaymentData}
+            data={chartData}
             valuePrefix="$"
-            title="Sales by Payment Method"
-            colorScheme={["#4A6FA5", "#6025C0"]}
-            barSize={processedPaymentData.length > 10 ? 12 : 20}
+            title="Sales Overview"
+            barSize={chartData.length > 10 ? 12 : 20}
           />
-        ) : (
-          <div className="flex justify-center items-center h-[300px] border border-dashed rounded-md">
-            <p className="text-muted-foreground">No payment data available</p>
-          </div>
-        )}
-      </TabsContent>
+        </TabsContent>
+        
+        <TabsContent value="payment" className="mt-0">
+          {processedPaymentData.length > 0 ? (
+            <InteractiveBarChart 
+              data={processedPaymentData}
+              valuePrefix="$"
+              title="Sales by Payment Method"
+              colorScheme={["#4A6FA5", "#6025C0"]}
+              barSize={processedPaymentData.length > 10 ? 12 : 20}
+            />
+          ) : (
+            <div className="flex justify-center items-center h-[300px] border border-dashed rounded-md">
+              <p className="text-muted-foreground">No payment data available</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

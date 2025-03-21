@@ -53,7 +53,7 @@ export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProp
       try {
         // Attempt to fetch real payment method data from the database
         const { data: transactions, error } = await supabase
-          .from('marqeta_transactions')
+          .from('transactions')
           .select('payment_method, amount');
         
         if (error) throw error;
