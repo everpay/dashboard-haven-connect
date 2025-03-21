@@ -55,9 +55,9 @@ export const InteractiveBarChart = ({
 
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-sm">{title}</CardTitle>
+        {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">

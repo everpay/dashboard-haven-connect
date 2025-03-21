@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/lib/auth";
 import { Sidebar } from './Sidebar';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Settings, LogOut, User } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { useRBAC } from '@/lib/rbac';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -19,7 +20,22 @@ type DashboardLayoutProps = {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { session } = useAuth();
+  const { userRole } = useRBAC();
   const [collapsed, setCollapsed] = useState(false);
+  const [userInitials, setUserInitials] = useState('BO');
+  const [userEmail, setUserEmail] = useState('admin@example.com');
+  
+  // Get user initials and email from session
+  useEffect(() => {
+    if (session?.user) {
+      const email = session.user.email || 'user@example.com';
+      setUserEmail(email);
+      
+      // Generate initials from email if no name is available
+      const initials = email.substring(0, 2).toUpperCase();
+      setUserInitials(initials);
+    }
+  }, [session]);
   
   return (
     <div className="min-h-screen bg-[#04080F] text-white">
@@ -41,17 +57,17 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-[#1E2736] p-0 text-white hover:bg-[#2E3746]">
-                  <span className="text-xs">BO</span>
+                  <span className="text-xs">{userInitials}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 z-50 bg-[#1E2736] border-[#1E2736] text-white">
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2E3746]">
-                    <span className="text-xs font-medium">BO</span>
+                    <span className="text-xs font-medium">{userInitials}</span>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">Business Owner</p>
-                    <p className="text-xs leading-none text-gray-400">admin@example.com</p>
+                    <p className="text-sm font-medium leading-none capitalize">{userRole}</p>
+                    <p className="text-xs leading-none text-gray-400">{userEmail}</p>
                   </div>
                 </div>
                 
