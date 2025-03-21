@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useVGSScriptLoader } from './useVGSScriptLoader';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 interface VGSCollectOptions {
   formId: string;
@@ -24,6 +25,8 @@ export const useVGSCollect = ({
   const collectRef = useRef<any>(null);
   const { scriptLoaded } = useVGSScriptLoader();
   const { toast } = useToast();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   
   // Initialize VGS Collect when script is loaded and form should be displayed
   useEffect(() => {
@@ -34,10 +37,14 @@ export const useVGSCollect = ({
     return () => {
       // Cleanup
       if (collectRef.current) {
-        collectRef.current.destroy();
+        try {
+          collectRef.current.destroy();
+        } catch (e) {
+          console.error('Error destroying VGS form:', e);
+        }
       }
     };
-  }, [scriptLoaded, open, formId]);
+  }, [scriptLoaded, open, formId, theme]);
   
   const initializeVGSCollect = () => {
     try {
@@ -48,23 +55,36 @@ export const useVGSCollect = ({
         console.log('Initializing VGS Collect for payment with form ID:', formId);
         
         // Initialize VGS Collect with the Vault ID
-        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox');
+        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox', function(state: any) {
+          // Callback to indicate form is ready
+          console.log("VGS Collect state:", state);
+          if (state === 'ready') {
+            setIsLoaded(true);
+          }
+        });
+        
+        // Set text color based on theme
+        const textColor = isDarkMode ? '#ffffff' : '#000000';
+        const backgroundColor = isDarkMode ? '#1e293b' : '#ffffff';
+        const borderColor = isDarkMode ? '#384152' : '#e2e8f0';
+        const placeholderColor = isDarkMode ? '#64748b' : '#a0aec0';
+        const focusBorderColor = isDarkMode ? '#60a5fa' : '#3b82f6';
         
         const cssConfig = {
           'font-size': '16px',
-          'color': '#333',
+          'color': textColor,
           'padding': '10px',
           'font-family': 'system-ui, sans-serif',
-          'border': '1px solid #ccc',
+          'border': `1px solid ${borderColor}`,
           'border-radius': '4px',
           'line-height': '1.5',
           'height': '40px',
-          'background-color': 'white',
+          'background-color': backgroundColor,
           '&::placeholder': {
-            'color': '#999'
+            'color': placeholderColor
           },
           '&:focus': {
-            'border': '1px solid #0070f3',
+            'border': `1px solid ${focusBorderColor}`,
             'outline': 'none'
           }
         };
@@ -99,15 +119,6 @@ export const useVGSCollect = ({
         // Set up event listeners
         collectRef.current.on('enterPressed', () => handleSubmit());
         
-        collectRef.current.on('field:valid', () => {
-          console.log('Field is valid');
-        });
-        
-        collectRef.current.on('field:invalid', () => {
-          console.log('Field is invalid');
-        });
-        
-        setIsLoaded(true);
         console.log('VGS Collect fields initialized successfully for payment form');
       } else {
         console.error('VGSCollect not found in window object');

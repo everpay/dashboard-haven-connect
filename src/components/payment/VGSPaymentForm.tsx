@@ -29,20 +29,18 @@ export const VGSPaymentForm = ({
 }: VGSPaymentFormProps) => {
   const { isLoaded, isSubmitting, handleSubmit } = useVGSCollect({
     formId,
-    onSuccess,
+    onSuccess: (response) => {
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
+      if (onSuccess) {
+        onSuccess(response);
+      }
+    },
     onError,
     amount,
     open
   });
-
-  const handleSuccess = (response: any) => {
-    if (onOpenChange) {
-      onOpenChange(false);
-    }
-    if (onSuccess) {
-      onSuccess(response);
-    }
-  };
 
   const paymentForm = (
     <Card className={`p-6 ${className}`}>

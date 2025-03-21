@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { useVGSScriptLoader } from '@/hooks/payment/useVGSScriptLoader';
 
 interface CardFormProps {
   formId: string;
@@ -27,68 +28,11 @@ export const CardForm: React.FC<CardFormProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cardholderName, setCardholderName] = useState('');
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [loadAttempts, setLoadAttempts] = useState(0);
   const collectRef = useRef<any>(null);
   const { toast } = useToast();
   const { theme } = useTheme();
+  const { scriptLoaded, loadAttempts } = useVGSScriptLoader();
   const isDarkMode = theme === 'dark';
-  
-  useEffect(() => {
-    // Create a function to initialize VGS Collect
-    const loadVGSScript = () => {
-      if (!scriptLoaded && loadAttempts < 3) {
-        console.log('Attempting to load VGS script, attempt:', loadAttempts + 1);
-        const script = document.createElement('script');
-        script.src = 'https://js.verygoodvault.com/vgs-collect/2.12.0/vgs-collect.js';
-        script.async = true;
-        script.onload = () => {
-          console.log('VGS Collect script loaded successfully');
-          setScriptLoaded(true);
-        };
-        script.onerror = () => {
-          console.error('Failed to load VGS Collect script, attempt:', loadAttempts + 1);
-          // Increment attempts counter
-          setLoadAttempts(prev => prev + 1);
-          
-          // Try alternative URL on failure
-          if (loadAttempts === 0) {
-            const altScript = document.createElement('script');
-            altScript.src = 'https://js.verygoodvault.com/vgs-collect/vgs-collect-latest.min.js';
-            altScript.async = true;
-            
-            altScript.onload = () => {
-              console.log('VGS Collect script loaded from alternative URL');
-              setScriptLoaded(true);
-            };
-            
-            altScript.onerror = () => {
-              console.error('Failed to load VGS script from alternative URL');
-              setLoadAttempts(prev => prev + 1);
-            };
-            
-            document.body.appendChild(altScript);
-          }
-        };
-        
-        // Check if script is already loaded
-        if (!document.querySelector('script[src*="vgs-collect"]')) {
-          document.body.appendChild(script);
-        } else {
-          // If the script tag exists but VGSCollect isn't available yet
-          setTimeout(() => {
-            if ((window as any).VGSCollect) {
-              setScriptLoaded(true);
-            } else {
-              setLoadAttempts(prev => prev + 1);
-            }
-          }, 1000);
-        }
-      }
-    };
-    
-    loadVGSScript();
-  }, [loadAttempts, scriptLoaded]);
   
   useEffect(() => {
     if (scriptLoaded) {
@@ -114,12 +58,18 @@ export const CardForm: React.FC<CardFormProps> = ({
       
       if (VGSCollect) {
         // Initialize VGS Collect with vault ID
-        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox');
+        collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox', function(state: any) {
+          // Callback to indicate form is ready
+          console.log("VGS Collect state:", state);
+          if (state === 'ready') {
+            setIsLoaded(true);
+          }
+        });
         
         // Set text color based on theme
-        const textColor = isDarkMode ? 'white' : 'black';
-        const backgroundColor = isDarkMode ? '#1e293b' : 'white';
-        const borderColor = isDarkMode ? '#384152' : '#ccc';
+        const textColor = isDarkMode ? '#ffffff' : '#000000';
+        const backgroundColor = isDarkMode ? '#1e293b' : '#ffffff';
+        const borderColor = isDarkMode ? '#384152' : '#e2e8f0';
         const placeholderColor = isDarkMode ? '#64748b' : '#a0aec0';
         const focusBorderColor = isDarkMode ? '#60a5fa' : '#3b82f6';
         
@@ -204,7 +154,6 @@ export const CardForm: React.FC<CardFormProps> = ({
         // Set up event listeners
         collectRef.current.on('enterPressed', () => handleSubmit());
         
-        setIsLoaded(true);
         console.log('VGS Collect fields initialized successfully');
       } else {
         console.error('VGSCollect not found in window object');
@@ -290,7 +239,6 @@ export const CardForm: React.FC<CardFormProps> = ({
     }
   };
   
-  // Use theme-aware styling instead of hard-coded dark background
   return (
     <Card className={`p-6 ${className}`}>
       <div className="space-y-4">
