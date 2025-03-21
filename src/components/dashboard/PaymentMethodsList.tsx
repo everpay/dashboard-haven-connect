@@ -9,7 +9,7 @@ interface PaymentMethodsListProps {
 
 export const PaymentMethodsList = ({ data }: PaymentMethodsListProps) => {
   return (
-    <div className="space-y-4 max-h-full grid gap-2">
+    <div className="space-y-2">
       {data.map((method) => (
         <PaymentMethodItem key={method.name} method={method} />
       ))}

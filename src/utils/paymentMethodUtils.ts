@@ -1,19 +1,5 @@
 
 import React from 'react';
-import { 
-  CreditCard, 
-  Banknote, 
-  Building, 
-  Landmark, 
-  Wallet, 
-  Smartphone, 
-  DollarSign, 
-  Send, 
-  Coins, 
-  QrCode, 
-  Hash,
-  Globe
-} from "lucide-react";
 
 export interface PaymentMethod {
   name: string;

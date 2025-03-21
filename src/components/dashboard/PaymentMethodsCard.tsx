@@ -7,6 +7,7 @@ import { PaymentMethodsList } from './PaymentMethodsList';
 import { PaymentMethodsLoading } from './PaymentMethodsLoading';
 import { usePaymentMethodsData } from '@/hooks/dashboard/usePaymentMethodsData';
 import { PaymentMethod } from '@/utils/paymentMethodUtils';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PaymentMethodsCardProps {
   data: PaymentMethod[];
@@ -22,11 +23,13 @@ export const PaymentMethodsCard = ({ data: initialData }: PaymentMethodsCardProp
         <CardTitle className="text-sm">Payment Methods</CardTitle>
         <CardDescription className="text-xs">Revenue by payment method</CardDescription>
       </CardHeader>
-      <CardContent className="pb-0 flex-grow overflow-auto">
-        {isLoading 
-          ? <PaymentMethodsLoading /> 
-          : <PaymentMethodsList data={data} />
-        }
+      <CardContent className="pb-0 flex-grow">
+        <ScrollArea className="h-[260px] pr-4">
+          {isLoading 
+            ? <PaymentMethodsLoading /> 
+            : <PaymentMethodsList data={data} />
+          }
+        </ScrollArea>
       </CardContent>
       <CardFooter className="pt-2 mt-auto">
         <Button 
