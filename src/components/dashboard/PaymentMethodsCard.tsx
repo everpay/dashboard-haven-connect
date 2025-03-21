@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { 
   CreditCard, 
   Banknote, 
-  Bank, 
+  Building, 
   Landmark, 
   Wallet, 
   Smartphone, 
@@ -64,7 +64,7 @@ const getPaymentMethodIcon = (method: string): React.ReactNode => {
   if (methodLower.includes('credit') || methodLower.includes('card') || methodLower.includes('visa') || methodLower.includes('mastercard')) {
     return <CreditCard className="h-4 w-4" />;
   } else if (methodLower.includes('ach')) {
-    return <Bank className="h-4 w-4" />;
+    return <Building className="h-4 w-4" />;
   } else if (methodLower.includes('wire')) {
     return <Landmark className="h-4 w-4" />;
   } else if (methodLower.includes('zelle') || methodLower.includes('venmo') || methodLower.includes('cash app')) {
@@ -72,7 +72,7 @@ const getPaymentMethodIcon = (method: string): React.ReactNode => {
   } else if (methodLower.includes('google') || methodLower.includes('apple') || methodLower.includes('pay')) {
     return <Smartphone className="h-4 w-4" />;
   } else if (methodLower.includes('bank')) {
-    return <Bank className="h-4 w-4" />;
+    return <Building className="h-4 w-4" />;
   } else if (methodLower.includes('swift')) {
     return <Globe className="h-4 w-4" />;
   } else if (methodLower.includes('crypto') || methodLower.includes('bitcoin')) {

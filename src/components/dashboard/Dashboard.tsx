@@ -21,7 +21,7 @@ export const Dashboard = () => {
   } = useDashboardData();
 
   if (error) {
-    return <ErrorDisplay error={error} />;
+    return <ErrorDisplay errorMessage={error} />;
   }
 
   return (
