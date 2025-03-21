@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { 
@@ -6,29 +7,11 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Download, BarChart3, FilePlus, User, ShoppingCart } from "lucide-react";
+import { ChevronDown, CreditCard, BarChart3, FilePlus, User, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();
-
-  const handleExportData = () => {
-    // Create a sample CSV content
-    const csvContent = "Date,Transaction ID,Amount,Status\n" +
-      "2024-03-21,TXN12345,$253.85,Completed\n" +
-      "2024-03-20,TXN12344,$1250.00,Completed\n" +
-      "2024-03-19,TXN12343,$500.00,Completed\n";
-    
-    // Create blob and download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "dashboard_data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -46,8 +29,8 @@ export const DashboardHeader = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleExportData}>
-            <Download className="mr-2 h-4 w-4" /> Export Data
+          <DropdownMenuItem onClick={() => navigate('/virtual-terminal')}>
+            <CreditCard className="mr-2 h-4 w-4" /> New Payment
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate('/reports/overview')}>
             <BarChart3 className="mr-2 h-4 w-4" /> View Reports

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -34,6 +33,7 @@ import ReportsOverview from "./pages/reports/Overview"
 import ReportsAnalytics from "./pages/reports/Analytics"
 import Banking from "./pages/Banking"
 import RecurringPayments from "./pages/RecurringPayments"
+import VirtualTerminal from '@/pages/VirtualTerminal'
 
 // Debug log to see if App component is loading
 console.log('App component initializing');
@@ -85,6 +85,7 @@ const App = () => {
                       <Route path="/reports/analytics" element={<ReportsAnalytics />} />
                       <Route path="/banking" element={<Banking />} />
                       <Route path="/overview" element={<Banking />} />
+                      <Route path="/virtual-terminal" element={<VirtualTerminal />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </TooltipProvider>

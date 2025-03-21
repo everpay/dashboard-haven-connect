@@ -18,21 +18,21 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
   const description = getTransactionDescription(transaction);
 
   return (
-    <div className="flex">
+    <div className="flex flex-col sm:flex-row w-full">
       <div className="mr-4 flex flex-col items-center">
         <Avatar className={`h-9 w-9 ${avatarColor}`}>
           <Icon className="h-5 w-5" />
         </Avatar>
-        <div className="h-full w-px bg-muted mt-2" />
+        <div className="h-full w-px bg-muted mt-2 hidden sm:block" />
       </div>
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-0.5 flex-1 mt-2 sm:mt-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <Avatar className="h-8 w-8 bg-muted">
             <div className="text-xs font-medium">
               {getInitials(transaction.customer_email)}
             </div>
           </Avatar>
-          <div>
+          <div className="mt-1 sm:mt-0">
             <p className="text-sm font-medium">{transaction.customer_email}</p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <span>{formatTimeAgo(transaction.created_at)}</span>
