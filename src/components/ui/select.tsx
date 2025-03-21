@@ -89,17 +89,22 @@ const SelectValue = React.forwardRef<
 
 SelectValue.displayName = "SelectValue";
 
-const SelectContent = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+const SelectContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ children, ...props }, ref) => {
   return (
-    <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+    <div 
+      ref={ref}
+      className="absolute z-10 mt-1 w-full bg-[#1E2736] border border-[#1E2736] shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm text-white"
+      {...props}
+    >
       {children}
     </div>
   );
-};
+});
+
+SelectContent.displayName = "SelectContent";
 
 const SelectItem = React.forwardRef<
   HTMLDivElement,

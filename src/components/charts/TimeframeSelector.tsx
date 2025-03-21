@@ -25,7 +25,7 @@ export const TimeframeSelector = ({
         <SelectTrigger className="w-36 h-8 text-sm bg-[#1E2736] border-[#1E2736] text-white">
           <SelectValue placeholder="Select timeframe" />
         </SelectTrigger>
-        <SelectContent className="bg-[#1E2736] border-[#1E2736] text-white">
+        <SelectContent>
           {timeframeOptions.map(option => (
             <SelectItem key={option.value} value={option.value} className="text-sm text-white hover:bg-[#2E3746]">
               {option.label}
