@@ -58,7 +58,7 @@ export const SalesChart = ({
           <p className="font-medium">{`${label}`}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {`${entry.name}: ${entry.value.toLocaleString()}`}
+              {`${entry.name}: $${entry.value.toLocaleString()}`}
             </p>
           ))}
         </div>
@@ -74,18 +74,12 @@ export const SalesChart = ({
           <h2 className="text-sm font-semibold">Sales Overview</h2>
           <p className="text-xs text-muted-foreground">{formatDateRange(timeframe)}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <TimeframeSelector 
-            currentTimeframe={timeframe} 
-            onTimeframeChange={onTimeframeChange}
-          />
-          <Tabs defaultValue="overview" onValueChange={setActiveTab} className="w-[200px]">
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="payment">By Payment</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        <Tabs defaultValue="overview" onValueChange={setActiveTab} className="w-[200px]">
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="payment">By Payment</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
       
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>

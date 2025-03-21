@@ -3,6 +3,7 @@ import React from 'react';
 import { SalesChart } from './SalesChart';
 import { PaymentMethodsCard } from './PaymentMethodsCard';
 import { TimeframeOption } from '@/utils/timeframeUtils';
+import { TimeframeSelector } from '@/components/charts/TimeframeSelector';
 
 interface DashboardUpperSectionProps {
   chartData: any[];
@@ -28,6 +29,12 @@ export const DashboardUpperSection = ({
         />
       </div>
       <div className="md:col-span-1">
+        <div className="mb-3">
+          <TimeframeSelector 
+            currentTimeframe={timeframe} 
+            onTimeframeChange={setTimeframe}
+          />
+        </div>
         <PaymentMethodsCard data={paymentMethodData} />
       </div>
     </div>
