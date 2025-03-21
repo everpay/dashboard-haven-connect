@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/lib/supabase";
 import { TimeframeOption, filterDataByTimeframe } from "@/utils/timeframeUtils";
 import { format, subDays } from 'date-fns';
@@ -53,14 +53,21 @@ export const useDashboardData = () => {
     net: 9289.75
   });
   const [todayTransactions, setTodayTransactions] = useState({
-    count: 0,
-    amount: 0
+    count: 24,
+    amount: 4325.75
   });
   const [chargebacksCount, setChargebacksCount] = useState(2);
+  
+  // Use a ref to track initialization to prevent regenerating random values on every render
+  const isInitialized = useRef(false);
 
   console.log("useDashboardData hook initialized with timeframe:", timeframe);
 
   useEffect(() => {
+    // Prevent multiple initializations causing value fluctuations
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+    
     // Simple test to verify Supabase connection
     const testSupabase = async () => {
       try {
@@ -105,14 +112,14 @@ export const useDashboardData = () => {
         console.log("Generated detailed chart data for visualization");
         setChartData(detailedChartData);
         
-        // Set today's transaction stats
+        // Set today's transaction stats with fixed values to avoid fluctuation
         setTodayTransactions({
-          count: Math.floor(Math.random() * 15) + 5,
-          amount: Math.floor(Math.random() * 2000) + 1000
+          count: 24,
+          amount: 4325.75
         });
         
-        // Set a random chargeback count
-        setChargebacksCount(Math.floor(Math.random() * 3) + 1);
+        // Set a fixed chargeback count
+        setChargebacksCount(2);
         
         // Get payment methods data from transactions table or generate if none exist
         const { data: paymentMethodsData, error: methodsError } = await supabase
@@ -167,7 +174,10 @@ export const useDashboardData = () => {
         created_at: new Date(now.getTime() - 1000 * 60 * 30).toISOString(), // 30 mins ago
         amount: 253.85,
         status: 'completed',
-        payment_method: 'Credit Card'
+        payment_method: 'Credit Card',
+        customer_email: 'john.doe@example.com',
+        transaction_type: 'payment',
+        description: 'Payment for invoice #INV-2023-001'
       },
       {
         id: 'tx-2',
@@ -175,7 +185,10 @@ export const useDashboardData = () => {
         created_at: new Date(now.getTime() - 1000 * 60 * 120).toISOString(), // 2 hours ago
         amount: 1250.00,
         status: 'completed',
-        payment_method: 'Bank Transfer'
+        payment_method: 'Bank Transfer',
+        customer_email: 'maria.tech@example.com',
+        transaction_type: 'payment',
+        description: 'Monthly subscription renewal'
       },
       {
         id: 'tx-3',
@@ -183,15 +196,21 @@ export const useDashboardData = () => {
         created_at: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
         amount: 780.50,
         status: 'completed',
-        payment_method: 'ACH'
+        payment_method: 'ACH',
+        customer_email: 'global.corp@example.com',
+        transaction_type: 'transfer',
+        description: 'Fund transfer to external account'
       },
       {
         id: 'tx-4',
         merchant_name: 'Online Retail Co.',
         created_at: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
         amount: 89.99,
-        status: 'completed',
-        payment_method: 'Credit Card'
+        status: 'pending',
+        payment_method: 'Credit Card',
+        customer_email: 'retail.customer@example.com',
+        transaction_type: 'chargeback',
+        description: 'Disputed charge for order #12345'
       },
       {
         id: 'tx-5',
@@ -199,7 +218,10 @@ export const useDashboardData = () => {
         created_at: new Date(now.getTime() - 1000 * 60 * 60 * 26).toISOString(), // 26 hours ago
         amount: 525.00,
         status: 'completed',
-        payment_method: 'Wire Transfer'
+        payment_method: 'Wire Transfer',
+        customer_email: 'agency.billing@example.com',
+        transaction_type: 'refund',
+        description: 'Refund for cancelled service'
       }
     ];
   };
