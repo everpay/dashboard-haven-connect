@@ -50,7 +50,18 @@ export function ThemeProvider({
         : "light";
       
       root.classList.add(systemTheme);
-      return;
+      
+      // Add event listener for system theme changes
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleChange = () => {
+        if (theme === "system") {
+          root.classList.remove("light", "dark");
+          root.classList.add(mediaQuery.matches ? "dark" : "light");
+        }
+      };
+      
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
     }
     
     root.classList.add(theme);

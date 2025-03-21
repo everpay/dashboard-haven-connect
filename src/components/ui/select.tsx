@@ -114,7 +114,7 @@ const SelectItem = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-gray-100",
+        "cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-[#2E3746]",
         className
       )}
       {...props}
