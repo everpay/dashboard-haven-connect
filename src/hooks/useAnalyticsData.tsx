@@ -60,7 +60,18 @@ const fetchAnalyticsData = async (userId: string, dataType: string) => {
   if (!userId) return generateMockData(dataType);
 
   try {
-    // Attempt to fetch real data from our database
+    // First try to get data from analytics_data table
+    const { data: analyticsData, error: analyticsError } = await supabase
+      .from('analytics_data')
+      .select('data')
+      .eq('data_type', dataType)
+      .single();
+      
+    if (analyticsData && !analyticsError) {
+      return analyticsData.data;
+    }
+    
+    // If no analytics data, attempt to fetch real data from our database
     if (dataType === 'mrr') {
       // Fetch MRR data from transactions table - group by month
       const { data, error } = await supabase

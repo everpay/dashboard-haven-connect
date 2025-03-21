@@ -16,10 +16,10 @@ export async function logTransaction(transactionData: TransactionResponse) {
     const user = (await supabase.auth.getUser()).data.user;
 
     const { data, error } = await supabase
-      .from('marqeta_transactions')
+      .from('transactions')
       .insert([
         {
-          user_id: user?.id,
+          merchant_id: user?.id,
           amount: transactionData.TRANSACTION_SEND_AMOUNT,
           currency: transactionData.TRANSACTION_CURRENCY_ISO3,
           status: transactionData.TRANSACTION_STATUS.toLowerCase(),
@@ -45,7 +45,7 @@ export async function logTransaction(transactionData: TransactionResponse) {
 export async function updateTransactionStatus(transactionId: string, status: TransactionStatus) {
   try {
     const { data, error } = await supabase
-      .from('marqeta_transactions')
+      .from('transactions')
       .update({ status: status.toLowerCase() })
       .eq('metadata->TRANSACTION_ID', transactionId);
 

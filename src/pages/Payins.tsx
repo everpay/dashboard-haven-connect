@@ -36,7 +36,7 @@ const Payins = () => {
     try {
       // Try to fetch real transactions from Supabase
       const { data, error } = await supabase
-        .from('marqeta_transactions')
+        .from('transactions')
         .select('*')
         .eq('transaction_type', 'payin')
         .order('created_at', { ascending: false })

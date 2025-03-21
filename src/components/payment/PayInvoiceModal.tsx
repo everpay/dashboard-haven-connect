@@ -41,12 +41,12 @@ export const PayInvoiceModal = ({
       
       // Record the transaction
       await supabase
-        .from('marqeta_transactions')
+        .from('transactions')
         .insert([{
-          user_id: invoice.merchant_id,
+          merchant_id: invoice.merchant_id,
           amount: invoice.total_amount,
           currency: 'USD',
-          status: 'Completed',
+          status: 'completed',
           merchant_name: 'Invoice Payment',
           transaction_type: 'payment',
           description: `Payment for invoice #INV-${String(invoice.id).padStart(5, '0')}`,

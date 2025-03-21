@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 import { useToast } from '@/components/ui/use-toast';
@@ -32,7 +33,7 @@ export const usePayoutData = (refreshKey: number, searchTerm: string) => {
     queryFn: async () => {
       try {
         let query = supabase
-          .from('marqeta_transactions')
+          .from('transactions')
           .select('*')
           .eq('transaction_type', 'payout')
           .order('created_at', { ascending: false });

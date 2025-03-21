@@ -76,7 +76,7 @@ export const usePayoutProcessor = (onSuccess?: () => void) => {
 
       // Save transaction to database
       const { data, error } = await supabase
-        .from('marqeta_transactions')
+        .from('transactions')
         .insert([
           {
             amount: formData.amount,

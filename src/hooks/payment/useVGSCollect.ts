@@ -1,4 +1,3 @@
-
 import { useRef, useState, useEffect } from 'react';
 import { useVGSScriptLoader } from './useVGSScriptLoader';
 import { supabase } from '@/lib/supabase';
@@ -28,14 +27,12 @@ export const useVGSCollect = ({
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   
-  // Initialize VGS Collect when script is loaded and form should be displayed
   useEffect(() => {
     if (scriptLoaded && (open === undefined || open)) {
       initializeVGSCollect();
     }
     
     return () => {
-      // Cleanup
       if (collectRef.current) {
         try {
           collectRef.current.destroy();
@@ -48,22 +45,18 @@ export const useVGSCollect = ({
   
   const initializeVGSCollect = () => {
     try {
-      // Type assertion for VGSCollect
       const VGSCollect = (window as any).VGSCollect;
       
       if (VGSCollect) {
         console.log('Initializing VGS Collect for payment with form ID:', formId);
         
-        // Initialize VGS Collect with the Vault ID
         collectRef.current = VGSCollect.create('tntep02g5hf', 'sandbox', function(state: any) {
-          // Callback to indicate form is ready
           console.log("VGS Collect state:", state);
           if (state === 'ready') {
             setIsLoaded(true);
           }
         });
         
-        // Set text color based on theme
         const textColor = isDarkMode ? '#ffffff' : '#000000';
         const backgroundColor = isDarkMode ? '#1e293b' : '#ffffff';
         const borderColor = isDarkMode ? '#384152' : '#e2e8f0';
@@ -89,7 +82,6 @@ export const useVGSCollect = ({
           }
         };
         
-        // Configure field for card number
         collectRef.current.field(`#${formId}-card-number`, {
           type: 'cardNumber',
           name: 'card_number',
@@ -98,7 +90,6 @@ export const useVGSCollect = ({
           css: cssConfig
         });
         
-        // Configure field for expiry date
         collectRef.current.field(`#${formId}-card-expiry`, {
           type: 'cardExpiryDate',
           name: 'card_expiry',
@@ -107,7 +98,6 @@ export const useVGSCollect = ({
           css: cssConfig
         });
         
-        // Configure field for CVV
         collectRef.current.field(`#${formId}-card-cvc`, {
           type: 'cardCVC',
           name: 'card_cvc',
@@ -116,7 +106,6 @@ export const useVGSCollect = ({
           css: cssConfig
         });
         
-        // Set up event listeners
         collectRef.current.on('enterPressed', () => handleSubmit());
         
         console.log('VGS Collect fields initialized successfully for payment form');
@@ -151,7 +140,6 @@ export const useVGSCollect = ({
     setIsSubmitting(true);
     console.log('Submitting payment form data...');
     
-    // VGS form submission to inbound route
     collectRef.current.submit(
       'https://tntep02g5hf.sandbox.verygoodproxy.com/post',
       {
@@ -170,14 +158,13 @@ export const useVGSCollect = ({
         
         if (status >= 200 && status < 300) {
           try {
-            // Record the transaction in Supabase
             const { data, error } = await supabase
-              .from('marqeta_transactions')
+              .from('transactions')
               .insert([
                 {
                   amount: amount || 10.00,
                   currency: 'USD',
-                  status: 'Completed',
+                  status: 'completed',
                   merchant_name: 'Payment Form',
                   transaction_type: 'payment',
                   description: 'VGS payment form transaction',
