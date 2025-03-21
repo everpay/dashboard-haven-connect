@@ -5,8 +5,7 @@ import { AlertCircle } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 export const PaymentSecurityAlert = () => {
-  const { theme } = useTheme();
-  const isDarkMode = theme === 'dark';
+  const { isDarkMode } = useTheme();
   
   return (
     <Alert className={`${isDarkMode ? 'bg-[#1A2131] border-[#2A3141]' : 'bg-white border-gray-200'}`}>

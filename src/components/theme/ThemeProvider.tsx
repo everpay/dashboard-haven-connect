@@ -13,11 +13,13 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  isDarkMode: boolean;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
+  isDarkMode: false,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -33,6 +35,8 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
   
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  
   console.log("ThemeProvider rendering with theme:", theme);
 
   useEffect(() => {
@@ -44,6 +48,7 @@ export function ThemeProvider({
     if (forcedTheme) {
       console.log("Applying forced theme:", forcedTheme);
       root.classList.add(forcedTheme);
+      setIsDarkMode(forcedTheme === "dark");
       return;
     }
     
@@ -55,6 +60,7 @@ export function ThemeProvider({
       
       console.log("Applying system theme:", systemTheme);
       root.classList.add(systemTheme);
+      setIsDarkMode(systemTheme === "dark");
       
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       
@@ -62,6 +68,7 @@ export function ThemeProvider({
         if (theme === "system") {
           root.classList.remove("light", "dark");
           root.classList.add(mediaQuery.matches ? "dark" : "light");
+          setIsDarkMode(mediaQuery.matches);
           console.log("System theme changed to:", mediaQuery.matches ? "dark" : "light");
         }
       };
@@ -72,10 +79,12 @@ export function ThemeProvider({
     
     console.log("Applying theme directly:", theme);
     root.classList.add(theme);
+    setIsDarkMode(theme === "dark");
   }, [theme, forcedTheme]);
 
   const value = {
     theme,
+    isDarkMode,
     setTheme: (newTheme: Theme) => {
       console.log("Setting theme to:", newTheme);
       localStorage.setItem(storageKey, newTheme);

@@ -11,7 +11,8 @@ import {
   Plug2,
   Settings,
   Link as LinkIcon,
-  Globe
+  Globe,
+  CreditCard
 } from 'lucide-react';
 import { SidebarNavLink } from './SidebarNavLink';
 import { SidebarDropdown } from './SidebarDropdown';
@@ -28,10 +29,13 @@ export const SidebarNavigation = () => {
           icon={Receipt} 
           label="Transactions" 
           defaultOpen={false}
-          includesPaths={["/transactions", "/recurring-payments", "/recurring-invoices", "/payment-links", "/payment-link", "/hosted-payment-page"]}
+          includesPaths={["/transactions", "/recurring-payments", "/recurring-invoices", "/payment-links", "/payment-link", "/hosted-payment-page", "/virtual-terminal"]}
         >
-          <SidebarNavLink to="/overview" isSubmenu>
+          <SidebarNavLink to="/transactions" isSubmenu>
             Overview
+          </SidebarNavLink>
+          <SidebarNavLink to="/virtual-terminal" isSubmenu>
+            Virtual Terminal
           </SidebarNavLink>
           <SidebarNavLink to="/recurring-payments" isSubmenu>
             Recurring Payments

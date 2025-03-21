@@ -10,8 +10,7 @@ interface VGSFormFieldProps {
 }
 
 export const VGSFormField: React.FC<VGSFormFieldProps> = ({ id, label, className }) => {
-  const { theme } = useTheme();
-  const isDarkMode = theme === 'dark';
+  const { isDarkMode } = useTheme();
   
   return (
     <div className={className}>
